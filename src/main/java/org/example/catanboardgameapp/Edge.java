@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Edge {
-    private Vertex vertex1;
-    private Vertex vertex2;
+    public Vertex vertex1;
+    public Vertex vertex2;
     private final List<Tile> adjacentTiles = new ArrayList<>();
 
     public Edge(Vertex vertex1, Vertex vertex2) {

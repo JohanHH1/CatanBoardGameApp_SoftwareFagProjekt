@@ -122,7 +122,7 @@ public class Board {
         return new Point2D(x,y);
     }
 
-    public String sortEdgeVertices(Vertex vertex1, Vertex vertex2) {
+    private String sortEdgeVertices(Vertex vertex1, Vertex vertex2) {
         //First sort by x, then y
         if (vertex1.getX() > vertex2.getX() ||
                 (vertex1.getX() == vertex2.getX() && vertex1.getY() > vertex2.getY())){
@@ -138,6 +138,18 @@ public class Board {
     }
 
     //Getters
+
+    public List<Tile> getTiles() {
+        return tiles;
+    }
+
+    public List<Vertex> getVertices() {
+        return vertices;
+    }
+
+    public List<Edge> getEdges() {
+        return edges;
+    }
 
     //Setters
 }
