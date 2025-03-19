@@ -20,12 +20,14 @@ public class Board {
             "Grain", "Grain", "Grain", "Grain", "Wood", "Wood", "Wood", "Wood",
             "Wool", "Wool", "Wool", "Wool", "Brick", "Brick", "Brick",
             "Ore", "Ore", "Ore" };
-    List<Integer> originalNumberTokens = new ArrayList<>(List.of(5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(6, 3, 9, 4, 5, 10,11, 2, 8, 12, 3, 6, 10, 5, 8, 11, 9, 4  ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 6, 11, 3, 9, 10, 5, 2, 12, 6, 3, 5, 10, 9, 8, 4, 11 ));
-    //4, 6, 11, 3, 8, 9, 10, 5, 2, 12, 6, 9, 5, 8, 3, 10, 4, 11
-    //10, 3, 6, 9, 8, 5, 11, 4, 12, 2, 8, 10, 5, 6, 9, 4, 3, 11
-    //6, 5, 8, 4, 10, 9, 3, 11, 2, 12, 5, 6 8, 9, 10, 3, 4, 11
+
+    List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
+
     //Board size parameters
     private final int radius;         // e.g., 2 for standard 19-hex
     private final double hexSize;     // distance from hex center to a corner
