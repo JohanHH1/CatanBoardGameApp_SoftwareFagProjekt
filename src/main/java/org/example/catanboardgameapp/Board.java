@@ -21,12 +21,14 @@ public class Board {
             "Wool", "Wool", "Wool", "Wool", "Brick", "Brick", "Brick",
             "Ore", "Ore", "Ore" };
 
-    List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
     //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(6, 4, 5, 11, 3, 9, 10, 6, 2, 12, 8, 3, 5, 10, 9, 4, 8, 11 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 3, 11, 5, 10, 8, 12, 2, 6, 11, 9, 10, 5, 4, 6, 3 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(6, 10, 9, 3, 11, 5, 4, 8, 2, 12, 8, 11, 9, 4, 5, 10, 6, 3 ));
+    List<Integer> originalNumberTokens = new ArrayList<>(List.of(11, 8, 4, 5, 10, 9, 3, 6, 12, 2, 6, 10, 5, 3, 11, 9, 4, 8 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(11, 8, 4, 9, 10, 5, 3, 8, 12, 2, 6, 10, 9, 3, 11, 5, 4, 6 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(3, 6, 4, 5, 10, 9, 11, 6, 2, 12, 8, 10, 5, 11, 3, 9, 4, 8));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(3, 6, 10, 5, 4, 9, 11, 8, 12, 2, 8, 4, 5, 11, 3, 9, 10, 6 ));
 
     //Board size parameters
     private final int radius;         // e.g., 2 for standard 19-hex
