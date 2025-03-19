@@ -3,10 +3,16 @@ import javafx.application.Application;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.effect.Light;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -29,9 +35,60 @@ public class CatanBoardGameApp extends Application {
             //***********
             // ADD COLORS BASED ON RESOURCE TYPE
             //************
-            polygon.setFill(Color.WHITE);
+            polygon.setFill(getTileColor(tile.getResourcetype()));
             polygon.setStroke(Color.BLACK);
+            Point2D center = tile.getCenter();
+            double centerX = center.getX();
+            double centerY = center.getY();
             root.getChildren().add(polygon);
+
+            // No coloring on 7 (desert)
+            if (tile.getTileDiceNumber() != 7) {
+                Text number = new Text(centerX, centerY, String.valueOf(tile.getTileDiceNumber()));
+                number.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+                number.setTextAlignment(TextAlignment.CENTER);
+
+                // Color 6 and 8 red
+                switch (tile.getTileDiceNumber()) {
+                    case 6, 8:
+                        number.setFill(Color.RED);
+                        break;
+                    default:
+                        number.setFill(Color.DARKGREEN);
+                        break;
+                }
+                // Measures largest number so rectangle can be based of this
+                Text sampleNumber = new Text("12");
+                sampleNumber.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+                double maxNumberWidth = sampleNumber.getLayoutBounds().getWidth();
+                double maxNumberHeight = sampleNumber.getLayoutBounds().getHeight();
+
+                // Defining the box
+                double boxPadding = 5;
+                double boxWidth = maxNumberWidth + boxPadding;
+                double boxHeight = maxNumberHeight + boxPadding;
+
+                // Rectangle background
+                Rectangle background = new Rectangle(
+                        centerX - boxWidth / 2,
+                        centerY - boxHeight / 2,
+                        boxWidth,
+                        boxHeight);
+
+                background.setFill(Color.BEIGE);
+                background.setStroke(Color.BLACK);
+                // Round corners
+                background.setArcWidth(5);
+                background.setArcHeight(5);
+
+                // Center the numbers (represented as numbers)
+                number.setX(centerX - number.getLayoutBounds().getWidth() / 2);
+                number.setY(centerY + number.getLayoutBounds().getHeight() / 4);
+                root.getChildren().addAll(background, number);
+                }
+
+
+
         }
         /*
         //Draw edges
@@ -75,9 +132,18 @@ public class CatanBoardGameApp extends Application {
         }
         return polygon;
     }
+    private Color getTileColor(Resource.ResourceType type) {
+        return switch (type) {
+            case BRICK -> Color.SADDLEBROWN;
+            case WOOD -> Color.FORESTGREEN;
+            case ORE -> Color.DARKGRAY;
+            case GRAIN -> Color.GOLD;
+            case WOOL -> Color.LIGHTGREEN;
+            case DESERT -> Color.BEIGE;
+        };
+    }
 
     public static void main(String[] args) {
         launch(args);
-
     }
 }

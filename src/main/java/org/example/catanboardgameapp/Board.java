@@ -20,9 +20,12 @@ public class Board {
             "Grain", "Grain", "Grain", "Grain", "Wood", "Wood", "Wood", "Wood",
             "Wool", "Wool", "Wool", "Wool", "Brick", "Brick", "Brick",
             "Ore", "Ore", "Ore" };
-    List<Integer> numberTokens = new ArrayList<>(List.of(5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11));
-
-
+    List<Integer> originalNumberTokens = new ArrayList<>(List.of(5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(6, 3, 9, 4, 5, 10,11, 2, 8, 12, 3, 6, 10, 5, 8, 11, 9, 4  ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 6, 11, 3, 9, 10, 5, 2, 12, 6, 3, 5, 10, 9, 8, 4, 11 ));
+    //4, 6, 11, 3, 8, 9, 10, 5, 2, 12, 6, 9, 5, 8, 3, 10, 4, 11
+    //10, 3, 6, 9, 8, 5, 11, 4, 12, 2, 8, 10, 5, 6, 9, 4, 3, 11
+    //6, 5, 8, 4, 10, 9, 3, 11, 2, 12, 5, 6 8, 9, 10, 3, 4, 11
     //Board size parameters
     private final int radius;         // e.g., 2 for standard 19-hex
     private final double hexSize;     // distance from hex center to a corner
@@ -43,27 +46,38 @@ public class Board {
     private void initializeBoard() {
         //Initialize empty list of all the tiles.
         List<Tile> allTiles = new ArrayList<>();
-        
+
+        //Calculating number of times to add the 18 resourses and 18 numbers. ex: 1 time for a standart 3*3 board.
         int numberOfTimesTilesAndNumbers = ((3 * boardsize * boardsize - (3 * boardsize) + 1))/18;
 
-        String[] dessertArray;
+        
+        String[] desertArray;
+        //Calculating the number of deserts to add. either 7 or 1 depending on the size.
         if (boardsize%3 ==2) {
-            dessertArray = new String[]{"Desert", "Desert", "Desert", "Desert", "Desert", "Desert", "Desert"};
+            desertArray = new String[]{"Desert", "Desert", "Desert", "Desert", "Desert", "Desert", "Desert"};
         } else {
-            dessertArray = new String[]{"Desert"};
+            desertArray = new String[]{"Desert"};
         }
-        int newSize = TERRAIN_TYPES.length * numberOfTimesTilesAndNumbers + dessertArray.length;
-        String[] TerrainWithAllDessertsAndNTerrains = new String[newSize];
-        for (int i = 0; i < numberOfTimesTilesAndNumbers; i++) {
-            System.arraycopy(TERRAIN_TYPES, 0, TerrainWithAllDessertsAndNTerrains, i * TERRAIN_TYPES.length, TERRAIN_TYPES.length);
-        }
-        // Copy extra elements at the end
-        System.arraycopy(dessertArray, 0, TerrainWithAllDessertsAndNTerrains, TERRAIN_TYPES.length * numberOfTimesTilesAndNumbers, dessertArray.length);
 
-        List<String> shuffledTerrains = new ArrayList<>(Arrays.asList(TerrainWithAllDessertsAndNTerrains));
-        Collections.shuffle(shuffledTerrains);
-        //System.out.println(shuffledTerrains);
-        numberTokens.addAll(numberTokens);
+        List<Integer> numberTokens = new ArrayList<>();
+        int newSize = TERRAIN_TYPES.length * numberOfTimesTilesAndNumbers + desertArray.length; //calculating the size of the new array with all terrains and deserts
+        String[] TerrainWithAllDesertsAndNTerrains = new String[newSize]; // making the array of the right size
+        for (int i = 0; i < numberOfTimesTilesAndNumbers; i++) {// copying the terrains to the new array
+            System.arraycopy(TERRAIN_TYPES, 0, TerrainWithAllDesertsAndNTerrains, i * TERRAIN_TYPES.length, TERRAIN_TYPES.length);
+            numberTokens.addAll(originalNumberTokens);
+        }
+        // Copy extra deserts at the end
+        System.arraycopy(desertArray, 0, TerrainWithAllDesertsAndNTerrains, TERRAIN_TYPES.length * numberOfTimesTilesAndNumbers, desertArray.length);
+
+        //Changing it from an array to a list
+        List<String> shuffledTerrains = new ArrayList<>(Arrays.asList(TerrainWithAllDesertsAndNTerrains));
+        Collections.shuffle(shuffledTerrains); //shuffeling the list so it is in a random order
+
+        //if the bordsize is standart, we dont want to mix the borard to keep the right numbering
+        if (boardsize != 3) {
+            Collections.shuffle(numberTokens);
+        }
+
 
 
         // Generates all the tiles in axial coordiantes (q,r). Goes from -r to r (radius) and then
@@ -76,12 +90,13 @@ public class Board {
         for (int q = -radius; q <= radius; q++) {
             for (int r = -radius; r <= radius; r++) {
                 if (Math.abs(q + r) <= radius) {
-                    String resourceTypeString = shuffledTerrains.remove(0); // gemmer en tilfældig resourse og fjerner den der listen
-                    int number = (resourceTypeString.equals("Desert")) ? 7 : numberTokens.remove(0);// fjerner den første element i listen efter den er blevet blandet.
+                    String resourceTypeString = shuffledTerrains.remove(0); // saves a Random first resource and removes it from the list
+                    int number = (resourceTypeString.equals("Desert")) ? 7 : numberTokens.remove(0);// removes the first element in the number list and if it is a dessert then 7
                     // Convert string to enum using fromString method
                     Resource.ResourceType resourceType = Resource.ResourceType.fromString(resourceTypeString);
                     // This (q,r) is inside the hex region
-                    Tile tile = new Tile(q, r, resourceType, number);
+                    Point2D center = axialToPixel(q,r);
+                    Tile tile = new Tile(q, r, resourceType, number, center);
                     allTiles.add(tile);
                 }
             }
