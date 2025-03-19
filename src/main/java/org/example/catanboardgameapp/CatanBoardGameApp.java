@@ -60,26 +60,7 @@ public class CatanBoardGameApp extends Application {
                 // Measures largest number so rectangle can be based of this
                 Text sampleNumber = new Text("12");
                 sampleNumber.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-                double maxNumberWidth = sampleNumber.getLayoutBounds().getWidth();
-                double maxNumberHeight = sampleNumber.getLayoutBounds().getHeight();
-
-                // Defining the box
-                double boxPadding = 5;
-                double boxWidth = maxNumberWidth + boxPadding;
-                double boxHeight = maxNumberHeight + boxPadding;
-
-                // Rectangle background
-                Rectangle background = new Rectangle(
-                        centerX - boxWidth / 2,
-                        centerY - boxHeight / 2,
-                        boxWidth,
-                        boxHeight);
-
-                background.setFill(Color.BEIGE);
-                background.setStroke(Color.BLACK);
-                // Round corners
-                background.setArcWidth(5);
-                background.setArcHeight(5);
+                Rectangle background = getRectangle(sampleNumber, centerX, centerY);
 
                 // Center the numbers (represented as numbers)
                 number.setX(centerX - number.getLayoutBounds().getWidth() / 2);
@@ -118,10 +99,29 @@ public class CatanBoardGameApp extends Application {
 
     }
 
+    private static Rectangle getRectangle(Text sampleNumber, double centerX, double centerY) {
+        double maxNumberWidth = sampleNumber.getLayoutBounds().getWidth();
+        double maxNumberHeight = sampleNumber.getLayoutBounds().getHeight();
 
+        // Defining the box
+        double boxPadding = 5;
+        double boxWidth = maxNumberWidth + boxPadding;
+        double boxHeight = maxNumberHeight + boxPadding;
 
+        // Rectangle background
+        Rectangle background = new Rectangle(
+                centerX - boxWidth / 2,
+                centerY - boxHeight / 2,
+                boxWidth,
+                boxHeight);
 
-
+        background.setFill(Color.BEIGE);
+        background.setStroke(Color.BLACK);
+        // Round corners
+        background.setArcWidth(5);
+        background.setArcHeight(5);
+        return background;
+    }
 
 
     // Creates polygons as tiles based on the vertices in each tile.
