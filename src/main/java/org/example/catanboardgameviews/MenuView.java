@@ -38,7 +38,7 @@ public class MenuView {
                 //int players = Integer.parseInt(playerInput.getText()); // converts input string to int
                 int radius = Integer.parseInt(boardSizeInput.getText());
                 //Creates new gameveiw from the BoardGame-class and puts it in primaryStage
-                Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius); // creating the board as our gameScene based on input
+                Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius-1); // creating the board as our gameScene based on input
                 primaryStage.setScene(gameScene); //setting current scene to gameScene
             } catch (NumberFormatException exception) {
                 System.out.println("Not acceptable input, try again");
