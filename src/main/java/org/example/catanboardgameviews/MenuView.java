@@ -1,4 +1,4 @@
-package org.example.catanboardgameapp;
+package org.example.catanboardgameviews;
 
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -9,7 +9,7 @@ import javafx.stage.Stage;
 
 public class MenuView {
 
-    static void showSetupScreen(Stage primaryStage) {
+    public static void showSetupScreen(Stage primaryStage) {
         VBox layout = new VBox(10); // new scen base is called layout
         layout.setStyle("-fx-padding: 20; -fx-alignment: center;");
 
