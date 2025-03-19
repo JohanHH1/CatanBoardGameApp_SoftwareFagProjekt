@@ -7,4 +7,6 @@ module org.example.catanboardgameapp {
 
     opens org.example.catanboardgameapp to javafx.fxml;
     exports org.example.catanboardgameapp;
+    exports org.example.catanboardgameviews;
+    opens org.example.catanboardgameviews to javafx.fxml;
 }

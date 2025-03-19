@@ -1,5 +1,4 @@
-package org.example.catanboardgameapp;
-import javafx.application.Application;
+package org.example.catanboardgameviews;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -12,6 +11,10 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import org.example.catanboardgameapp.Board;
+import org.example.catanboardgameapp.Resource;
+import org.example.catanboardgameapp.Tile;
+import org.example.catanboardgameapp.Vertex;
 
 import static javafx.application.Application.launch;
 
