@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.*;
 
 public class Board {
     //Initialize and create lists of tile, vertex and edge classes
@@ -15,12 +16,19 @@ public class Board {
     private final List<Edge> edges = new ArrayList<>();
     private final Map<Point2D, Vertex> vertexMap = new HashMap<>(); // For unifying shared Vertex objects
     private final Map<String, Edge> edgeMap = new HashMap<>();
+    private static final String[] TERRAIN_TYPES = {
+            "Grain", "Grain", "Grain", "Grain", "Wood", "Wood", "Wood", "Wood",
+            "Wool", "Wool", "Wool", "Wool", "Brick", "Brick", "Brick",
+            "Ore", "Ore", "Ore" };
+    List<Integer> numberTokens = new ArrayList<>(List.of(5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11));
+
 
     //Board size parameters
     private final int radius;         // e.g., 2 for standard 19-hex
     private final double hexSize;     // distance from hex center to a corner
     private final double offsetX;     // shift everything horizontally
     private final double offsetY;
+    private final int boardsize;
 
     //Constructor
     public Board(int radius, double hexSize, double offsetX, double offsetY) {
@@ -28,22 +36,52 @@ public class Board {
         this.hexSize = hexSize;
         this.offsetX = offsetX;
         this.offsetY = offsetY;
+        this.boardsize = radius + 1;
         initializeBoard();
     }
 
     private void initializeBoard() {
         //Initialize empty list of all the tiles.
         List<Tile> allTiles = new ArrayList<>();
+        
+        int numberOfTimesTilesAndNumbers = ((3 * boardsize * boardsize - (3 * boardsize) + 1))/18;
+
+        String[] dessertArray;
+        if (boardsize%3 ==2) {
+            dessertArray = new String[]{"Desert", "Desert", "Desert", "Desert", "Desert", "Desert", "Desert"};
+        } else {
+            dessertArray = new String[]{"Desert"};
+        }
+        int newSize = TERRAIN_TYPES.length * numberOfTimesTilesAndNumbers + dessertArray.length;
+        String[] TerrainWithAllDessertsAndNTerrains = new String[newSize];
+        for (int i = 0; i < numberOfTimesTilesAndNumbers; i++) {
+            System.arraycopy(TERRAIN_TYPES, 0, TerrainWithAllDessertsAndNTerrains, i * TERRAIN_TYPES.length, TERRAIN_TYPES.length);
+        }
+        // Copy extra elements at the end
+        System.arraycopy(dessertArray, 0, TerrainWithAllDessertsAndNTerrains, TERRAIN_TYPES.length * numberOfTimesTilesAndNumbers, dessertArray.length);
+
+        List<String> shuffledTerrains = new ArrayList<>(Arrays.asList(TerrainWithAllDessertsAndNTerrains));
+        Collections.shuffle(shuffledTerrains);
+        //System.out.println(shuffledTerrains);
+        numberTokens.addAll(numberTokens);
+
 
         // Generates all the tiles in axial coordiantes (q,r). Goes from -r to r (radius) and then
         // check if abs(q+r) <= radius. If it is more than the radius,
         // the tile would be outside our board.
         // For axial coordinate explanation: https://www.redblobgames.com/grids/hexagons/
+
+
+
         for (int q = -radius; q <= radius; q++) {
             for (int r = -radius; r <= radius; r++) {
                 if (Math.abs(q + r) <= radius) {
+                    String resourceTypeString = shuffledTerrains.remove(0); // gemmer en tilfældig resourse og fjerner den der listen
+                    int number = (resourceTypeString.equals("Desert")) ? 7 : numberTokens.remove(0);// fjerner den første element i listen efter den er blevet blandet.
+                    // Convert string to enum using fromString method
+                    Resource.ResourceType resourceType = Resource.ResourceType.fromString(resourceTypeString);
                     // This (q,r) is inside the hex region
-                    Tile tile = new Tile(q, r);
+                    Tile tile = new Tile(q, r, resourceType, number);
                     allTiles.add(tile);
                 }
             }

@@ -19,7 +19,7 @@ import static javafx.application.Application.launch;
 public class CatanBoardGameApp extends Application {
     @Override
     public void start(Stage primaryStage) {
-        Board board = new Board(3,50,400,300);
+        Board board = new Board(2,50,400,300);
 
         Group root = new Group();
 
