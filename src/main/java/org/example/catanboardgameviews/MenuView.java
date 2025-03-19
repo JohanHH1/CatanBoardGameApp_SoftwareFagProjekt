@@ -37,6 +37,12 @@ public class MenuView {
             try {
                 //int players = Integer.parseInt(playerInput.getText()); // converts input string to int
                 int radius = Integer.parseInt(boardSizeInput.getText());
+
+                //check radius is not too small
+                if (radius < 3) {
+                    System.out.println("Board size must be at least 3, try again");
+                    return;
+                }
                 //Creates new gameveiw from the BoardGame-class and puts it in primaryStage
                 Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius-1); // creating the board as our gameScene based on input
                 primaryStage.setScene(gameScene); //setting current scene to gameScene
