@@ -20,12 +20,22 @@ public class Board {
             "Grain", "Grain", "Grain", "Grain", "Wood", "Wood", "Wood", "Wood",
             "Wool", "Wool", "Wool", "Wool", "Brick", "Brick", "Brick",
             "Ore", "Ore", "Ore" };
+    List<List<Integer>> originalNumberTokensAll = List.of(
+            new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11)),
+            new ArrayList<>(List.of(6, 4, 5, 11, 3, 9, 10, 6, 2, 12, 8, 3, 5, 10, 9, 4, 8, 11)),
+            new ArrayList<>(List.of(8, 4, 9, 3, 11, 5, 10, 8, 12, 2, 6, 11, 9, 10, 5, 4, 6, 3)),
+            new ArrayList<>(List.of(6, 10, 9, 3, 11, 5, 4, 8, 2, 12, 8, 11, 9, 4, 5, 10, 6, 3)),
+            new ArrayList<>(List.of(11, 8, 4, 5, 10, 9, 3, 6, 12, 2, 6, 10, 5, 3, 11, 9, 4, 8)),
+            new ArrayList<>(List.of(11, 8, 4, 9, 10, 5, 3, 8, 12, 2, 6, 10, 9, 3, 11, 5, 4, 6)),
+            new ArrayList<>(List.of(3, 6, 4, 5, 10, 9, 11, 6, 2, 12, 8, 10, 5, 11, 3, 9, 4, 8)),
+            new ArrayList<>(List.of(3, 6, 10, 5, 4, 9, 11, 8, 12, 2, 8, 4, 5, 11, 3, 9, 10, 6))
+    );
 
     //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
     //List<Integer> originalNumberTokens = new ArrayList<>(List.of(6, 4, 5, 11, 3, 9, 10, 6, 2, 12, 8, 3, 5, 10, 9, 4, 8, 11 ));
     //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 3, 11, 5, 10, 8, 12, 2, 6, 11, 9, 10, 5, 4, 6, 3 ));
     //List<Integer> originalNumberTokens = new ArrayList<>(List.of(6, 10, 9, 3, 11, 5, 4, 8, 2, 12, 8, 11, 9, 4, 5, 10, 6, 3 ));
-    List<Integer> originalNumberTokens = new ArrayList<>(List.of(11, 8, 4, 5, 10, 9, 3, 6, 12, 2, 6, 10, 5, 3, 11, 9, 4, 8 ));
+    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(11, 8, 4, 5, 10, 9, 3, 6, 12, 2, 6, 10, 5, 3, 11, 9, 4, 8 ));
     //List<Integer> originalNumberTokens = new ArrayList<>(List.of(11, 8, 4, 9, 10, 5, 3, 8, 12, 2, 6, 10, 9, 3, 11, 5, 4, 6 ));
     //List<Integer> originalNumberTokens = new ArrayList<>(List.of(3, 6, 4, 5, 10, 9, 11, 6, 2, 12, 8, 10, 5, 11, 3, 9, 4, 8));
     //List<Integer> originalNumberTokens = new ArrayList<>(List.of(3, 6, 10, 5, 4, 9, 11, 8, 12, 2, 8, 4, 5, 11, 3, 9, 10, 6 ));
@@ -68,7 +78,7 @@ public class Board {
         String[] TerrainWithAllDesertsAndNTerrains = new String[newSize]; // making the array of the right size
         for (int i = 0; i < numberOfTimesTilesAndNumbers; i++) {// copying the terrains to the new array
             System.arraycopy(TERRAIN_TYPES, 0, TerrainWithAllDesertsAndNTerrains, i * TERRAIN_TYPES.length, TERRAIN_TYPES.length);
-            numberTokens.addAll(originalNumberTokens);
+            numberTokens.addAll(originalNumberTokensAll.get((int) (Math.random() * originalNumberTokensAll.size()) ));
         }
         // Copy extra deserts at the end
         System.arraycopy(desertArray, 0, TerrainWithAllDesertsAndNTerrains, TERRAIN_TYPES.length * numberOfTimesTilesAndNumbers, desertArray.length);
@@ -81,7 +91,6 @@ public class Board {
         if (boardsize != 3) {
             Collections.shuffle(numberTokens);
         }
-
 
 
         // Generates all the tiles in axial coordiantes (q,r). Goes from -r to r (radius) and then

@@ -15,10 +15,10 @@ public class MenuView {
 
         //input from user
         Label playerLable = new Label("How many players");
-        TextField playerInput = new TextField("50"); // initializing with 3 players
+        TextField playerInput = new TextField("4"); // initializing with 3 players // mellem 2 og 6
 
         Label boardSizeLable = new Label("Insert board size");
-        TextField boardSizeInput = new TextField("2");
+        TextField boardSizeInput = new TextField("3"); // må ikke være under 3
 
         Button startButton = getButton(primaryStage, boardSizeInput);
         layout.getChildren().addAll(playerLable, playerInput, boardSizeLable,boardSizeInput, startButton);
