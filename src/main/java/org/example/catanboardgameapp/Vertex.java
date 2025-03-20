@@ -8,29 +8,41 @@ public class Vertex {
     private double y;
 
     private final List<Tile> adjacentTiles = new ArrayList<>();
+    private final List<Vertex> neighbors = new ArrayList<>(); // Added to store neighboring vertices
 
-
+    //___________________CONSTRUCTOR_________________________
     public Vertex(double x, double y) {
         this.x = x;
         this.y = y;
     }
 
-    //TJek om nødvendig
+    //___________________FUNCTIONS_________________________
+
+    // Add a neighboring vertex
+    public void addNeighbor(Vertex neighbor) {
+        if (!neighbors.contains(neighbor)) {
+            neighbors.add(neighbor);
+        }
+    }
+
+    // Get all neighboring vertices
+    public List<Vertex> getNeighbors() {
+        return neighbors;
+    }
+
     public void addAdjacentTile(Tile tile) {
-        // Avoid duplicates if desired
         if (!adjacentTiles.contains(tile)) {
             adjacentTiles.add(tile);
         }
     }
 
+    //___________________GETTERS_________________________
     public double getX() {
         return x;
     }
-
     public double getY() {
         return y;
     }
-
     public List<Tile> getAdjacentTiles() {
         return adjacentTiles;
     }

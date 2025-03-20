@@ -8,18 +8,31 @@ public class Edge {
     public Vertex vertex2;
     private final List<Tile> adjacentTiles = new ArrayList<>();
 
+    //___________________CONSTRUCTOR______________________
+
     public Edge(Vertex vertex1, Vertex vertex2) {
         this.vertex1 = vertex1;
         this.vertex2 = vertex2;
+
+        // Automatically mark the vertices as neighbors
+        vertex1.addNeighbor(vertex2);
+        vertex2.addNeighbor(vertex1);
     }
 
-    //function to ensure no duplicated edges
+    //___________________FUNCTIONS_________________________
+
+    // Check if edge is connected to a given vertex
+    public boolean isConnectedTo(Vertex vertex) {
+        return vertex.equals(vertex1) || vertex.equals(vertex2);
+    }
+
     public void addAdjacentTile(Tile tile) {
         if (!adjacentTiles.contains(tile)) {
             adjacentTiles.add(tile);
         }
     }
 
+    //___________________GETTERS_________________________
     public Vertex getVertex1() {
         return vertex1;
     }
@@ -31,6 +44,4 @@ public class Edge {
     public List<Tile> getAdjacentTiles() {
         return adjacentTiles;
     }
-
-
 }
