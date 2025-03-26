@@ -43,14 +43,13 @@ public class MenuView {
                     return;
                 }
 <<<<<<< Updated upstream
+
                 //Creates new gameveiw from the BoardGame-class and puts it in primaryStage
                 Gameplay gameplay = new Gameplay();
                 gameplay.initializePlayers(players);
                 Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius-1, gameplay); // creating the board as our gameScene based on input
-=======
                 //Creates new gameview from the BoardGame-class and puts it in primaryStage
-                Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius-1); // creating the board as our gameScene based on input
->>>>>>> Stashed changes
+                //Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius-1); // creating the board as our gameScene based on input
                 primaryStage.setScene(gameScene); //setting current scene to gameScene
             } catch (NumberFormatException exception) {
                 System.out.println("Not acceptable input, try again");
