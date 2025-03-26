@@ -15,6 +15,8 @@ import org.example.catanboardgameapp.Board;
 import org.example.catanboardgameapp.Resource;
 import org.example.catanboardgameapp.Tile;
 import org.example.catanboardgameapp.Vertex;
+import javafx.animation.PauseTransition;
+import javafx.util.Duration;
 
 import static javafx.application.Application.launch;
 
@@ -134,5 +136,21 @@ public class CatanBoardGameView {
             case WOOL -> Color.LIGHTGREEN;
             case DESERT -> Color.BEIGE;
         };
+    }
+    public static void showCenteredNumber(Group root, String text) {
+        Text centeredText = new Text(text);
+        centeredText.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 48));
+        centeredText.setFill(Color.BLACK);
+
+        // Centering on screen (800x600 as set in Scene)
+        centeredText.setX(400 - centeredText.getLayoutBounds().getWidth() / 2);
+        centeredText.setY(300 + centeredText.getLayoutBounds().getHeight() / 4);
+
+        root.getChildren().add(centeredText);
+
+        // Remove after 4 seconds
+        PauseTransition pause = new PauseTransition(Duration.seconds(4));
+        pause.setOnFinished(e -> root.getChildren().remove(centeredText));
+        pause.play();
     }
 }

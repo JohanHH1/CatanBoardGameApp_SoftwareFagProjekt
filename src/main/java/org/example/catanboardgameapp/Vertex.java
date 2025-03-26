@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Vertex {
+    private Player owner = null;
     private double x;
     private double y;
 
@@ -35,6 +36,10 @@ public class Vertex {
             adjacentTiles.add(tile);
         }
     }
+    public boolean hasSettlement() {
+        return owner != null;
+    }
+
 
     //___________________GETTERS_________________________
     public double getX() {
@@ -46,4 +51,8 @@ public class Vertex {
     public List<Tile> getAdjacentTiles() {
         return adjacentTiles;
     }
+    public Player getOwner() {return owner;}
+
+
+    public void setOwner(Player owner) {this.owner = owner;}
 }
