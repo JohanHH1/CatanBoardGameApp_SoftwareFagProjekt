@@ -28,8 +28,6 @@ public class MenuView {
         primaryStage.setTitle("Catan Board Game");
         primaryStage.setScene(setupScene);
         primaryStage.show();
-
-
     }
 
     private static Button getButton(Stage primaryStage, TextField boardSizeInput, TextField playerInput) {
@@ -44,10 +42,15 @@ public class MenuView {
                     System.out.println("Board size must be at least 3, try again");
                     return;
                 }
+<<<<<<< Updated upstream
                 //Creates new gameveiw from the BoardGame-class and puts it in primaryStage
                 Gameplay gameplay = new Gameplay();
                 gameplay.initializePlayers(players);
                 Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius-1, gameplay); // creating the board as our gameScene based on input
+=======
+                //Creates new gameview from the BoardGame-class and puts it in primaryStage
+                Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius-1); // creating the board as our gameScene based on input
+>>>>>>> Stashed changes
                 primaryStage.setScene(gameScene); //setting current scene to gameScene
             } catch (NumberFormatException exception) {
                 System.out.println("Not acceptable input, try again");

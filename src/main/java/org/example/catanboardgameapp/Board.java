@@ -12,7 +12,7 @@ import java.util.*;
 
 public class Board {
     //Initialize and create lists of tile, vertex and edge classes
-    private final List<Tile> tiles = new ArrayList<>();
+    private static final List<Tile> tiles = new ArrayList<>();
     private final List<Vertex> vertices = new ArrayList<>();
     private final List<Edge> edges = new ArrayList<>();
     private final Map<Point2D, Vertex> vertexMap = new HashMap<>(); // For unifying shared Vertex objects
@@ -206,7 +206,7 @@ public class Board {
 
     //Getters
 
-    public List<Tile> getTiles() {
+    public static List<Tile> getTiles() {
         return tiles;
     }
 

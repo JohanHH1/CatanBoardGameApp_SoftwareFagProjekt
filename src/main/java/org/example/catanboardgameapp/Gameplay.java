@@ -23,6 +23,7 @@ private Player currentPlayer;
 
     public void playerTurn () {
         int dice = rollDice();
+
         // display dice in catanBoardGameApp
         // roll dice
         // get resources
@@ -122,6 +123,23 @@ private Player currentPlayer;
         }
         return false;
     }
+    public void distributeResource (int diceNumber) {
+        List<Tile> tiles = Board.getTiles();
+        for (Tile tile : tiles) {
+            if (tile.getTileDiceNumber() == diceNumber) {
+                for (Vertex vertex : tile.getVertices()) {
+                    if (vertex.getOwner() != null) {
+                        String resourceType = tile.getResourcetype().toString();
+                        Player owner = vertex.getOwner();
+                        int currentAmount = owner.getResources().getOrDefault(resourceType, 0);
+                        owner.getResources().put(resourceType, currentAmount + 1);
+                    }
+                }
+
+            }
+        }
+    }
+
 
     // Update playerScore by adding 1
     public void addScore() {currentPlayer.increasePlayerScore();
@@ -133,5 +151,11 @@ private Player currentPlayer;
         System.out.println("Dice rolled: " + diceRoll);
         return diceRoll;
     }
+
+    public void decreasePlayerScore(){
+            currentPlayer.decreasePlayerScore();
+    }
+
+
 }
 

@@ -41,6 +41,7 @@ public class Player {
     public void increasePlayerScore() {
         playerScore += 1;
     }
+    public void decreasePlayerScore() { playerScore -= 1; }
 
     //_____________________________Getters_____________________________//
     public int getPlayerId() {
@@ -80,4 +81,5 @@ public class Player {
                 ", roads=" + roads.size() +
                 '}';
     }
+
 }
