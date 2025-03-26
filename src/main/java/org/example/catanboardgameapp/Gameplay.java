@@ -96,10 +96,10 @@ private Player currentPlayer;
             return false; // Invalid placement
         }
         // Check if player has required resources
-        if (canRemoveResource("Brick", 1) && canRemoveResource("Lumber", 1) &&
+        if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1) &&
                 canRemoveResource("Grain", 1) && canRemoveResource("Wool", 1)) {
             removeResource("Brick",1);
-            removeResource("Lumber",1);
+            removeResource("Wood",1);
             removeResource("Grain",1);
             removeResource("Wool",1);
             currentPlayer.getSettlements().add(vertex);
@@ -116,9 +116,9 @@ private Player currentPlayer;
             return false; // Invalid placement
         }
         // Check if player has required resources
-        if (canRemoveResource("Brick", 1) && canRemoveResource("Lumber", 1)) {
+        if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
             removeResource("Brick",1);
-            removeResource("Lumber",1);
+            removeResource("Wood",1);
             currentPlayer.getRoads().add(edge);
             return true;
         }

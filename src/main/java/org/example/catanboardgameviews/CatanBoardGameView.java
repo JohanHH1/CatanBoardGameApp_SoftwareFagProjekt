@@ -15,6 +15,8 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import org.example.catanboardgameapp.*;
 import javafx.animation.PauseTransition;
@@ -26,6 +28,7 @@ import org.example.catanboardgameapp.Tile;
 import org.example.catanboardgameapp.Vertex;
 
 
+import java.io.InputStream;
 
 import static javafx.application.Application.launch;
 
@@ -44,11 +47,14 @@ public class CatanBoardGameView {
             //************
             polygon.setFill(getTileColor(tile.getResourcetype()));
             polygon.setStroke(Color.BLACK);
+
+
             Point2D center = tile.getCenter();
             double centerX = center.getX();
             double centerY = center.getY();
-            boardGroup.getChildren().add(polygon);
-
+            ImageView icon = getResourceIcon(tile.getResourcetype(), centerX, centerY);
+            boardGroup.getChildren().add(polygon); // background hex tile
+            boardGroup.getChildren().add(getResourceIcon(tile.getResourcetype(), centerX, centerY)); // icon on top
             // No coloring on 7 (desert)
             if (tile.getTileDiceNumber() != 7) {
                 Text number = new Text(centerX, centerY, String.valueOf(tile.getTileDiceNumber()));
@@ -216,12 +222,39 @@ public class CatanBoardGameView {
     private static Color getTileColor(Resource.ResourceType type) {
         return switch (type) {
             case BRICK -> Color.SADDLEBROWN;
-            case WOOD -> Color.FORESTGREEN;
+            case WOOD -> Color.DARKGREEN;
             case ORE -> Color.DARKGRAY;
             case GRAIN -> Color.GOLD;
-            case WOOL -> Color.LIGHTGREEN;
+            case WOOL -> Color.YELLOWGREEN;
             case DESERT -> Color.BEIGE;
         };
+    }
+    private static ImageView getResourceIcon(Resource.ResourceType type, double x, double y) {
+        System.out.println("⏳ Attempting to load icon for: " + type);
+
+        String filename = switch (type) {
+            case BRICK -> "/Icons/brick.png";
+            case WOOD -> "/Icons/wood.png";
+            case ORE -> "/Icons/ore.png";
+            case GRAIN -> "/Icons/grain.png";
+            case WOOL -> "/Icons/wool.png";
+            case DESERT -> "/Icons/desert.png";
+        };
+
+        InputStream stream = CatanBoardGameView.class.getResourceAsStream(filename);
+        if (stream == null) {
+            System.err.println("⚠️ Image not found: " + filename);
+            return new ImageView(); // fallback
+        }
+
+        Image image = new Image(stream);
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(30); // or 32 or 24, try what looks best
+        imageView.setPreserveRatio(true);
+        imageView.setSmooth(true);
+        imageView.setX(x - imageView.getFitWidth() / 2);
+        imageView.setY(y - imageView.getFitHeight() / 2);
+        return imageView;
     }
 
 }

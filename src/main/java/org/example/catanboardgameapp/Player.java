@@ -27,7 +27,7 @@ public class Player {
 
         // Initialize each resource count to 0
         resources.put("Brick", 0);
-        resources.put("Lumber", 0);
+        resources.put("Wood", 0);
         resources.put("Ore", 0);
         resources.put("Grain", 0);
         resources.put("Wool", 0);
