@@ -23,6 +23,7 @@ private Player currentPlayer;
 
     public void playerTurn () {
         int dice = rollDice();
+        distributeResource(dice);
 
         // display dice in catanBoardGameApp
         // roll dice
@@ -156,6 +157,8 @@ private Player currentPlayer;
             currentPlayer.decreasePlayerScore();
     }
 
-
+    public List<Player> getPlayerList() {
+        return playerList;
+    }
 }
 

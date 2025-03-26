@@ -5,6 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
@@ -32,6 +33,7 @@ public class CatanBoardGameView {
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
         Board board = new Board(radius,50,400,300);
         Group boardGroup = new Group();
+
         //Group root = new Group();
 
         //Draw tiles
@@ -111,10 +113,69 @@ public class CatanBoardGameView {
         BorderPane root = new BorderPane();
         root.setCenter(boardGroup);
         root.setTop(buttonBox);
+
+
+//        VBox leftMenu = new VBox();
+//        leftMenu.setStyle("-fx-padding: 10; -fx-background-color: #e0e0e0; -fx-min-width: 150;");
+//        Text title = new Text("Player Stats");
+//        title.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+//        leftMenu.getChildren().add(title);
+//        for (Player player : gameplay.getPlayerList()) {
+//            Text playerName = new Text("Player " + player.getPlayerId());
+//            playerName.setFont(Font.font("Arial", 14));
+//            leftMenu.getChildren().add(playerName);
+//        }
+//
+//        root.setLeft(leftMenu);
+        VBox leftMenu = new VBox(10); // spacing between player sections
+        leftMenu.setStyle("-fx-padding: 10; -fx-background-color: #e0e0e0; -fx-min-width: 200;");
+
+        Text title = new Text("Player Stats");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        leftMenu.getChildren().add(title);
+
+// Use getPlayerList() instead of getPlayers()
+        for (Player player : gameplay.getPlayerList()) {
+            VBox playerBox = new VBox(5); // spacing between name and resources
+
+            Text playerName = new Text("Player " + player.getPlayerId());
+            playerName.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            playerName.setFill(player.getColor());
+
+            playerBox.getChildren().add(playerName);
+
+            // Show all resources
+            for (String resourceName : player.getResources().keySet()) {
+                int count = player.getResources().get(resourceName);
+                Text resourceText = new Text(resourceName + ": " + count);
+                resourceText.setFont(Font.font("Arial", 12));
+                playerBox.getChildren().add(resourceText);
+            }
+
+            leftMenu.getChildren().add(playerBox);
+        }
+
+        root.setLeft(leftMenu);
+
+
+        boardGroup.setOnScroll(event -> {
+            double zoomFactor = 1.05;
+            if (event.getDeltaY() < 0) {
+                zoomFactor = 0.95;
+            }
+
+            double newScaleX = boardGroup.getScaleX() * zoomFactor;
+            double newScaleY = boardGroup.getScaleY() * zoomFactor;
+
+            // Clamp zoom between 0.5x and 3x
+            if (newScaleX >= 0.5 && newScaleX <= 3) {
+                boardGroup.setScaleX(newScaleX);
+                boardGroup.setScaleY(newScaleY);
+            }
+
+            event.consume();
+        });
         return new Scene(root, 800, 600, Color.LIGHTGRAY);
-
-
-
 
 
     }
