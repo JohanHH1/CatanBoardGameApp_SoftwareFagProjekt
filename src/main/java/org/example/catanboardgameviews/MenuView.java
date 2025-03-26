@@ -42,7 +42,7 @@ public class MenuView {
                     System.out.println("Board size must be at least 3, try again");
                     return;
                 }
-<<<<<<< Updated upstream
+
 
                 //Creates new gameveiw from the BoardGame-class and puts it in primaryStage
                 Gameplay gameplay = new Gameplay();

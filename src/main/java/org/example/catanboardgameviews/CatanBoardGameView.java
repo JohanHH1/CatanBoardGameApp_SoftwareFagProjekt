@@ -14,17 +14,17 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-<<<<<<< Updated upstream
+
 import org.example.catanboardgameapp.*;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
-=======
+
 import org.example.catanboardgameapp.Board;
 import org.example.catanboardgameapp.Resource;
 import org.example.catanboardgameapp.Tile;
 import org.example.catanboardgameapp.Vertex;
 
->>>>>>> Stashed changes
+
 
 import static javafx.application.Application.launch;
 
