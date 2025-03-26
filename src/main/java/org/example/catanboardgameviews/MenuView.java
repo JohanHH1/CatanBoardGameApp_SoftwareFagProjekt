@@ -6,6 +6,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.example.catanboardgameapp.Gameplay;
 
 public class MenuView {
 
@@ -20,7 +21,7 @@ public class MenuView {
         Label boardSizeLable = new Label("Insert board size");
         TextField boardSizeInput = new TextField("3"); // må ikke være under 3
 
-        Button startButton = getButton(primaryStage, boardSizeInput);
+        Button startButton = getButton(primaryStage, boardSizeInput, playerInput);
         layout.getChildren().addAll(playerLable, playerInput, boardSizeLable,boardSizeInput, startButton);
         Scene setupScene = new Scene(layout, 800, 600); // creating new scene with the base layout
 
@@ -31,11 +32,11 @@ public class MenuView {
 
     }
 
-    private static Button getButton(Stage primaryStage, TextField boardSizeInput) {
+    private static Button getButton(Stage primaryStage, TextField boardSizeInput, TextField playerInput) {
         Button startButton = new Button("Start game");
         startButton.setOnAction(event -> { // if Start game pushed we redirect to gameScene
             try {
-                //int players = Integer.parseInt(playerInput.getText()); // converts input string to int
+                int players = Integer.parseInt(playerInput.getText()); // converts input string to int
                 int radius = Integer.parseInt(boardSizeInput.getText());
 
                 //check radius is not too small
@@ -44,7 +45,9 @@ public class MenuView {
                     return;
                 }
                 //Creates new gameveiw from the BoardGame-class and puts it in primaryStage
-                Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius-1); // creating the board as our gameScene based on input
+                Gameplay gameplay = new Gameplay();
+                gameplay.initializePlayers(players);
+                Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius-1, gameplay); // creating the board as our gameScene based on input
                 primaryStage.setScene(gameScene); //setting current scene to gameScene
             } catch (NumberFormatException exception) {
                 System.out.println("Not acceptable input, try again");

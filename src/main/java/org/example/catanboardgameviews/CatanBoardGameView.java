@@ -2,6 +2,9 @@ package org.example.catanboardgameviews;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
@@ -11,20 +14,17 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import org.example.catanboardgameapp.Board;
-import org.example.catanboardgameapp.Resource;
-import org.example.catanboardgameapp.Tile;
-import org.example.catanboardgameapp.Vertex;
+import org.example.catanboardgameapp.*;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 
 import static javafx.application.Application.launch;
 
 public class CatanBoardGameView {
-    public static Scene createGameScene(Stage primaryStage, int radius) {
+    public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
         Board board = new Board(radius,50,400,300);
-
-        Group root = new Group();
+        Group boardGroup = new Group();
+        //Group root = new Group();
 
         //Draw tiles
         for (Tile tile : board.getTiles()) {
@@ -37,7 +37,7 @@ public class CatanBoardGameView {
             Point2D center = tile.getCenter();
             double centerX = center.getX();
             double centerY = center.getY();
-            root.getChildren().add(polygon);
+            boardGroup.getChildren().add(polygon);
 
             // No coloring on 7 (desert)
             if (tile.getTileDiceNumber() != 7) {
@@ -62,7 +62,7 @@ public class CatanBoardGameView {
                 // Center the numbers (represented as numbers)
                 number.setX(centerX - number.getLayoutBounds().getWidth() / 2);
                 number.setY(centerY + number.getLayoutBounds().getHeight() / 4);
-                root.getChildren().addAll(background, number);
+                boardGroup.getChildren().addAll(background, number);
                 }
 
 
@@ -83,9 +83,26 @@ public class CatanBoardGameView {
         for (Vertex vertex : board.getVertices()) {
             Circle circle = new Circle(vertex.getX(), vertex.getY(), 4);
             circle.setFill(Color.RED);
-            root.getChildren().add(circle);
+            boardGroup.getChildren().add(circle);
         }
+        Button rollDiceButton = new Button("Roll Dice");
+        Button nextTurnButton = new Button("Next Turn");
+        Text diceResult = new Text("");
 
+        rollDiceButton.setOnAction(e -> {
+            int result = gameplay.rollDice();
+            diceResult.setText("Dice:" + result);
+        });
+        nextTurnButton.setOnAction(e -> {
+            gameplay.nextPlayerTurn();
+            diceResult.setText("Turn: Player " + gameplay.getCurrentPlayer().getPlayerId());
+        });
+        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, diceResult);
+        buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
+
+        BorderPane root = new BorderPane();
+        root.setCenter(boardGroup);
+        root.setTop(buttonBox);
         return new Scene(root, 800, 600, Color.LIGHTGRAY);
 
 
