@@ -45,12 +45,12 @@ private Player currentPlayer;
 
 
     private boolean isValidSettlementPlacement(Vertex vertex) {
-        if (currentPlayer.getSettlements().contains(vertex)) {
+        if (vertex.hasSettlement()) {
             return false; // settlement already in place at the vertex
         }
         // Check if any neighboring vertex already has a settlement
         for (Vertex neighbor : vertex.getNeighbors()) {
-            if (currentPlayer.getSettlements().contains(neighbor)) {
+            if (neighbor.hasSettlement()) {
                 return false; // Settlement too close
             }
         }
@@ -94,6 +94,13 @@ private Player currentPlayer;
     public boolean buildSettlement(Vertex vertex) {
         if (!isValidSettlementPlacement(vertex)) {
             return false; // Invalid placement
+        }
+
+        if (currentPlayer.getSettlements().size() < 2) { // allows player to place 2 initial settlements
+            currentPlayer.getSettlements().add(vertex);
+            vertex.setOwner(currentPlayer);
+            addScore();
+            return true;
         }
         // Check if player has required resources
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1) &&
