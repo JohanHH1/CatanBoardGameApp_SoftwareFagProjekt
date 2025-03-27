@@ -32,6 +32,11 @@ public class Edge {
         }
     }
 
+    public boolean sharesVertexWith(Edge other) {
+        return getVertex1().equals(other.getVertex1()) || getVertex1().equals(other.getVertex2()) ||
+                getVertex2().equals(other.getVertex1()) || getVertex2().equals(other.getVertex2());
+    }
+
     //___________________GETTERS_________________________
     public Vertex getVertex1() {
         return vertex1;

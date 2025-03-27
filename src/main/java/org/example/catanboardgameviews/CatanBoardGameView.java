@@ -10,6 +10,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -84,23 +85,69 @@ public class CatanBoardGameView {
 
 
         }
-        /*
-        //Draw edges
+        
+        // Edges with click handlers
         for (Edge edge : board.getEdges()) {
-            Line line = new Line(edge.getVertex1().getX(), edge.getVertex1().getY(),
-                    edge.getVertex2().getX(), edge.getVertex2().getY());
-            line.setStroke(Color.BLACK);
-            root.getChildren().add(line);
-        }
+            // Create an invisible clickable line (wider for easier clicking)
+            Line clickableLine = new Line(
+                    edge.getVertex1().getX(), edge.getVertex1().getY(),
+                    edge.getVertex2().getX(), edge.getVertex2().getY()
+            );
+            clickableLine.setStrokeWidth(10); // Wide for easy clicking
+            clickableLine.setOpacity(0); // Invisible
 
-         */
+            // Create the visible line
+            Line visibleLine = new Line(
+                    edge.getVertex1().getX(), edge.getVertex1().getY(),
+                    edge.getVertex2().getX(), edge.getVertex2().getY()
+            );
+            visibleLine.setStroke(Color.TRANSPARENT);
+            visibleLine.setStrokeWidth(2);
+
+            // click handler
+            clickableLine.setOnMouseClicked(event -> {
+                if (gameplay.buildRoad(edge)) {
+                    // Road was successfully built
+                    visibleLine.setStroke(gameplay.getCurrentPlayer().getColor());
+                    visibleLine.setStrokeWidth(4);
+                    System.out.println("Road built by player " + gameplay.getCurrentPlayer().getPlayerId());
+                } else {
+                    // Red dot if not buildable
+                    double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
+                    double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
+                    showTemporaryDot(boardGroup, midX, midY, Color.RED);
+                    System.out.println("Cannot build road here");
+                }
+            });
+
+            boardGroup.getChildren().addAll(clickableLine, visibleLine);
+        }
 
         // Draw vertices
         for (Vertex vertex : board.getVertices()) {
-            Circle circle = new Circle(vertex.getX(), vertex.getY(), 4);
-            circle.setFill(Color.RED);
-            boardGroup.getChildren().add(circle);
+
+            Circle visibleCircle = new Circle(vertex.getX(), vertex.getY(), 4); // vertex circle
+            visibleCircle.setFill(Color.BLACK);
+            visibleCircle.setStroke(Color.BLACK);
+            boardGroup.getChildren().add(visibleCircle);
+
+            Circle clickableCircle = new Circle(vertex.getX(), vertex.getY(), 4);
+            clickableCircle.setFill(Color.TRANSPARENT);
+            clickableCircle.setStroke(Color.TRANSPARENT);
+
+            clickableCircle.setOnMouseClicked(event -> {
+                if (gameplay.buildSettlement(vertex)) { // if conditions for building are true
+                    vertex.setOwner(gameplay.getCurrentPlayer()); // take vertex and set owner to currentPlayer
+                    updateVertexAppearance(visibleCircle, vertex); // update appearance
+                    System.out.println("Settlement built by player " + gameplay.getCurrentPlayer().getPlayerId());
+                } else {
+                    showPlacementError(boardGroup, vertex.getX(), vertex.getY()); // if conditions for building are false
+                }
+            });
+
+            boardGroup.getChildren().addAll(clickableCircle); // show chosen vertex
         }
+
         Button rollDiceButton = new Button("Roll Dice");
         Button nextTurnButton = new Button("Next Turn");
         Text diceResult = new Text("");
@@ -184,6 +231,49 @@ public class CatanBoardGameView {
         return new Scene(root, 800, 600, Color.LIGHTGRAY);
 
 
+    }
+
+    private static void showTemporaryDot(Group boardGroup, double midX, double midY, Color red) {
+        // create red dot
+        Circle dot = new Circle(midX, midY, 5, red);
+
+        // add to scene
+        boardGroup.getChildren().add(dot);
+
+        // remove after 1s
+        PauseTransition delay = new PauseTransition(Duration.seconds(1));
+        delay.setOnFinished(e -> boardGroup.getChildren().remove(dot));
+        delay.play();
+    }
+
+    private static void showPlacementError(Group boardGroup, double x, double y) {
+        Line line1 = new Line(x-5, y-5, x+5, y+5);
+        Line line2 = new Line(x-5, y+5, x+5, y-5);
+        line1.setStroke(Color.RED);
+        line2.setStroke(Color.RED);
+        line1.setStrokeWidth(2);
+        line2.setStrokeWidth(2);
+
+        Group errorGroup = new Group(line1, line2);
+        boardGroup.getChildren().add(errorGroup);
+
+        // Goes away after 1s
+        System.out.println("Placement is invalid");
+        PauseTransition delay = new PauseTransition(Duration.seconds(1));
+        delay.setOnFinished(e -> {
+            boardGroup.getChildren().remove(errorGroup);
+        });
+        delay.play();
+    }
+
+    private static void updateVertexAppearance(Circle circle, Vertex vertex) {
+        if (vertex.getOwner() != null) { // If vertex.getOwner() is not null then set color to the owner
+            circle.setFill(vertex.getOwner().getColor());
+            circle.setRadius(8);
+        } else {
+            circle.setFill(Color.TRANSPARENT);
+            circle.setRadius(4); // Vertices without settlement are smaller
+        }
     }
 
     private static Rectangle getRectangle(Text sampleNumber, double centerX, double centerY) {
