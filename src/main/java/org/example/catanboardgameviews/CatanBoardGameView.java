@@ -230,7 +230,7 @@ public class CatanBoardGameView {
         };
     }
     private static ImageView getResourceIcon(Resource.ResourceType type, double x, double y) {
-        System.out.println("⏳ Attempting to load icon for: " + type);
+        //System.out.println("⏳ Attempting to load icon for: " + type);
 
         String filename = switch (type) {
             case BRICK -> "/Icons/brick.png";
@@ -253,7 +253,20 @@ public class CatanBoardGameView {
         imageView.setPreserveRatio(true);
         imageView.setSmooth(true);
         imageView.setX(x - imageView.getFitWidth() / 2);
-        imageView.setY(y - imageView.getFitHeight() / 2);
+        if (type == Resource.ResourceType.BRICK) {
+            imageView.setY(y - imageView.getFitHeight() / 2+18);
+        } else if (type == Resource.ResourceType.WOOD) {
+            imageView.setY(y - imageView.getFitHeight() / 2+20);
+        } else if (type == Resource.ResourceType.ORE) {
+            imageView.setY(y - imageView.getFitHeight() / 2+15);
+        } else if (type == Resource.ResourceType.GRAIN) {
+            imageView.setY(y - imageView.getFitHeight() / 2+10);
+        } else if (type == Resource.ResourceType.WOOL) {
+            imageView.setY(y - imageView.getFitHeight() / 2+15);
+        } else {
+            imageView.setY(y - imageView.getFitHeight() / 2-20);
+        }
+        //imageView.setY(y - imageView.getFitHeight() / 2+20);
         return imageView;
     }
 
