@@ -249,24 +249,18 @@ public class CatanBoardGameView {
 
         Image image = new Image(stream);
         ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(30); // or 32 or 24, try what looks best
+
+        // Increase size to cover the tile
+        double tileSize = 80; // Adjust this based on your hex tile size
+        imageView.setFitWidth(tileSize);
+        imageView.setFitHeight(tileSize);
         imageView.setPreserveRatio(true);
         imageView.setSmooth(true);
-        imageView.setX(x - imageView.getFitWidth() / 2);
-        if (type == Resource.ResourceType.BRICK) {
-            imageView.setY(y - imageView.getFitHeight() / 2+18);
-        } else if (type == Resource.ResourceType.WOOD) {
-            imageView.setY(y - imageView.getFitHeight() / 2+20);
-        } else if (type == Resource.ResourceType.ORE) {
-            imageView.setY(y - imageView.getFitHeight() / 2+15);
-        } else if (type == Resource.ResourceType.GRAIN) {
-            imageView.setY(y - imageView.getFitHeight() / 2+10);
-        } else if (type == Resource.ResourceType.WOOL) {
-            imageView.setY(y - imageView.getFitHeight() / 2+15);
-        } else {
-            imageView.setY(y - imageView.getFitHeight() / 2-20);
-        }
-        //imageView.setY(y - imageView.getFitHeight() / 2+20);
+
+        // Center the image over the hex tile
+        imageView.setX(x - tileSize / 2);
+        imageView.setY(y - tileSize / 2);
+
         return imageView;
     }
 
