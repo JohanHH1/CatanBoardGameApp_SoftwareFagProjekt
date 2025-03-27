@@ -122,6 +122,15 @@ private Player currentPlayer;
         if (!isValidRoadPlacement(edge)) {
             return false; // Invalid placement
         }
+        if (currentPlayer.getRoads().size() < 2 ) {
+            for (Edge existingRoad : currentPlayer.getRoads()) {
+                if (existingRoad.sharesVertexWith(edge)) {
+                    return false;
+                }
+            }
+            currentPlayer.getRoads().add(edge);
+            return true;
+        }
         // Check if player has required resources
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
             removeResource("Brick",1);
