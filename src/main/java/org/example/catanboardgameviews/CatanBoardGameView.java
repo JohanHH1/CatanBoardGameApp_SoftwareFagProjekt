@@ -247,19 +247,23 @@ public class CatanBoardGameView {
             return new ImageView(); // fallback
         }
 
+
+        // Increase tile coverage size
         Image image = new Image(stream);
         ImageView imageView = new ImageView(image);
 
-        // Increase size to cover the tile
-        double tileSize = 80; // Adjust this based on your hex tile size
+        // Reduce tile size slightly to fit better inside the hex
+        double hexRadius = 50;  // Adjust based on your Board class
+        double tileSize = hexRadius * 2;  // Scale slightly smaller
+
         imageView.setFitWidth(tileSize);
         imageView.setFitHeight(tileSize);
         imageView.setPreserveRatio(true);
         imageView.setSmooth(true);
 
-        // Center the image over the hex tile
-        imageView.setX(x - tileSize / 2);
-        imageView.setY(y - tileSize / 2);
+        // Center the image over the tile with small vertical correction
+        imageView.setX((x - tileSize / 2)+ 7);
+        imageView.setY((y - tileSize / 2)); // Slight vertical adjustment
 
         return imageView;
     }
