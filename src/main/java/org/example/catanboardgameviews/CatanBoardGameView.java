@@ -30,6 +30,8 @@ import org.example.catanboardgameapp.Vertex;
 
 
 import java.io.InputStream;
+import java.net.SocketOption;
+import java.util.Locale;
 
 import static javafx.application.Application.launch;
 
@@ -39,6 +41,11 @@ public class CatanBoardGameView {
         Group boardGroup = new Group();
 
         //Group root = new Group();
+        BorderPane root = new BorderPane();
+
+        // Create initial left menu
+        VBox leftMenu = createLeftMenu(gameplay);
+        root.setLeft(leftMenu);
 
         //Draw tiles
         for (Tile tile : board.getTiles()) {
@@ -155,6 +162,8 @@ public class CatanBoardGameView {
         rollDiceButton.setOnAction(e -> {
             int result = gameplay.rollDice();
             diceResult.setText("Dice:" + result);
+            gameplay.distributeResource(result);
+            root.setLeft(createLeftMenu(gameplay));
         });
         nextTurnButton.setOnAction(e -> {
             gameplay.nextPlayerTurn();
@@ -163,52 +172,11 @@ public class CatanBoardGameView {
         HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, diceResult);
         buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
 
-        BorderPane root = new BorderPane();
+
         root.setCenter(boardGroup);
         root.setTop(buttonBox);
+        root.setLeft(createLeftMenu(gameplay));
 
-
-//        VBox leftMenu = new VBox();
-//        leftMenu.setStyle("-fx-padding: 10; -fx-background-color: #e0e0e0; -fx-min-width: 150;");
-//        Text title = new Text("Player Stats");
-//        title.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-//        leftMenu.getChildren().add(title);
-//        for (Player player : gameplay.getPlayerList()) {
-//            Text playerName = new Text("Player " + player.getPlayerId());
-//            playerName.setFont(Font.font("Arial", 14));
-//            leftMenu.getChildren().add(playerName);
-//        }
-//
-//        root.setLeft(leftMenu);
-        VBox leftMenu = new VBox(10); // spacing between player sections
-        leftMenu.setStyle("-fx-padding: 10; -fx-background-color: #e0e0e0; -fx-min-width: 200;");
-
-        Text title = new Text("Player Stats");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        leftMenu.getChildren().add(title);
-
-// Use getPlayerList() instead of getPlayers()
-        for (Player player : gameplay.getPlayerList()) {
-            VBox playerBox = new VBox(5); // spacing between name and resources
-
-            Text playerName = new Text("Player " + player.getPlayerId());
-            playerName.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-            playerName.setFill(player.getColor());
-
-            playerBox.getChildren().add(playerName);
-
-            // Show all resources
-            for (String resourceName : player.getResources().keySet()) {
-                int count = player.getResources().get(resourceName);
-                Text resourceText = new Text(resourceName + ": " + count);
-                resourceText.setFont(Font.font("Arial", 12));
-                playerBox.getChildren().add(resourceText);
-            }
-
-            leftMenu.getChildren().add(playerBox);
-        }
-
-        root.setLeft(leftMenu);
 
 
         boardGroup.setOnScroll(event -> {
@@ -231,6 +199,35 @@ public class CatanBoardGameView {
         return new Scene(root, 800, 600, Color.LIGHTGRAY);
 
 
+    }
+    private static VBox createLeftMenu(Gameplay gameplay) {
+        VBox leftMenu = new VBox(10);
+        leftMenu.setStyle("-fx-padding: 10; -fx-background-color: #e0e0e0; -fx-min-width: 200;");
+
+        Text title = new Text("Player Stats");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        leftMenu.getChildren().add(title);
+
+        for (Player player : gameplay.getPlayerList()) {
+            VBox playerBox = new VBox(5);
+
+            Text playerName = new Text("Player " + player.getPlayerId());
+            playerName.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            playerName.setFill(player.getColor());
+
+            playerBox.getChildren().add(playerName);
+
+            for (String resourceName : player.getResources().keySet()) {
+                int count = player.getResources().get(resourceName);
+                Text resourceText = new Text(resourceName + ": " + count);
+                resourceText.setFont(Font.font("Arial", 12));
+                playerBox.getChildren().add(resourceText);
+            }
+
+            leftMenu.getChildren().add(playerBox);
+        }
+
+        return leftMenu;
     }
 
     private static void showTemporaryDot(Group boardGroup, double midX, double midY, Color red) {

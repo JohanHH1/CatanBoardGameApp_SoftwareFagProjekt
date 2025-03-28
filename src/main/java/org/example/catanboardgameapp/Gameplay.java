@@ -22,6 +22,7 @@ private Player currentPlayer;
     }
 
     public void playerTurn () {
+        
         int dice = rollDice();
         distributeResource(dice);
 
@@ -146,10 +147,11 @@ private Player currentPlayer;
             if (tile.getTileDiceNumber() == diceNumber) {
                 for (Vertex vertex : tile.getVertices()) {
                     if (vertex.getOwner() != null) {
-                        String resourceType = tile.getResourcetype().toString();
+                        String resourceType = tile.getResourcetype().getName();
                         Player owner = vertex.getOwner();
                         int currentAmount = owner.getResources().getOrDefault(resourceType, 0);
                         owner.getResources().put(resourceType, currentAmount + 1);
+                        System.out.println(owner + "gets " + resourceType + " " + currentAmount);
                     }
                 }
 
