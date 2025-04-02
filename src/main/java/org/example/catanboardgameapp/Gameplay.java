@@ -7,7 +7,7 @@ import java.util.*;
 
 public class Gameplay {
 private final List<Player> playerList = new ArrayList<>();
-private int currentPlayerIndex = 0;
+private int currentPlayerIndex;
 private Player currentPlayer;
 
     public void initializePlayers (int numberOfPlayers) {
@@ -17,7 +17,7 @@ private Player currentPlayer;
             Player player = new Player(i+1, colorList.get(i));
             playerList.add(player);
         }
-        currentPlayerIndex = 1; // Determines which player starts
+        currentPlayerIndex = 0; // Determines which player starts
         currentPlayer = playerList.get(currentPlayerIndex);
     }
 

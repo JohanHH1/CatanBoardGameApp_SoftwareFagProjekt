@@ -88,9 +88,6 @@ public class CatanBoardGameView {
                 number.setY(centerY + number.getLayoutBounds().getHeight() / 4);
                 boardGroup.getChildren().addAll(background, number);
                 }
-
-
-
         }
         
         // Edges with click handlers
