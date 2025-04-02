@@ -34,6 +34,8 @@ import java.io.InputStream;
 import java.util.Optional;
 
 public class CatanBoardGameView {
+    private static Button nextTurnButton;
+    private static Button rollDiceButton;
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
         double sceneWidth = 800;
         double sceneHeight = 600;
@@ -197,6 +199,8 @@ public class CatanBoardGameView {
 
         HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, exitButton);
         buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
+        hideButtonNextPlayer();
+        hideButtonRollDice();
 
         root.setTop(buttonBox);
 
@@ -421,6 +425,31 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
 
         return imageView;
     }
+    public static void showButtonNextPlayer() {
+        if (nextTurnButton != null) {
+            nextTurnButton.setVisible(true);
+            nextTurnButton.setManaged(true);
+        }
+    }
+    public static void hideButtonNextPlayer() {
+        if (nextTurnButton != null) {
+            nextTurnButton.setVisible(false);
+            nextTurnButton.setManaged(false);
+        }
+    }
+    public static void showButtonRollDice() {
+        if (rollDiceButton != null) {
+            rollDiceButton.setVisible(true);
+            rollDiceButton.setManaged(true);
+        }
+    }
+    public static void hideButtonRollDice() {
+        if (rollDiceButton != null) {
+            rollDiceButton.setVisible(false);
+            rollDiceButton.setManaged(false);
+        }
+    }
+}
 
 
 }
