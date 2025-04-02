@@ -4,6 +4,7 @@ import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 import java.util.*;
+import org.example.catanboardgameviews.CatanBoardGameView;
 
 public class Gameplay {
 private final List<Player> playerList = new ArrayList<>();
@@ -22,7 +23,7 @@ private Player currentPlayer;
     }
 
     public void playerTurn () {
-        
+        CatanBoardGameView.showButtonNextPlayer();
         int dice = rollDice();
         distributeResource(dice);
 

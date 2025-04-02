@@ -36,6 +36,8 @@ import java.util.Locale;
 import static javafx.application.Application.launch;
 
 public class CatanBoardGameView {
+    private static Button nextTurnButton;
+    private static Button rollDiceButton;
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
         Board board = new Board(radius,50,400,300);
         Group boardGroup = new Group();
@@ -168,6 +170,8 @@ public class CatanBoardGameView {
         });
         HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, diceResult);
         buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
+        hideButtonNextPlayer();
+        hideButtonRollDice();
 
 
         root.setCenter(boardGroup);
@@ -351,5 +355,28 @@ public class CatanBoardGameView {
 
         return imageView;
     }
-
+    public static void showButtonNextPlayer() {
+        if (nextTurnButton != null) {
+            nextTurnButton.setVisible(true);
+            nextTurnButton.setManaged(true);
+        }
+    }
+    public static void hideButtonNextPlayer() {
+        if (nextTurnButton != null) {
+            nextTurnButton.setVisible(false);
+            nextTurnButton.setManaged(false);
+        }
+    }
+    public static void showButtonRollDice() {
+        if (rollDiceButton != null) {
+            rollDiceButton.setVisible(true);
+            rollDiceButton.setManaged(true);
+        }
+    }
+    public static void hideButtonRollDice() {
+        if (rollDiceButton != null) {
+            rollDiceButton.setVisible(false);
+            rollDiceButton.setManaged(false);
+        }
+    }
 }
