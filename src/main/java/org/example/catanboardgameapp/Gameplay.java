@@ -10,6 +10,7 @@ public class Gameplay {
 private final List<Player> playerList = new ArrayList<>();
 private int currentPlayerIndex;
 private Player currentPlayer;
+private boolean secondFreeSettelment=false;
 
     public void initializePlayers (int numberOfPlayers) {
         List<Color> colorList = List.of(Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW);
@@ -40,8 +41,34 @@ private Player currentPlayer;
         return playerList.get(currentPlayerIndex);
 
     }
-    public void nextPlayerTurn () {
-        currentPlayerIndex= (currentPlayerIndex+1) % playerList.size();
+    public void nextPlayerTurn() {
+        // Determine if we are in the special condition
+        int oneCount = 0;
+        int twoCount = 0;
+        for (Player player : playerList) {
+            int settlements = player.getSettlements().size();
+            if (settlements == 1) {
+                oneCount++;
+            } else if (settlements == 2) {
+                twoCount++;
+            }
+        }
+
+        // Special condition: either all players have 1, or some have 1 and the rest have 2.
+        boolean specialCondition1 = (oneCount == playerList.size());
+        boolean specialCondition2 = (oneCount >= 1 && (oneCount + twoCount == playerList.size()));
+        if (specialCondition1 ) {
+            currentPlayer = getCurrentPlayer();
+            secondFreeSettelment=true;
+        }
+        else if (specialCondition2) {
+            // Count backwards: decrement the index with wrap-around
+            currentPlayerIndex = (currentPlayerIndex - 1 + playerList.size()) % playerList.size();
+        } else {
+            // Normal turn: count forward
+            currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
+        }
+
         currentPlayer = getCurrentPlayer();
     }
 
@@ -99,7 +126,12 @@ private Player currentPlayer;
         }
 
         // Special case for initial placement (first two settlements)
-        if (currentPlayer.getSettlements().size() < 2) {
+        if (currentPlayer.getSettlements().size() < 1) {
+            currentPlayer.getSettlements().add(vertex);
+            vertex.setOwner(currentPlayer);
+            addScore();
+            return true;
+        } else if (secondFreeSettelment && currentPlayer.getSettlements().size() < 2) {
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
@@ -129,7 +161,7 @@ private Player currentPlayer;
         }
 
         // Special case for initial placement (first two roads)
-        if (currentPlayer.getRoads().size() < 2) {
+        if (currentPlayer.getRoads().size() < 1) {
             // For initial placement, road must be connected to one of the player's settlements
             boolean connectedToSettlement = false;
             for (Vertex settlement : currentPlayer.getSettlements()) {
@@ -141,11 +173,23 @@ private Player currentPlayer;
             if (!connectedToSettlement) {
                 return false;
             }
-
+            currentPlayer.getRoads().add(edge);
+            return true;
+        } else if (secondFreeSettelment && currentPlayer.getRoads().size() < 2) {
+            // For initial placement, road must be connected to one of the player's settlements
+            boolean connectedToSettlement = false;
+            for (Vertex settlement : currentPlayer.getSettlements()) {
+                if (edge.isConnectedTo(settlement)) {
+                    connectedToSettlement = true;
+                    break;
+                }
+            }
+            if (!connectedToSettlement) {
+                return false;
+            }
             currentPlayer.getRoads().add(edge);
             return true;
         }
-
         // Normal road building (after initial placement)
         // Check if player has required resources
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
