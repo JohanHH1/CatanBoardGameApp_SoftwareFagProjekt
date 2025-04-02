@@ -97,19 +97,22 @@ private Player currentPlayer;
             return false; // Invalid placement
         }
 
-        if (currentPlayer.getSettlements().size() < 2) { // allows player to place 2 initial settlements
+        // Special case for initial placement (first two settlements)
+        if (currentPlayer.getSettlements().size() < 2) {
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
             return true;
         }
+
+        // Normal settlement building (after initial placement)
         // Check if player has required resources
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1) &&
                 canRemoveResource("Grain", 1) && canRemoveResource("Wool", 1)) {
-            removeResource("Brick",1);
-            removeResource("Wood",1);
-            removeResource("Grain",1);
-            removeResource("Wool",1);
+            removeResource("Brick", 1);
+            removeResource("Wood", 1);
+            removeResource("Grain", 1);
+            removeResource("Wool", 1);
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
@@ -123,19 +126,30 @@ private Player currentPlayer;
         if (!isValidRoadPlacement(edge)) {
             return false; // Invalid placement
         }
-        if (currentPlayer.getRoads().size() < 2 ) {
-            for (Edge existingRoad : currentPlayer.getRoads()) {
-                if (existingRoad.sharesVertexWith(edge)) {
-                    return false;
+
+        // Special case for initial placement (first two roads)
+        if (currentPlayer.getRoads().size() < 2) {
+            // For initial placement, road must be connected to one of the player's settlements
+            boolean connectedToSettlement = false;
+            for (Vertex settlement : currentPlayer.getSettlements()) {
+                if (edge.isConnectedTo(settlement)) {
+                    connectedToSettlement = true;
+                    break;
                 }
             }
+            if (!connectedToSettlement) {
+                return false;
+            }
+
             currentPlayer.getRoads().add(edge);
             return true;
         }
+
+        // Normal road building (after initial placement)
         // Check if player has required resources
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
-            removeResource("Brick",1);
-            removeResource("Wood",1);
+            removeResource("Brick", 1);
+            removeResource("Wood", 1);
             currentPlayer.getRoads().add(edge);
             return true;
         }
