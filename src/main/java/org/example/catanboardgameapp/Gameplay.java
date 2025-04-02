@@ -171,6 +171,13 @@ private Player currentPlayer;
         return diceRoll;
     }
 
+    public void reset() {
+        playerList.clear();            // clear all players
+        currentPlayerIndex = 0;        // reset turn counter
+        currentPlayer = null;          // reset player reference
+    }
+
+
     public void decreasePlayerScore(){
             currentPlayer.decreasePlayerScore();
     }

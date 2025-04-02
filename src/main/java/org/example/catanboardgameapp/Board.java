@@ -1,14 +1,7 @@
 package org.example.catanboardgameapp;
 
 import javafx.geometry.Point2D;
-import javafx.scene.effect.Light;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.*;
-
 
 public class Board {
     //Initialize and create lists of tile, vertex and edge classes
@@ -21,6 +14,7 @@ public class Board {
             "Grain", "Grain", "Grain", "Grain", "Wood", "Wood", "Wood", "Wood",
             "Wool", "Wool", "Wool", "Wool", "Brick", "Brick", "Brick",
             "Ore", "Ore", "Ore" };
+
     List<List<Integer>> originalNumberTokensAll = List.of(
             new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11)),
             new ArrayList<>(List.of(6, 4, 5, 11, 3, 9, 10, 6, 2, 12, 8, 3, 5, 10, 9, 4, 8, 11)),
@@ -32,15 +26,6 @@ public class Board {
             new ArrayList<>(List.of(3, 6, 10, 5, 4, 9, 11, 8, 12, 2, 8, 4, 5, 11, 3, 9, 10, 6))
     );
 
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11 ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(6, 4, 5, 11, 3, 9, 10, 6, 2, 12, 8, 3, 5, 10, 9, 4, 8, 11 ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(8, 4, 9, 3, 11, 5, 10, 8, 12, 2, 6, 11, 9, 10, 5, 4, 6, 3 ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(6, 10, 9, 3, 11, 5, 4, 8, 2, 12, 8, 11, 9, 4, 5, 10, 6, 3 ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(11, 8, 4, 5, 10, 9, 3, 6, 12, 2, 6, 10, 5, 3, 11, 9, 4, 8 ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(11, 8, 4, 9, 10, 5, 3, 8, 12, 2, 6, 10, 9, 3, 11, 5, 4, 6 ));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(3, 6, 4, 5, 10, 9, 11, 6, 2, 12, 8, 10, 5, 11, 3, 9, 4, 8));
-    //List<Integer> originalNumberTokens = new ArrayList<>(List.of(3, 6, 10, 5, 4, 9, 11, 8, 12, 2, 8, 4, 5, 11, 3, 9, 10, 6 ));
-
     //Board size parameters
     private final int radius;         // e.g., 2 for standard 19-hex
     private final double hexSize;     // distance from hex center to a corner
@@ -49,23 +34,32 @@ public class Board {
     private final int boardsize;
 
     //Constructor
-    public Board(int radius, double hexSize, double offsetX, double offsetY) {
+    public Board(int radius, double screenWidth, double screenHeight) {
         this.radius = radius;
-        this.hexSize = hexSize;
-        this.offsetX = offsetX;
-        this.offsetY = offsetY;
+        this.hexSize = calculateHexSize(radius, screenWidth, screenHeight);
+        this.offsetX = screenWidth / 2;
+        this.offsetY = screenHeight / 2;
         this.boardsize = radius + 1;
         initializeBoard();
     }
 
+    private double calculateHexSize(int radius, double screenWidth, double screenHeight) {
+        double maxCols = 2 * radius + 1.5;
+        double maxRows = 2 * radius * 1.5 + 1;
+        double maxHexWidth = screenWidth / maxCols;
+        double maxHexHeight = screenHeight / maxRows;
+        double hexSize = Math.min(maxHexWidth / Math.sqrt(3), maxHexHeight / 1.5);
+        return Math.round(hexSize); // round to integer
+    }
+
     private void initializeBoard() {
         //Initialize empty list of all the tiles.
+        tiles.clear();
         List<Tile> allTiles = new ArrayList<>();
 
-        //Calculating number of times to add the 18 resourses and 18 numbers. ex: 1 time for a standart 3*3 board.
+        //Calculating number of times to add the 18 resources and 18 numbers. ex: 1 time for a standard 3*3 board.
         int numberOfTimesTilesAndNumbers = ((3 * boardsize * boardsize - (3 * boardsize) + 1))/18;
 
-        
         String[] desertArray;
         //Calculating the number of deserts to add. either 7 or 1 depending on the size.
         if (boardsize%3 ==2) {
@@ -93,19 +87,15 @@ public class Board {
             Collections.shuffle(numberTokens);
         }
 
-
-        // Generates all the tiles in axial coordiantes (q,r). Goes from -r to r (radius) and then
+        // Generates all the tiles in axial coordinates (q,r). Goes from -r to r (radius) and then
         // check if abs(q+r) <= radius. If it is more than the radius,
         // the tile would be outside our board.
         // For axial coordinate explanation: https://www.redblobgames.com/grids/hexagons/
-
-
-
         for (int q = -radius; q <= radius; q++) {
             for (int r = -radius; r <= radius; r++) {
                 if (Math.abs(q + r) <= radius) {
                     String resourceTypeString = shuffledTerrains.remove(0); // saves a Random first resource and removes it from the list
-                    int number = (resourceTypeString.equals("Desert")) ? 7 : numberTokens.remove(0);// removes the first element in the number list and if it is a dessert then 7
+                    int number = (resourceTypeString.equals("Desert")) ? 7 : numberTokens.remove(0); // removes the first element in the number list and if it is a dessert then 7
                     // Convert string to enum using fromString method
                     Resource.ResourceType resourceType = Resource.ResourceType.fromString(resourceTypeString);
                     // This (q,r) is inside the hex region
@@ -115,9 +105,10 @@ public class Board {
                 }
             }
         }
+
         for (Tile tile : allTiles) {
             //Compute tile centers in pixels
-            Point2D center = axialToPixel(tile.getQ(), tile.getR()); //*****
+            Point2D center = axialToPixel(tile.getQ(), tile.getR());
 
             //Array with 6 vertex objects for this tile
             Vertex[] corners = new Vertex[6];
@@ -127,12 +118,12 @@ public class Board {
                 double angleDeg = 60. * cornerNumber - 30.;
                 double angleRad = Math.toRadians(angleDeg);
 
-                //Calculate corner point locations in pixel coordiantes.
+                //Calculate corner point locations in pixel coordinates.
                 //Corner point calculation from "pointy_hex_corner": https://www.redblobgames.com/grids/hexagons/
                 double centerX = center.getX() + hexSize * Math.cos(angleRad);
                 double centerY = center.getY() + hexSize * Math.sin(angleRad);
 
-                // Rounding the corner coordinates to avoid floating errors when multiples tiles share the same corner.
+                // Rounding the corner coordinates to avoid floating errors when multiple tiles share the same corner.
                 centerX = Math.round(centerX * 1000.0) / 1000.0;
                 centerY = Math.round(centerY * 1000.0) / 1000.0;
                 Point2D cornerPoint = new Point2D(centerX, centerY);
@@ -146,9 +137,7 @@ public class Board {
                 }
 
                 vertex.addAdjacentTile(tile);
-
                 corners[cornerNumber] = vertex;
-
             }
 
             // Unifying Edges that are between corners[cornerNumber] and corners[cornerNumber+1 mod 6]
@@ -174,13 +163,13 @@ public class Board {
             tile.setVertices(List.of(corners));
             tile.setEdges(tileEdges);
         }
+
         //Add everything
         this.tiles.addAll(allTiles);
         this.vertices.addAll(vertexMap.values());
         this.edges.addAll(edgeMap.values());
-
-
     }
+
     //Point2D is built in class in JavaFX which stores a coordinate
     //Formula used is "pointy_hex_to_pixel(hex)" from https://www.redblobgames.com/grids/hexagons/
     private Point2D axialToPixel(int q, int r){
@@ -193,7 +182,6 @@ public class Board {
         //First sort by x, then y
         if (vertex1.getX() > vertex2.getX() ||
                 (vertex1.getX() == vertex2.getX() && vertex1.getY() > vertex2.getY())){
-
             //set vertex 2 first in the string since its lowest
             Vertex tempVertex = vertex1;
             vertex1 = vertex2;
@@ -205,7 +193,6 @@ public class Board {
     }
 
     //Getters
-
     public static List<Tile> getTiles() {
         return tiles;
     }
@@ -216,6 +203,10 @@ public class Board {
 
     public List<Edge> getEdges() {
         return edges;
+    }
+
+    public double getHexSize() {
+        return hexSize;
     }
 
     //Setters

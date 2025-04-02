@@ -13,7 +13,6 @@ public class Tile {
     private List<Vertex> vertices;
     private List<Edge> edges;
 
-
     public Tile(int q, int r, Resource.ResourceType resourcetype, int  tileDiceNumber, Point2D center) {
         this.q = q;
         this.r = r;

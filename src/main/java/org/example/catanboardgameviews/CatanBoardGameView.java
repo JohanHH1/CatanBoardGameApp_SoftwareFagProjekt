@@ -1,46 +1,46 @@
 package org.example.catanboardgameviews;
+
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-
 import org.example.catanboardgameapp.*;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 
-import org.example.catanboardgameapp.Board;
-import org.example.catanboardgameapp.Resource;
-import org.example.catanboardgameapp.Tile;
-import org.example.catanboardgameapp.Vertex;
-
-
 import java.io.InputStream;
-import java.net.SocketOption;
-import java.util.Locale;
-
-import static javafx.application.Application.launch;
+import java.util.Optional;
 
 public class CatanBoardGameView {
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
-        Board board = new Board(radius,50,400,300);
-        Group boardGroup = new Group();
+        double sceneWidth = 800;
+        double sceneHeight = 600;
 
-        //Group root = new Group();
+        // Group root = new Group();
+        Board board = new Board(radius, sceneWidth, sceneHeight);
+        Group boardGroup = new Group();
         BorderPane root = new BorderPane();
 
         // Create initial left menu
@@ -50,19 +50,16 @@ public class CatanBoardGameView {
         //Draw tiles
         for (Tile tile : board.getTiles()) {
             Polygon polygon = createTilePolygon(tile);
-            //***********
-            // ADD COLORS BASED ON RESOURCE TYPE
-            //************
             polygon.setFill(getTileColor(tile.getResourcetype()));
             polygon.setStroke(Color.BLACK);
-
 
             Point2D center = tile.getCenter();
             double centerX = center.getX();
             double centerY = center.getY();
-            ImageView icon = getResourceIcon(tile.getResourcetype(), centerX, centerY);
+
             boardGroup.getChildren().add(polygon); // background hex tile
-            boardGroup.getChildren().add(getResourceIcon(tile.getResourcetype(), centerX, centerY)); // icon on top
+            boardGroup.getChildren().add(getResourceIcon(tile.getResourcetype(), centerX, centerY, board.getHexSize())); // icon on top
+
             // No coloring on 7 (desert)
             if (tile.getTileDiceNumber() != 7) {
                 Text number = new Text(centerX, centerY, String.valueOf(tile.getTileDiceNumber()));
@@ -87,9 +84,9 @@ public class CatanBoardGameView {
                 number.setX(centerX - number.getLayoutBounds().getWidth() / 2);
                 number.setY(centerY + number.getLayoutBounds().getHeight() / 4);
                 boardGroup.getChildren().addAll(background, number);
-                }
+            }
         }
-        
+
         // Edges with click handlers
         for (Edge edge : board.getEdges()) {
             // Create an invisible clickable line (wider for easier clicking)
@@ -123,13 +120,10 @@ public class CatanBoardGameView {
                     System.out.println("Cannot build road here");
                 }
             });
-
             boardGroup.getChildren().addAll(clickableLine, visibleLine);
         }
-
         // Draw vertices
         for (Vertex vertex : board.getVertices()) {
-
             Circle visibleCircle = new Circle(vertex.getX(), vertex.getY(), 4); // vertex circle
             visibleCircle.setFill(Color.BLACK);
             visibleCircle.setStroke(Color.BLACK);
@@ -148,55 +142,136 @@ public class CatanBoardGameView {
                     showPlacementError(boardGroup, vertex.getX(), vertex.getY()); // if conditions for building are false
                 }
             });
-
             boardGroup.getChildren().addAll(clickableCircle); // show chosen vertex
         }
 
+        Pane boardWrapper = new Pane(boardGroup);
+        root.setCenter(boardWrapper);
+
         Button rollDiceButton = new Button("Roll Dice");
         Button nextTurnButton = new Button("Next Turn");
+        Button centerButton = new Button("Center Board");
+        Button zoomInButton = new Button("+");
+        Button zoomOutButton = new Button("-");
+        Button exitButton = new Button("Exit");
         Text diceResult = new Text("");
 
         rollDiceButton.setOnAction(e -> {
             int result = gameplay.rollDice();
-            diceResult.setText("Dice:" + result);
+            diceResult.setText("Dice: " + result);
             gameplay.distributeResource(result);
             root.setLeft(createLeftMenu(gameplay));
         });
+
         nextTurnButton.setOnAction(e -> {
             gameplay.nextPlayerTurn();
             diceResult.setText("Turn: Player " + gameplay.getCurrentPlayer().getPlayerId());
         });
-        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, diceResult);
+
+        centerButton.setOnAction(e -> {
+            boardGroup.setTranslateX(0);
+            boardGroup.setTranslateY(0);
+            boardGroup.setScaleX(1.0);
+            boardGroup.setScaleY(1.0);
+        });
+
+        zoomInButton.setOnAction(e -> {
+            double scale = boardGroup.getScaleX() * 1.1;
+            boardGroup.setScaleX(scale);
+            boardGroup.setScaleY(scale);
+        });
+
+        zoomOutButton.setOnAction(e -> {
+            double scale = boardGroup.getScaleX() * 0.9;
+            boardGroup.setScaleX(scale);
+            boardGroup.setScaleY(scale);
+        });
+
+        exitButton.setOnAction(e -> {
+            Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to exit to main menu?", ButtonType.YES, ButtonType.NO);
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.YES) {
+                MenuView.showSetupScreen(primaryStage);
+            }
+        });
+
+        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, exitButton);
         buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
 
-
-        root.setCenter(boardGroup);
         root.setTop(buttonBox);
-        root.setLeft(createLeftMenu(gameplay));
 
-
-
-        boardGroup.setOnScroll(event -> {
-            double zoomFactor = 1.05;
-            if (event.getDeltaY() < 0) {
-                zoomFactor = 0.95;
-            }
-
-            double newScaleX = boardGroup.getScaleX() * zoomFactor;
-            double newScaleY = boardGroup.getScaleY() * zoomFactor;
-
-            // Clamp zoom between 0.5x and 3x
-            if (newScaleX >= 0.5 && newScaleX <= 3) {
-                boardGroup.setScaleX(newScaleX);
-                boardGroup.setScaleY(newScaleY);
-            }
-
+        boardWrapper.setOnScroll((ScrollEvent event) -> {
+            double zoomFactor = event.getDeltaY() > 0 ? 1.05 : 0.95;
+            double scale = boardGroup.getScaleX() * zoomFactor;
+            scale = Math.max(0.5, Math.min(scale, 3.0));
+            boardGroup.setScaleX(scale);
+            boardGroup.setScaleY(scale);
             event.consume();
         });
-        return new Scene(root, 800, 600, Color.LIGHTGRAY);
 
+        final double[] mouseAnchorX = new double[1];
+        final double[] mouseAnchorY = new double[1];
+        final double[] initialTranslateX = new double[1];
+        final double[] initialTranslateY = new double[1];
 
+        boardWrapper.setOnMousePressed(event -> {
+            mouseAnchorX[0] = event.getX();
+            mouseAnchorY[0] = event.getY();
+            initialTranslateX[0] = boardGroup.getTranslateX();
+            initialTranslateY[0] = boardGroup.getTranslateY();
+        });
+
+        boardWrapper.setOnMouseDragged(event -> {
+            double deltaX = event.getX() - mouseAnchorX[0];
+            double deltaY = event.getY() - mouseAnchorY[0];
+            boardGroup.setTranslateX(initialTranslateX[0] + deltaX);
+            boardGroup.setTranslateY(initialTranslateY[0] + deltaY);
+        });
+
+        Scene scene = new Scene(root, sceneWidth, sceneHeight, Color.LIGHTGRAY);
+        scene.setOnKeyPressed(event -> {
+            double moveStep = 30;
+            switch (event.getCode()) {
+                case W -> boardGroup.setTranslateY(boardGroup.getTranslateY() - moveStep);
+                case A -> boardGroup.setTranslateX(boardGroup.getTranslateX() - moveStep);
+                case S -> boardGroup.setTranslateY(boardGroup.getTranslateY() + moveStep);
+                case D -> boardGroup.setTranslateX(boardGroup.getTranslateX() + moveStep);
+                case R -> {
+                    boardGroup.setTranslateX(0);
+                    boardGroup.setTranslateY(0);
+                    boardGroup.setScaleX(1.0);
+                    boardGroup.setScaleY(1.0);
+                }
+                case ESCAPE -> {
+                    Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to exit to main menu?", ButtonType.YES, ButtonType.NO);
+                    Optional<ButtonType> result = alert.showAndWait();
+                    if (result.isPresent() && result.get() == ButtonType.YES) {
+                        MenuView.showSetupScreen(primaryStage);
+                    }
+                }
+            }
+        });
+
+        return scene;
     }
+
+private static void centerBoard(Board board, Group boardGroup, double screenWidth, double screenHeight) {
+        Tile centerTile = board.getTiles().get((board.getTiles().size() - 1) / 2);
+        Point2D centerPoint = centerTile.getCenter();
+        double centerX = (screenWidth - 200) / 2 - centerPoint.getX();
+        double centerY = screenHeight / 2 - centerPoint.getY();
+        boardGroup.setTranslateX(centerX);
+        boardGroup.setTranslateY(centerY);
+        boardGroup.setScaleX(1.0);
+        boardGroup.setScaleY(1.0);
+    }
+
+    private static void zoom(Group group, double zoomFactor) {
+        double scale = group.getScaleX() * zoomFactor;
+        group.setScaleX(Math.max(0.5, Math.min(scale, 3.0)));
+        group.setScaleY(Math.max(0.5, Math.min(scale, 3.0)));
+    }
+
     private static VBox createLeftMenu(Gameplay gameplay) {
         VBox leftMenu = new VBox(10);
         leftMenu.setStyle("-fx-padding: 10; -fx-background-color: #e0e0e0; -fx-min-width: 200;");
@@ -294,7 +369,6 @@ public class CatanBoardGameView {
         return background;
     }
 
-
     // Creates polygons as tiles based on the vertices in each tile.
     private static Polygon createTilePolygon(Tile tile) {
         Polygon polygon = new Polygon();
@@ -303,6 +377,7 @@ public class CatanBoardGameView {
         }
         return polygon;
     }
+
     private static Color getTileColor(Resource.ResourceType type) {
         return switch (type) {
             case BRICK -> Color.SADDLEBROWN;
@@ -313,9 +388,8 @@ public class CatanBoardGameView {
             case DESERT -> Color.BEIGE;
         };
     }
-    private static ImageView getResourceIcon(Resource.ResourceType type, double x, double y) {
-        //System.out.println("⏳ Attempting to load icon for: " + type);
 
+    private static ImageView getResourceIcon(Resource.ResourceType type, double x, double y, double hexSize) {
         String filename = switch (type) {
             case BRICK -> "/Icons/brick.png";
             case WOOD -> "/Icons/wood.png";
@@ -330,26 +404,23 @@ public class CatanBoardGameView {
             System.err.println("⚠️ Image not found: " + filename);
             return new ImageView(); // fallback
         }
-
-
         // Increase tile coverage size
         Image image = new Image(stream);
         ImageView imageView = new ImageView(image);
 
-        // Reduce tile size slightly to fit better inside the hex
-        double hexRadius = 50;  // Adjust based on your Board class
-        double tileSize = hexRadius * 2;  // Scale slightly smaller
+        double imageWidth = Math.sqrt(3) * hexSize;
+        double imageHeight = 2 * hexSize;
 
-        imageView.setFitWidth(tileSize);
-        imageView.setFitHeight(tileSize);
-        imageView.setPreserveRatio(true);
+        imageView.setFitWidth(imageWidth);
+        imageView.setFitHeight(imageHeight);
+        imageView.setPreserveRatio(false);
         imageView.setSmooth(true);
 
-        // Center the image over the tile with small vertical correction
-        imageView.setX((x - tileSize / 2)+ 7);
-        imageView.setY((y - tileSize / 2)); // Slight vertical adjustment
+        imageView.setX(Math.round(x - imageWidth / 2));
+        imageView.setY(Math.round(y - imageHeight / 2));
 
         return imageView;
     }
+
 
 }

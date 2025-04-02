@@ -43,9 +43,9 @@ public class MenuView {
                     return;
                 }
 
-
                 //Creates new gameveiw from the BoardGame-class and puts it in primaryStage
                 Gameplay gameplay = new Gameplay();
+                gameplay.reset();
                 gameplay.initializePlayers(players);
                 Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, radius-1, gameplay); // creating the board as our gameScene based on input
                 //Creates new gameview from the BoardGame-class and puts it in primaryStage
