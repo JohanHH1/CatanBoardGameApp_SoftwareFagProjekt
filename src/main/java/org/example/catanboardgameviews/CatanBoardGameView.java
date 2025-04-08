@@ -452,4 +452,3 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
 }
 
 
-}
