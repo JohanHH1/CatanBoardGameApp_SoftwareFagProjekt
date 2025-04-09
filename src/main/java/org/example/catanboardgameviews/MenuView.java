@@ -41,8 +41,8 @@ public class MenuView {
                 if (radius < 3) {
                     System.out.println("Board size must be at least 3, try again");
                     return;
-                } else if (radius > 14){
-                    System.out.println("Board size must be at most 14, try again");
+                } else if (radius > 10){
+                    System.out.println("Board size must be at most 10, try again");
                     return;
                 }
 

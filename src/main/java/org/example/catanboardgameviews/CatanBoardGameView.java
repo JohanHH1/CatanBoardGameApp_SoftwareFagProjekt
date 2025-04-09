@@ -44,6 +44,7 @@ import static org.example.catanboardgameviews.CatanBoardGameView.rollDiceButton;
 public class CatanBoardGameView {
     public static Button nextTurnButton;
     public static Button rollDiceButton;
+   public static int boardRadius;
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
         double sceneWidth = 800;
         double sceneHeight = 600;
@@ -53,10 +54,12 @@ public class CatanBoardGameView {
         Group boardGroup = new Group();
         BorderPane root = new BorderPane();
 
+
+
         // Create initial left menu
         VBox leftMenu = createLeftMenu(gameplay);
         root.setLeft(leftMenu);
-
+        boardRadius = radius;
         //Draw tiles
         for (Tile tile : board.getTiles()) {
             Polygon polygon = createTilePolygon(tile);
@@ -112,7 +115,8 @@ public class CatanBoardGameView {
                     edge.getVertex1().getX(), edge.getVertex1().getY(),
                     edge.getVertex2().getX(), edge.getVertex2().getY()
             );
-            visibleLine.setStroke(Color.TRANSPARENT);
+            visibleLine.setStroke(Color.WHITE);
+            //visibleLine.setStroke(Color.TRANSPARENT);
             visibleLine.setStrokeWidth(2);
 
             // click handler
@@ -120,7 +124,7 @@ public class CatanBoardGameView {
                 if (gameplay.buildRoad(edge)) {
                     // Road was successfully built
                     visibleLine.setStroke(gameplay.getCurrentPlayer().getColor());
-                    visibleLine.setStrokeWidth(4);
+                    visibleLine.setStrokeWidth(12./radius);
                     System.out.println("Road built by player " + gameplay.getCurrentPlayer().getPlayerId());
                     root.setLeft(createLeftMenu(gameplay));
                 } else {
@@ -135,9 +139,10 @@ public class CatanBoardGameView {
         }
         // Draw vertices
         for (Vertex vertex : board.getVertices()) {
-            Circle visibleCircle = new Circle(vertex.getX(), vertex.getY(), 4); // vertex circle
-            visibleCircle.setFill(Color.BLACK);
-            visibleCircle.setStroke(Color.BLACK);
+            Circle visibleCircle = new Circle(vertex.getX(), vertex.getY(), 10/radius); // vertex circle
+            visibleCircle.setFill(Color.TRANSPARENT);
+            //visibleCircle.setStroke(Color.BLACK);
+            //visibleCircle.setStroke(Color.TRANSPARENT);
             boardGroup.getChildren().add(visibleCircle);
 
             Circle clickableCircle = new Circle(vertex.getX(), vertex.getY(), 4);
@@ -266,7 +271,7 @@ public class CatanBoardGameView {
             }
         });
 
-        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, tradeButton, currentPlayersOnTurn, diceResult);
+        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton,exitButton, tradeButton, currentPlayersOnTurn, diceResult);
         buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
         rollDiceButton.setVisible(false);
 
@@ -367,6 +372,9 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
                 resourceText.setFont(Font.font("Arial", 12));
                 playerBox.getChildren().add(resourceText);
             }
+            Text pointsText = new Text("Victory points: " + player.getplayerScore());
+            pointsText.setFont(Font.font("Arial", 12));
+            playerBox.getChildren().add(pointsText);
 
             leftMenu.getChildren().add(playerBox);
         }
@@ -410,10 +418,10 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
     private static void updateVertexAppearance(Circle circle, Vertex vertex) {
         if (vertex.getOwner() != null) { // If vertex.getOwner() is not null then set color to the owner
             circle.setFill(vertex.getOwner().getColor());
-            circle.setRadius(8);
+            circle.setRadius(16./boardRadius);
         } else {
             circle.setFill(Color.TRANSPARENT);
-            circle.setRadius(4); // Vertices without settlement are smaller
+            circle.setRadius(8./boardRadius); // Vertices without settlement are smaller
         }
     }
 
@@ -511,30 +519,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
 
         return imageView;
     }
-    public static void showButtonNextPlayer() {
-        if (nextTurnButton != null) {
-            nextTurnButton.setVisible(true);
-            nextTurnButton.setManaged(true);
-        }
-    }
-    public static void hideButtonNextPlayer() {
-        if (nextTurnButton != null) {
-            nextTurnButton.setVisible(false);
-            nextTurnButton.setManaged(false);
-        }
-    }
-    public static void showButtonRollDice() {
-        if (rollDiceButton != null) {
-            rollDiceButton.setVisible(true);
-            rollDiceButton.setManaged(true);
-        }
-    }
-    public static void hideButtonRollDice() {
-        if (rollDiceButton != null) {
-            rollDiceButton.setVisible(false);
-            rollDiceButton.setManaged(false);
-        }
-    }
+
 }
 
 

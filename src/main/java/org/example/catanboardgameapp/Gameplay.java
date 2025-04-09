@@ -1,5 +1,6 @@
 package org.example.catanboardgameapp;
 
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ private final List<Player> playerList = new ArrayList<>();
 private int currentPlayerIndex;
 private Player currentPlayer;
 private boolean secondFreeSettelment=false;
+private Robber robber;
 
     public void initializePlayers (int numberOfPlayers) {
         List<Color> colorList = List.of(Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW);
@@ -24,20 +26,6 @@ private boolean secondFreeSettelment=false;
         currentPlayerIndex = 0; // Determines which player starts
         currentPlayer = playerList.get(currentPlayerIndex);
     }
-
-    public void playerTurn () {
-        CatanBoardGameView.showButtonNextPlayer();
-        int dice = rollDice();
-        distributeResource(dice);
-
-        // display dice in catanBoardGameApp
-        // roll dice
-        // get resources
-        // build settelments
-        // next player
-    }
-
-
 
     public Player getCurrentPlayer() {
         return playerList.get(currentPlayerIndex);
@@ -73,7 +61,6 @@ private boolean secondFreeSettelment=false;
 
         currentPlayer = getCurrentPlayer();
     }
-
 
     private boolean isValidSettlementPlacement(Vertex vertex) {
         if (vertex.hasSettlement()) {
@@ -246,10 +233,47 @@ private boolean secondFreeSettelment=false;
     }
     public void distributeResource (int diceNumber) {
         List<Tile> tiles = Board.getTiles();
-        if (diceNumber == 7){
-            //discard metode
-        }
-        else {
+        if (diceNumber == 7){ /*
+            ChoiceDialog<Tile> tileDialog = new ChoiceDialog<>(tiles.get(0), tiles);
+            tileDialog.setTitle("Move Robber");
+            tileDialog.setHeaderText("Select a tile to move the robber to:");
+            tileDialog.setContentText("Tile:");
+
+            Optional<Tile> selectedTile = tileDialog.showAndWait();
+            if (selectedTile.isEmpty()) return;
+
+            Tile newTile = selectedTile.get();
+            robber.moveTo(newTile);
+
+            //Potential victims
+            List<Player> potentialVictims = robber.getPotentialVictims(newTile, getCurrentPlayer());
+
+            if (!potentialVictims.isEmpty()) {
+                List<String> choices = new ArrayList<>();
+                for (Player p : potentialVictims) {
+                    choices.add("Player " + p.getPlayerId());
+                }
+
+                ChoiceDialog<String> victimDialog = new ChoiceDialog<>(choices.get(0), choices);
+                victimDialog.setTitle("Steal Resource:");
+                victimDialog.setHeaderText("Select a victim to steal the resource:");
+                victimDialog.setContentText("Victim:");
+
+                Optional<String> victimChoice = victimDialog.showAndWait();
+                if (victimChoice.isPresent()) {
+                    int victimId = Integer.parseInt(victimChoice.get().split(" ")[1]);
+                    Player victim = potentialVictims.stream()
+                            .filter(p -> p.getPlayerId() == victimId)
+                            .findFirst().orElse(null);
+
+                    if (victim != null) {
+                        stealFromVictim(victim);
+                    }
+                }
+            }
+
+        */
+        }else {
             for (Tile tile : tiles) {
                 if (tile.getTileDiceNumber() == diceNumber) {
                     for (Vertex vertex : tile.getVertices()) {
@@ -278,8 +302,35 @@ private boolean secondFreeSettelment=false;
         return true;
     }
 
+    //Robber
+    public boolean stealFromVictim(Player victim) {
+        String stolenResource = stealRandomCard(victim, getCurrentPlayer());
+        if (stolenResource != null) {
+            System.out.println("Stolen resource: " + stolenResource + " from Player " + victim.getPlayerId());
+            return true;
+        }
+        return false;
+    }
 
-    // Update playerScore by adding 1
+    private String stealRandomCard(Player victim, Player thief) {
+        List<String> availableResources = new ArrayList<>();
+
+        for (Map.Entry<String, Integer> entry : victim.getResources().entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                availableResources.add(entry.getKey());
+            }
+            if (availableResources.isEmpty()) return null;
+        }
+        String stolen = availableResources.get(new Random().nextInt(availableResources.size()));
+        victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
+        thief.getResources().put(stolen, thief.getResources().getOrDefault(stolen, 0) + 1);
+        return stolen;
+    }
+
+
+
+
+// Update playerScore by adding 1
     public void addScore() {currentPlayer.increasePlayerScore();
     }
 
@@ -304,5 +355,10 @@ private boolean secondFreeSettelment=false;
     public List<Player> getPlayerList() {
         return playerList;
     }
+
+    public void setRobber(Robber robber) {
+        this.robber = robber;
+    }
+
 }
 

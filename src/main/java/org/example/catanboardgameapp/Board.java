@@ -209,5 +209,9 @@ public class Board {
         return hexSize;
     }
 
+    public int getRadius() {
+        return radius;
+    }
+
     //Setters
 }
