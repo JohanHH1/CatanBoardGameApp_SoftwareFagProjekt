@@ -12,6 +12,7 @@ public class Player {
     private List<Vertex> settlements;
     private List<Edge> roads;
     private int playerScore;
+    private List<Vertex> cities;
 
     //_____________________________Constructor_____________________________//
     public Player(int playerId, Color color) {
@@ -24,6 +25,7 @@ public class Player {
         this.settlements = new ArrayList<>();
         this.roads = new ArrayList<>();
         this.playerScore = 0;
+        this.cities = new ArrayList<>();
 
         // Initialize each resource count to 0
         resources.put("Brick", 0);
@@ -59,6 +61,9 @@ public class Player {
 
     public List<Vertex> getSettlements() {
         return settlements;
+    }
+    public List<Vertex> getCities() {
+        return cities;
     }
 
     public List<Edge> getRoads() {

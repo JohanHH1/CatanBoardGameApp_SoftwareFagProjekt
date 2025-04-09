@@ -41,6 +41,9 @@ public class MenuView {
                 if (radius < 3) {
                     System.out.println("Board size must be at least 3, try again");
                     return;
+                } else if (radius > 14){
+                    System.out.println("Board size must be at most 14, try again");
+                    return;
                 }
 
                 //Creates new gameveiw from the BoardGame-class and puts it in primaryStage

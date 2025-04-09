@@ -39,6 +39,9 @@ public class Vertex {
     public boolean hasSettlement() {
         return owner != null;
     }
+    public boolean hasCity() {
+        return owner != null;
+    }
 
 
     //___________________GETTERS_________________________

@@ -8,6 +8,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -29,13 +30,20 @@ import javafx.stage.Stage;
 import org.example.catanboardgameapp.*;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
+import java.util.List;
+import java.util.ArrayList;
+import org.w3c.dom.css.Rect;
 
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Optional;
 
+import static org.example.catanboardgameviews.CatanBoardGameView.nextTurnButton;
+import static org.example.catanboardgameviews.CatanBoardGameView.rollDiceButton;
+
 public class CatanBoardGameView {
-    private static Button nextTurnButton;
-    private static Button rollDiceButton;
+    public static Button nextTurnButton;
+    public static Button rollDiceButton;
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
         double sceneWidth = 800;
         double sceneHeight = 600;
@@ -65,8 +73,9 @@ public class CatanBoardGameView {
             // No coloring on 7 (desert)
             if (tile.getTileDiceNumber() != 7) {
                 Text number = new Text(centerX, centerY, String.valueOf(tile.getTileDiceNumber()));
-                number.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+                number.setFont(Font.font("Arial", FontWeight.BOLD, 40./radius)); //18
                 number.setTextAlignment(TextAlignment.CENTER);
+
 
                 // Color 6 and 8 red
                 switch (tile.getTileDiceNumber()) {
@@ -79,7 +88,7 @@ public class CatanBoardGameView {
                 }
                 // Measures largest number so rectangle can be based of this
                 Text sampleNumber = new Text("12");
-                sampleNumber.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+                sampleNumber.setFont(Font.font("Arial", FontWeight.BOLD, 40./radius));
                 Rectangle background = getRectangle(sampleNumber, centerX, centerY);
 
                 // Center the numbers (represented as numbers)
@@ -88,7 +97,6 @@ public class CatanBoardGameView {
                 boardGroup.getChildren().addAll(background, number);
             }
         }
-
         // Edges with click handlers
         for (Edge edge : board.getEdges()) {
             // Create an invisible clickable line (wider for easier clicking)
@@ -114,6 +122,7 @@ public class CatanBoardGameView {
                     visibleLine.setStroke(gameplay.getCurrentPlayer().getColor());
                     visibleLine.setStrokeWidth(4);
                     System.out.println("Road built by player " + gameplay.getCurrentPlayer().getPlayerId());
+                    root.setLeft(createLeftMenu(gameplay));
                 } else {
                     // Red dot if not buildable
                     double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
@@ -140,7 +149,21 @@ public class CatanBoardGameView {
                     vertex.setOwner(gameplay.getCurrentPlayer()); // take vertex and set owner to currentPlayer
                     updateVertexAppearance(visibleCircle, vertex); // update appearance
                     System.out.println("Settlement built by player " + gameplay.getCurrentPlayer().getPlayerId());
-                } else {
+                    root.setLeft(createLeftMenu(gameplay));
+                }
+                else if (gameplay.buildCity(vertex)) {
+                    vertex.setOwner(gameplay.getCurrentPlayer());
+                    boardGroup.getChildren().remove(visibleCircle);
+
+                    Rectangle citySquare = new Rectangle(vertex.getX() - 6, vertex.getY() - 6, 12, 12);
+                    citySquare.setFill(gameplay.getCurrentPlayer().getColor());
+                    citySquare.setStroke(Color.BLACK);
+
+                    boardGroup.getChildren().add(citySquare);
+                    System.out.println("city built");
+                    root.setLeft(createLeftMenu(gameplay));
+                }
+                else {
                     showPlacementError(boardGroup, vertex.getX(), vertex.getY()); // if conditions for building are false
                 }
             });
@@ -156,18 +179,35 @@ public class CatanBoardGameView {
         Button zoomInButton = new Button("+");
         Button zoomOutButton = new Button("-");
         Button exitButton = new Button("Exit");
+        Button tradeButton = new Button("Trade with bank 4:1");
         Text diceResult = new Text("");
+        Text currentPlayersOnTurn = new Text("");
 
         rollDiceButton.setOnAction(e -> {
             int result = gameplay.rollDice();
             diceResult.setText("Dice: " + result);
             gameplay.distributeResource(result);
             root.setLeft(createLeftMenu(gameplay));
+            rollDiceButton.setVisible(false);
+            nextTurnButton.setVisible(true);
         });
 
         nextTurnButton.setOnAction(e -> {
             gameplay.nextPlayerTurn();
-            diceResult.setText("Turn: Player " + gameplay.getCurrentPlayer().getPlayerId());
+            currentPlayersOnTurn.setText("Turn: Player " + gameplay.getCurrentPlayer().getPlayerId());
+            int n = 0;
+            for (Player player : gameplay.getPlayerList()) {
+                n=n+player.getRoads().size();
+
+            }
+            if (n>=(gameplay.getPlayerList().size()*2-1)){
+                rollDiceButton.setVisible(true);
+                nextTurnButton.setVisible(false);
+            }
+            else {
+                rollDiceButton.setVisible(false);
+                nextTurnButton.setVisible(true);
+            }
         });
 
         centerButton.setOnAction(e -> {
@@ -189,6 +229,35 @@ public class CatanBoardGameView {
             boardGroup.setScaleY(scale);
         });
 
+        //Trade with the bank 4-1
+        tradeButton.setOnAction(e -> {
+            List<String> resourceOptions = Arrays.asList("Brick", "Wood","Grain", "Wool", "Ore");
+            ChoiceDialog<String> giveDialog = new ChoiceDialog<>("Brick", resourceOptions);
+            giveDialog.setTitle("Trade with Bank");
+            giveDialog.setHeaderText("Select resource you want to give 4x of:");
+            giveDialog.setContentText("Give:");
+
+            Optional<String> giveResult = giveDialog.showAndWait();
+            if (giveResult.isEmpty()) return;
+            String giveResource = giveResult.get();
+            List<String> receiveOptions = new ArrayList<>(resourceOptions);
+            receiveOptions.remove(giveResource);
+
+            ChoiceDialog<String> receiveDialog = new ChoiceDialog<>(receiveOptions.get(0), receiveOptions);
+            receiveDialog.setTitle("Trade with Bank");
+            receiveDialog.setHeaderText("Select the resource you want to receive 1x:");
+            receiveDialog.setContentText("Receive:");
+
+            Optional<String> receiveResult = receiveDialog.showAndWait();
+            if (receiveResult.isEmpty()) return;
+            String receiveResource = receiveResult.get();
+            if (!gameplay.tradeWithBank(giveResource, receiveResource)) {
+                showTradeError("You don't have enough " + giveResource + " to trade.");
+            } else {
+                root.setLeft(createLeftMenu(gameplay)); // Update left menu
+            }
+        });
+
         exitButton.setOnAction(e -> {
             Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to exit to main menu?", ButtonType.YES, ButtonType.NO);
             Optional<ButtonType> result = alert.showAndWait();
@@ -197,10 +266,9 @@ public class CatanBoardGameView {
             }
         });
 
-        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, exitButton);
+        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, tradeButton, currentPlayersOnTurn, diceResult);
         buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
-        hideButtonNextPlayer();
-        hideButtonRollDice();
+        rollDiceButton.setVisible(false);
 
         root.setTop(buttonBox);
 
@@ -349,6 +417,16 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
         }
     }
 
+   /* private static void updateVertexApperanceCity(Rectangle rectangle, Vertex vertex) {
+        if (vertex.getOwner() != null) { // If vertex.getOwner() is not null then set color to the owner
+            rectangle.setFill(vertex.getOwner().getColor());
+            rectangle.setRadius(8);
+        } else {
+            updateVertexAppearance(Circle circle, Vertex vertex);
+        }
+    }*/
+
+
     private static Rectangle getRectangle(Text sampleNumber, double centerX, double centerY) {
         double maxNumberWidth = sampleNumber.getLayoutBounds().getWidth();
         double maxNumberHeight = sampleNumber.getLayoutBounds().getHeight();
@@ -371,6 +449,14 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
         background.setArcWidth(5);
         background.setArcHeight(5);
         return background;
+    }
+
+    private static void showTradeError(String message) {
+        Alert alert = new Alert(AlertType.ERROR);
+        alert.setTitle("Trade Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     // Creates polygons as tiles based on the vertices in each tile.

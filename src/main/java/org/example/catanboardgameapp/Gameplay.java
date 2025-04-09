@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.*;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
+import static org.example.catanboardgameviews.CatanBoardGameView.*;
+
 public class Gameplay {
 private final List<Player> playerList = new ArrayList<>();
 private int currentPlayerIndex;
@@ -86,6 +88,22 @@ private boolean secondFreeSettelment=false;
         return true;
     }
 
+    private boolean isValidCityPlacement(Vertex vertex) {
+        if (vertex.hasSettlement()) {
+            return true; // settlement already in place at the vertex
+        }
+        // Check if any neighboring vertex already has a settlement
+        for (Vertex neighbor : vertex.getNeighbors()) {
+            if (neighbor.hasSettlement()) {
+                return false; // Settlement too close
+            }
+            if (neighbor.hasCity()) {
+                return false; // Settlement too close
+            }
+        }
+        return true;
+    }
+
     // Checking if a road placement is valid
     private boolean isValidRoadPlacement(Edge edge) {
         if (currentPlayer.getRoads().contains(edge)) {
@@ -138,6 +156,9 @@ private boolean secondFreeSettelment=false;
             return true;
         }
 
+
+
+
         // Normal settlement building (after initial placement)
         // Check if player has required resources
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1) &&
@@ -149,6 +170,29 @@ private boolean secondFreeSettelment=false;
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
+            System.out.println("test om byg");
+            return true;
+        }
+        return false;
+    }
+
+    // Upgrade to city
+    public boolean buildCity(Vertex vertex) {
+        if (!isValidCityPlacement(vertex)) {
+            return false; // Invalid placement
+        }
+
+        // Normal city upgrade
+        // Check if player has required resources
+        if (canRemoveResource("Ore", 3) && canRemoveResource("Grain", 2)) {
+            removeResource("Ore", 3);
+            removeResource("Grain", 2);
+            currentPlayer.getSettlements().remove(vertex);
+            currentPlayer.getCities().add(vertex);
+            vertex.setOwner(currentPlayer);
+            addScore();
+            System.out.println("test om city");
+            System.out.println(currentPlayer.getplayerScore());
             return true;
         }
         return false;
@@ -202,20 +246,36 @@ private boolean secondFreeSettelment=false;
     }
     public void distributeResource (int diceNumber) {
         List<Tile> tiles = Board.getTiles();
-        for (Tile tile : tiles) {
-            if (tile.getTileDiceNumber() == diceNumber) {
-                for (Vertex vertex : tile.getVertices()) {
-                    if (vertex.getOwner() != null) {
-                        String resourceType = tile.getResourcetype().getName();
-                        Player owner = vertex.getOwner();
-                        int currentAmount = owner.getResources().getOrDefault(resourceType, 0);
-                        owner.getResources().put(resourceType, currentAmount + 1);
-                        System.out.println(owner + "gets " + resourceType + " " + currentAmount);
+        if (diceNumber == 7){
+            //discard metode
+        }
+        else {
+            for (Tile tile : tiles) {
+                if (tile.getTileDiceNumber() == diceNumber) {
+                    for (Vertex vertex : tile.getVertices()) {
+                        if (vertex.getOwner() != null) {
+                            String resourceType = tile.getResourcetype().getName();
+                            Player owner = vertex.getOwner();
+                            int currentAmount = owner.getResources().getOrDefault(resourceType, 0);
+                            owner.getResources().put(resourceType, currentAmount + 1);
+                            System.out.println(owner + "gets " + resourceType + " " + currentAmount);
+                        }
                     }
-                }
 
+                }
             }
         }
+    }
+
+    public boolean tradeWithBank(String giveResource, String receiveResource) {
+        if (!canRemoveResource(giveResource, 4)) {
+            return false;
+        }
+
+        removeResource(giveResource,4);
+        addResource(receiveResource, 1);
+        System.out.println("traded 4" + giveResource + "for 1 " + receiveResource);
+        return true;
     }
 
 

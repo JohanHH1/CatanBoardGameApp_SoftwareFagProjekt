@@ -1,6 +1,7 @@
 module org.example.catanboardgameapp {
     requires javafx.controls;
     requires javafx.fxml;
+    requires jdk.xml.dom;
 
     //requires org.controlsfx.controls;
     //requires org.kordamp.bootstrapfx.core;
