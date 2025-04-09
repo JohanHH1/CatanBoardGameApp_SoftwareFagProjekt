@@ -29,6 +29,7 @@ import javafx.stage.Stage;
 import org.example.catanboardgameapp.*;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
+import org.example.controller.GUI;
 
 import java.io.InputStream;
 import java.util.Optional;
@@ -89,9 +90,10 @@ public class CatanBoardGameView {
             }
         }
 
+        GUI controller = new GUI(gameplay, boardGroup);
         // Edges with click handlers
         for (Edge edge : board.getEdges()) {
-            // Create an invisible clickable line (wider for easier clicking)
+            // Creates an invisible clickable line (wider for easier clicking)
             Line clickableLine = new Line(
                     edge.getVertex1().getX(), edge.getVertex1().getY(),
                     edge.getVertex2().getX(), edge.getVertex2().getY()
@@ -99,7 +101,7 @@ public class CatanBoardGameView {
             clickableLine.setStrokeWidth(10); // Wide for easy clicking
             clickableLine.setOpacity(0); // Invisible
 
-            // Create the visible line
+            // visible line
             Line visibleLine = new Line(
                     edge.getVertex1().getX(), edge.getVertex1().getY(),
                     edge.getVertex2().getX(), edge.getVertex2().getY()
@@ -107,8 +109,15 @@ public class CatanBoardGameView {
             visibleLine.setStroke(Color.TRANSPARENT);
             visibleLine.setStrokeWidth(2);
 
+            // Kopplar klick-event till controller/metod
+            clickableLine.setOnMouseClicked(controller.createRoadClickHandler(edge, visibleLine));
+
+            boardGroup.getChildren().addAll(visibleLine, clickableLine);
+
+        }
+
             // click handler
-            clickableLine.setOnMouseClicked(event -> {
+            /*clickableLine.setOnMouseClicked(event -> {
                 if (gameplay.buildRoad(edge)) {
                     // Road was successfully built
                     visibleLine.setStroke(gameplay.getCurrentPlayer().getColor());
@@ -121,10 +130,9 @@ public class CatanBoardGameView {
                     showTemporaryDot(boardGroup, midX, midY, Color.RED);
                     System.out.println("Cannot build road here");
                 }
-            });
-            boardGroup.getChildren().addAll(clickableLine, visibleLine);
-        }
+            });*/
         // Draw vertices
+
         for (Vertex vertex : board.getVertices()) {
             Circle visibleCircle = new Circle(vertex.getX(), vertex.getY(), 4); // vertex circle
             visibleCircle.setFill(Color.BLACK);
@@ -306,7 +314,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
         return leftMenu;
     }
 
-    private static void showTemporaryDot(Group boardGroup, double midX, double midY, Color red) {
+    public static void showTemporaryDot(Group boardGroup, double midX, double midY, Color red) {
         // create red dot
         Circle dot = new Circle(midX, midY, 5, red);
 
