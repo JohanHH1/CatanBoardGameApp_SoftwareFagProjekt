@@ -89,7 +89,7 @@ public class CatanBoardGameView {
                 boardGroup.getChildren().addAll(background, number);
             }
         }
-
+        // New
         GUI controller = new GUI(gameplay, boardGroup);
         // Edges with click handlers
         for (Edge edge : board.getEdges()) {

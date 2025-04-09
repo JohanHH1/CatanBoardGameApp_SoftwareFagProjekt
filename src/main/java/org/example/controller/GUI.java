@@ -2,6 +2,7 @@ package org.example.controller;
 
 import java.util.*;
 import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -9,6 +10,7 @@ import javafx.scene.shape.Line;
 import org.example.catanboardgameapp.Edge;
 import org.example.catanboardgameapp.Gameplay;
 
+import org.example.catanboardgameapp.Vertex;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
 public class GUI {
@@ -27,8 +29,9 @@ public class GUI {
                 visibleLine.setStrokeWidth(4);
                 System.out.println("Road built by player " + gameplay.getCurrentPlayer().getPlayerId());
             } else {
-                double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2 + boardGroup.getTranslateX();;
-                double midY = (edge.getVertex2().getY() + edge.getVertex2().getY()) / 2 + boardGroup.getTranslateY();;
+                double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
+                double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
+
                 CatanBoardGameView.showTemporaryDot(boardGroup, midX, midY, Color.RED);
                 System.out.println("Cannot build road here");
             }
