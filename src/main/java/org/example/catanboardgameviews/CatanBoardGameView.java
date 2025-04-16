@@ -1,6 +1,6 @@
 package org.example.catanboardgameviews;
 
-import javafx.geometry.Bounds;
+
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -10,7 +10,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -29,7 +28,7 @@ import javafx.stage.Stage;
 import org.example.catanboardgameapp.*;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
-import org.example.controller.GUI;
+import org.example.controller.CatanController;
 
 import java.io.InputStream;
 import java.util.Optional;
@@ -46,8 +45,9 @@ public class CatanBoardGameView {
         Group boardGroup = new Group();
         BorderPane root = new BorderPane();
 
-        // Create initial left menu
-        VBox leftMenu = createLeftMenu(gameplay);
+        LeftSideMenuView leftMenuView = new LeftSideMenuView();
+        VBox leftMenu = leftMenuView.createLeftMenu(gameplay);
+
         root.setLeft(leftMenu);
 
         //Draw tiles
@@ -90,7 +90,7 @@ public class CatanBoardGameView {
             }
         }
         // New
-        GUI controller = new GUI(gameplay, boardGroup);
+        CatanController controller = new CatanController(gameplay, boardGroup);
         // Edges with click handlers
         for (Edge edge : board.getEdges()) {
             // Creates an invisible clickable line (wider for easier clicking)
@@ -109,29 +109,12 @@ public class CatanBoardGameView {
             visibleLine.setStroke(Color.TRANSPARENT);
             visibleLine.setStrokeWidth(2);
 
-            // Kopplar klick-event till controller/metod
+            // Connects click-event with controller method
             clickableLine.setOnMouseClicked(controller.createRoadClickHandler(edge, visibleLine));
 
             boardGroup.getChildren().addAll(visibleLine, clickableLine);
 
         }
-
-            // click handler
-            /*clickableLine.setOnMouseClicked(event -> {
-                if (gameplay.buildRoad(edge)) {
-                    // Road was successfully built
-                    visibleLine.setStroke(gameplay.getCurrentPlayer().getColor());
-                    visibleLine.setStrokeWidth(4);
-                    System.out.println("Road built by player " + gameplay.getCurrentPlayer().getPlayerId());
-                } else {
-                    // Red dot if not buildable
-                    double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
-                    double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
-                    showTemporaryDot(boardGroup, midX, midY, Color.RED);
-                    System.out.println("Cannot build road here");
-                }
-            });*/
-        // Draw vertices
 
         for (Vertex vertex : board.getVertices()) {
             Circle visibleCircle = new Circle(vertex.getX(), vertex.getY(), 4); // vertex circle
@@ -143,15 +126,8 @@ public class CatanBoardGameView {
             clickableCircle.setFill(Color.TRANSPARENT);
             clickableCircle.setStroke(Color.TRANSPARENT);
 
-            clickableCircle.setOnMouseClicked(event -> {
-                if (gameplay.buildSettlement(vertex)) { // if conditions for building are true
-                    vertex.setOwner(gameplay.getCurrentPlayer()); // take vertex and set owner to currentPlayer
-                    updateVertexAppearance(visibleCircle, vertex); // update appearance
-                    System.out.println("Settlement built by player " + gameplay.getCurrentPlayer().getPlayerId());
-                } else {
-                    showPlacementError(boardGroup, vertex.getX(), vertex.getY()); // if conditions for building are false
-                }
-            });
+            clickableCircle.setOnMouseClicked(controller.createSettlementClickHandler(visibleCircle, vertex));
+
             boardGroup.getChildren().addAll(clickableCircle); // show chosen vertex
         }
 
@@ -170,7 +146,7 @@ public class CatanBoardGameView {
             int result = gameplay.rollDice();
             diceResult.setText("Dice: " + result);
             gameplay.distributeResource(result);
-            root.setLeft(createLeftMenu(gameplay));
+            root.setLeft(leftMenuView.createLeftMenu(gameplay));
         });
 
         nextTurnButton.setOnAction(e -> {
@@ -283,37 +259,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
         group.setScaleX(Math.max(0.5, Math.min(scale, 3.0)));
         group.setScaleY(Math.max(0.5, Math.min(scale, 3.0)));
     }
-
-    private static VBox createLeftMenu(Gameplay gameplay) {
-        VBox leftMenu = new VBox(10);
-        leftMenu.setStyle("-fx-padding: 10; -fx-background-color: #e0e0e0; -fx-min-width: 200;");
-
-        Text title = new Text("Player Stats");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        leftMenu.getChildren().add(title);
-
-        for (Player player : gameplay.getPlayerList()) {
-            VBox playerBox = new VBox(5);
-
-            Text playerName = new Text("Player " + player.getPlayerId());
-            playerName.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-            playerName.setFill(player.getColor());
-
-            playerBox.getChildren().add(playerName);
-
-            for (String resourceName : player.getResources().keySet()) {
-                int count = player.getResources().get(resourceName);
-                Text resourceText = new Text(resourceName + ": " + count);
-                resourceText.setFont(Font.font("Arial", 12));
-                playerBox.getChildren().add(resourceText);
-            }
-
-            leftMenu.getChildren().add(playerBox);
-        }
-
-        return leftMenu;
-    }
-
+    
     public static void showTemporaryDot(Group boardGroup, double midX, double midY, Color red) {
         // create red dot
         Circle dot = new Circle(midX, midY, 5, red);
@@ -327,7 +273,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
         delay.play();
     }
 
-    private static void showPlacementError(Group boardGroup, double x, double y) {
+    public static void showPlacementError(Group boardGroup, double x, double y) {
         Line line1 = new Line(x-5, y-5, x+5, y+5);
         Line line2 = new Line(x-5, y+5, x+5, y-5);
         line1.setStroke(Color.RED);
@@ -347,7 +293,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
         delay.play();
     }
 
-    private static void updateVertexAppearance(Circle circle, Vertex vertex) {
+    public static void updateVertexAppearance(Circle circle, Vertex vertex) {
         if (vertex.getOwner() != null) { // If vertex.getOwner() is not null then set color to the owner
             circle.setFill(vertex.getOwner().getColor());
             circle.setRadius(8);
@@ -456,6 +402,16 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
             rollDiceButton.setVisible(false);
             rollDiceButton.setManaged(false);
         }
+    }
+
+    public static void updateRoadAppearance(Line visibleLine, Player currentPlayer) {
+        visibleLine.setStroke(currentPlayer.getColor());
+        visibleLine.setStrokeWidth(4);
+    }
+
+    public static void showBuildErrorDot(Group boardGroup, Point2D mid) {
+        showTemporaryDot(boardGroup, mid.getX(), mid.getY(), Color.RED);
+        System.out.println("dont");
     }
 }
 
