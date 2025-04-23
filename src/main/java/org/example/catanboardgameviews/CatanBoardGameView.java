@@ -28,16 +28,18 @@ import javafx.stage.Stage;
 import org.example.catanboardgameapp.*;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
+
 import java.util.List;
 import java.util.ArrayList;
 
 import org.example.controller.BuildController;
 import org.example.controller.TradeController;
 import org.example.controller.TurnController;
+import java.util.*;
+
+import org.w3c.dom.css.Rect;
 
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Optional;
 
 public class CatanBoardGameView {
     public static Button nextTurnButton;
@@ -49,8 +51,19 @@ public class CatanBoardGameView {
 
         // Group root = new Group();
         Board board = new Board(radius, sceneWidth, sceneHeight);
+
         //Draw tiles
         Group boardGroup = createBoardTiles(board, radius);
+
+        // Desert tile
+        Tile desertTile = board.getTiles().stream()
+                .filter(t -> t.getTileDiceNumber() == 7)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No desert tile found"));
+
+        // Initialize robber
+        gameplay.setRobber(new Robber(desertTile));
+
         BorderPane root = new BorderPane();
 
 
@@ -83,7 +96,11 @@ public class CatanBoardGameView {
         rollDiceButton.setOnAction(e -> {
             int result = gameplay.rollDice();
             diceResult.setText("Dice: " + result);
-            gameplay.distributeResource(result);
+            if (result == 7) {
+                showRobberTargets(boardGroup, board, gameplay);
+            } else {
+                gameplay.distributeResource(result);
+            }
             root.setLeft(createLeftMenu(gameplay));
             rollDiceButton.setVisible(false);
             nextTurnButton.setVisible(true);
@@ -181,6 +198,64 @@ public class CatanBoardGameView {
 
         return scene;
     }
+    public static void showRobberTargets(Group boardGroup, Board board, Gameplay gameplay) {
+        List<Circle> robberTargetCircles = new ArrayList<>();
+
+        for (Tile tile : board.getTiles()) {
+            if (tile.getTileDiceNumber() == 7) continue; // skip desert
+
+            Point2D center = tile.getCenter();
+            double circleX = center.getX();
+            double circleY = center.getY();
+
+            Circle circle = new Circle(circleX, circleY, 50 / boardRadius, Color.TRANSPARENT);
+            circle.setStroke(Color.BLACK);
+            circle.setStrokeWidth(5);
+
+            circle.setOnMouseClicked(e -> {
+                // Remove all target circles
+                for (Circle c : robberTargetCircles) {
+                    boardGroup.getChildren().remove(c);
+                }
+
+                // Mark the selected tile with a black circle
+                Circle blackDot = new Circle(circleX, circleY, 50 / boardRadius, Color.TRANSPARENT);
+                blackDot.setStroke(Color.BLACK);
+                blackDot.setStrokeWidth(5);
+                boardGroup.getChildren().add(blackDot);
+
+                // Move robber
+                Robber robber = gameplay.getRobber();
+                robber.moveTo(tile);
+
+                //Potential victims
+                List<Player> victims = robber.getPotentialVictims(tile, gameplay.getCurrentPlayer());
+
+                if (victims.isEmpty()) {
+                    System.out.println("No players to steal from");
+                    return;
+                }
+                ChoiceDialog<Player> dialog = new ChoiceDialog<>(victims.get(0), victims);
+                dialog.setTitle("Choose a player to steal from");
+                dialog.setHeaderText("Select a player with a city/settlement on this tile:");
+                dialog.setContentText("Player:");
+
+                Optional<Player> result = dialog.showAndWait();
+                result.ifPresent(victim -> {
+                    boolean success = gameplay.stealResourceFrom(victim);
+                    if (!success) {
+                        System.out.println("Failed to steal resource from " + victim);
+                    }
+                    VBox newLeftMenu = createLeftMenu(gameplay);
+                    ((BorderPane) boardGroup.getScene().getRoot()).setLeft(newLeftMenu);
+
+                });
+            });
+
+            boardGroup.getChildren().add(circle);
+            robberTargetCircles.add(circle);
+        }
+    }
 
     private static Group createBoardTiles(Board board, int radius) {
         Group boardGroup = new Group();
@@ -246,6 +321,7 @@ public class CatanBoardGameView {
     // Metod för att skapa och hantera användarklick på vägar och hörn
 
 private static void centerBoard(Board board, Group boardGroup, double screenWidth, double screenHeight) {
+
         Tile centerTile = board.getTiles().get((board.getTiles().size() - 1) / 2);
         Point2D centerPoint = centerTile.getCenter();
         double centerX = (screenWidth - 200) / 2 - centerPoint.getX();

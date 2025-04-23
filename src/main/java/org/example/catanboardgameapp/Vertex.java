@@ -5,6 +5,7 @@ import java.util.List;
 
 public class Vertex {
     private Player owner = null;
+    private String typeOf = null;
     private double x;
     private double y;
 
@@ -25,6 +26,12 @@ public class Vertex {
             neighbors.add(neighbor);
         }
     }
+    public void makeSettlement(){
+        this.typeOf = "Settlement";
+    }
+    public void makeCity(){
+        this.typeOf = "City";
+    }
 
     // Get all neighboring vertices
     public List<Vertex> getNeighbors() {
@@ -40,6 +47,7 @@ public class Vertex {
         return owner != null;
     }
     public boolean hasCity() {
+
         return owner != null;
     }
 
@@ -55,7 +63,10 @@ public class Vertex {
         return adjacentTiles;
     }
     public Player getOwner() {return owner;}
+    public String getTypeOf() {
+        return typeOf;
+    }
 
-
-    public void setOwner(Player owner) {this.owner = owner;}
+    public void setOwner(Player owner) {
+        this.owner = owner;}
 }

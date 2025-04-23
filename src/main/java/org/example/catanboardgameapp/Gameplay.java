@@ -1,13 +1,9 @@
 package org.example.catanboardgameapp;
 
-import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 import java.util.*;
-import org.example.catanboardgameviews.CatanBoardGameView;
-
-import static org.example.catanboardgameviews.CatanBoardGameView.*;
 
 public class Gameplay {
 private final List<Player> playerList = new ArrayList<>();
@@ -75,26 +71,19 @@ private Robber robber;
         return true;
     }
 
-    private boolean isValidCityPlacement(Vertex vertex) {
-        if (vertex.hasSettlement()) {
-            return true; // settlement already in place at the vertex
-        }
-        // Check if any neighboring vertex already has a settlement
-        for (Vertex neighbor : vertex.getNeighbors()) {
-            if (neighbor.hasSettlement()) {
-                return false; // Settlement too close
-            }
-            if (neighbor.hasCity()) {
-                return false; // Settlement too close
-            }
+    private boolean isNotValidCityPlacement(Vertex vertex) {
+        if (vertex.hasSettlement() && vertex.getOwner()==currentPlayer) {
+            return false; // settlement already in place at the vertex
         }
         return true;
     }
 
     // Checking if a road placement is valid
     private boolean isValidRoadPlacement(Edge edge) {
-        if (currentPlayer.getRoads().contains(edge)) {
-            return false; // Prevent duplicate roads
+        for (Player player : playerList) {
+            if (player.getRoads().contains(edge)){
+                return false;
+            }
         }
         // A road must be connected to an existing road or settlement owned by the player
         return currentPlayer.getSettlements().contains(edge.getVertex1()) || currentPlayer.getSettlements().contains(edge.getVertex2()) ||
@@ -135,16 +124,21 @@ private Robber robber;
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
+            vertex.makeSettlement();
             return true;
         } else if (secondFreeSettelment && currentPlayer.getSettlements().size() < 2) {
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
+
+            for (Tile tile : vertex.getAdjacentTiles()){
+                if (!tile.getResourcetype().getName().equals("Desert")){
+                int currentAmount = currentPlayer.getResources().getOrDefault(tile.getResourcetype().getName(), 0);
+                currentPlayer.getResources().put(tile.getResourcetype().getName(),currentAmount  + 1);
+            }}
+            vertex.makeSettlement();
             return true;
         }
-
-
-
 
         // Normal settlement building (after initial placement)
         // Check if player has required resources
@@ -157,7 +151,7 @@ private Robber robber;
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
-            System.out.println("test om byg");
+            vertex.makeSettlement();
             return true;
         }
         return false;
@@ -165,10 +159,9 @@ private Robber robber;
 
     // Upgrade to city
     public boolean buildCity(Vertex vertex) {
-        if (!isValidCityPlacement(vertex)) {
+        if (isNotValidCityPlacement(vertex)) {
             return false; // Invalid placement
         }
-
         // Normal city upgrade
         // Check if player has required resources
         if (canRemoveResource("Ore", 3) && canRemoveResource("Grain", 2)) {
@@ -178,7 +171,7 @@ private Robber robber;
             currentPlayer.getCities().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
-            System.out.println("test om city");
+            vertex.makeCity();
             System.out.println(currentPlayer.getplayerScore());
             return true;
         }
@@ -233,46 +226,7 @@ private Robber robber;
     }
     public void distributeResource (int diceNumber) {
         List<Tile> tiles = Board.getTiles();
-        if (diceNumber == 7){ /*
-            ChoiceDialog<Tile> tileDialog = new ChoiceDialog<>(tiles.get(0), tiles);
-            tileDialog.setTitle("Move Robber");
-            tileDialog.setHeaderText("Select a tile to move the robber to:");
-            tileDialog.setContentText("Tile:");
-
-            Optional<Tile> selectedTile = tileDialog.showAndWait();
-            if (selectedTile.isEmpty()) return;
-
-            Tile newTile = selectedTile.get();
-            robber.moveTo(newTile);
-
-            //Potential victims
-            List<Player> potentialVictims = robber.getPotentialVictims(newTile, getCurrentPlayer());
-
-            if (!potentialVictims.isEmpty()) {
-                List<String> choices = new ArrayList<>();
-                for (Player p : potentialVictims) {
-                    choices.add("Player " + p.getPlayerId());
-                }
-
-                ChoiceDialog<String> victimDialog = new ChoiceDialog<>(choices.get(0), choices);
-                victimDialog.setTitle("Steal Resource:");
-                victimDialog.setHeaderText("Select a victim to steal the resource:");
-                victimDialog.setContentText("Victim:");
-
-                Optional<String> victimChoice = victimDialog.showAndWait();
-                if (victimChoice.isPresent()) {
-                    int victimId = Integer.parseInt(victimChoice.get().split(" ")[1]);
-                    Player victim = potentialVictims.stream()
-                            .filter(p -> p.getPlayerId() == victimId)
-                            .findFirst().orElse(null);
-
-                    if (victim != null) {
-                        stealFromVictim(victim);
-                    }
-                }
-            }
-
-        */
+        if (diceNumber == 7){return;
         }else {
             for (Tile tile : tiles) {
                 if (tile.getTileDiceNumber() == diceNumber) {
@@ -281,7 +235,14 @@ private Robber robber;
                             String resourceType = tile.getResourcetype().getName();
                             Player owner = vertex.getOwner();
                             int currentAmount = owner.getResources().getOrDefault(resourceType, 0);
-                            owner.getResources().put(resourceType, currentAmount + 1);
+                            System.out.println(vertex.hasCity() +" is here");
+                            if (vertex.getTypeOf().equals("City")) {
+                                System.out.println("a city has been rolled");
+                                owner.getResources().put(resourceType, currentAmount + 2);
+                            } else {
+                                System.out.println("a settlement has been rolled");
+                                owner.getResources().put(resourceType, currentAmount + 1);
+                            }
                             System.out.println(owner + "gets " + resourceType + " " + currentAmount);
                         }
                     }
@@ -301,33 +262,6 @@ private Robber robber;
         System.out.println("traded 4" + giveResource + "for 1 " + receiveResource);
         return true;
     }
-
-    //Robber
-    public boolean stealFromVictim(Player victim) {
-        String stolenResource = stealRandomCard(victim, getCurrentPlayer());
-        if (stolenResource != null) {
-            System.out.println("Stolen resource: " + stolenResource + " from Player " + victim.getPlayerId());
-            return true;
-        }
-        return false;
-    }
-
-    private String stealRandomCard(Player victim, Player thief) {
-        List<String> availableResources = new ArrayList<>();
-
-        for (Map.Entry<String, Integer> entry : victim.getResources().entrySet()) {
-            for (int i = 0; i < entry.getValue(); i++) {
-                availableResources.add(entry.getKey());
-            }
-            if (availableResources.isEmpty()) return null;
-        }
-        String stolen = availableResources.get(new Random().nextInt(availableResources.size()));
-        victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
-        thief.getResources().put(stolen, thief.getResources().getOrDefault(stolen, 0) + 1);
-        return stolen;
-    }
-
-
 
 
 // Update playerScore by adding 1
@@ -356,9 +290,39 @@ private Robber robber;
         return playerList;
     }
 
+    public boolean stealResourceFrom(Player victim) {
+        Map<String, Integer> victimResources = victim.getResources();
+        List<String> availableResources = new ArrayList<>();
+
+        for (Map.Entry<String, Integer> entry : victimResources.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                availableResources.add(entry.getKey());
+            }
+        }
+
+        if (availableResources.isEmpty()) {
+            return false;
+        }
+        Collections.shuffle(availableResources);
+        String stolenResource = availableResources.get(0);
+
+        //transfer resource
+        victimResources.put(stolenResource, victimResources.get(stolenResource) - 1);
+        getCurrentPlayer().getResources().put(stolenResource, getCurrentPlayer().getResources().getOrDefault(stolenResource, 0) + 1);
+        System.out.println("Player " + getCurrentPlayer().getPlayerId() + " stole 1 " + stolenResource + " from Player " + victim.getPlayerId());
+        return true;
+    }
+
+    public void initializeRobber(Tile desertTile) {
+        this.robber = new Robber(desertTile);
+    }
+
     public void setRobber(Robber robber) {
         this.robber = robber;
     }
 
+    public Robber getRobber() {
+        return robber;
+    }
 }
 
