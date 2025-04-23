@@ -233,46 +233,7 @@ private Robber robber;
     }
     public void distributeResource (int diceNumber) {
         List<Tile> tiles = Board.getTiles();
-        if (diceNumber == 7){ /*
-            ChoiceDialog<Tile> tileDialog = new ChoiceDialog<>(tiles.get(0), tiles);
-            tileDialog.setTitle("Move Robber");
-            tileDialog.setHeaderText("Select a tile to move the robber to:");
-            tileDialog.setContentText("Tile:");
-
-            Optional<Tile> selectedTile = tileDialog.showAndWait();
-            if (selectedTile.isEmpty()) return;
-
-            Tile newTile = selectedTile.get();
-            robber.moveTo(newTile);
-
-            //Potential victims
-            List<Player> potentialVictims = robber.getPotentialVictims(newTile, getCurrentPlayer());
-
-            if (!potentialVictims.isEmpty()) {
-                List<String> choices = new ArrayList<>();
-                for (Player p : potentialVictims) {
-                    choices.add("Player " + p.getPlayerId());
-                }
-
-                ChoiceDialog<String> victimDialog = new ChoiceDialog<>(choices.get(0), choices);
-                victimDialog.setTitle("Steal Resource:");
-                victimDialog.setHeaderText("Select a victim to steal the resource:");
-                victimDialog.setContentText("Victim:");
-
-                Optional<String> victimChoice = victimDialog.showAndWait();
-                if (victimChoice.isPresent()) {
-                    int victimId = Integer.parseInt(victimChoice.get().split(" ")[1]);
-                    Player victim = potentialVictims.stream()
-                            .filter(p -> p.getPlayerId() == victimId)
-                            .findFirst().orElse(null);
-
-                    if (victim != null) {
-                        stealFromVictim(victim);
-                    }
-                }
-            }
-
-        */
+        if (diceNumber == 7){return;
         }else {
             for (Tile tile : tiles) {
                 if (tile.getTileDiceNumber() == diceNumber) {
@@ -300,31 +261,6 @@ private Robber robber;
         addResource(receiveResource, 1);
         System.out.println("traded 4" + giveResource + "for 1 " + receiveResource);
         return true;
-    }
-
-    //Robber
-    public boolean stealFromVictim(Player victim) {
-        String stolenResource = stealRandomCard(victim, getCurrentPlayer());
-        if (stolenResource != null) {
-            System.out.println("Stolen resource: " + stolenResource + " from Player " + victim.getPlayerId());
-            return true;
-        }
-        return false;
-    }
-
-    private String stealRandomCard(Player victim, Player thief) {
-        List<String> availableResources = new ArrayList<>();
-
-        for (Map.Entry<String, Integer> entry : victim.getResources().entrySet()) {
-            for (int i = 0; i < entry.getValue(); i++) {
-                availableResources.add(entry.getKey());
-            }
-            if (availableResources.isEmpty()) return null;
-        }
-        String stolen = availableResources.get(new Random().nextInt(availableResources.size()));
-        victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
-        thief.getResources().put(stolen, thief.getResources().getOrDefault(stolen, 0) + 1);
-        return stolen;
     }
 
 
