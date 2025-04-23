@@ -1,13 +1,9 @@
 package org.example.catanboardgameapp;
 
-import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 import java.util.*;
-import org.example.catanboardgameviews.CatanBoardGameView;
-
-import static org.example.catanboardgameviews.CatanBoardGameView.*;
 
 public class Gameplay {
 private final List<Player> playerList = new ArrayList<>();
@@ -75,18 +71,9 @@ private Robber robber;
         return true;
     }
 
-    private boolean isValidCityPlacement(Vertex vertex) {
-        if (vertex.hasSettlement()) {
-            return true; // settlement already in place at the vertex
-        }
-        // Check if any neighboring vertex already has a settlement
-        for (Vertex neighbor : vertex.getNeighbors()) {
-            if (neighbor.hasSettlement()) {
-                return false; // Settlement too close
-            }
-            if (neighbor.hasCity()) {
-                return false; // Settlement too close
-            }
+    private boolean isNotValidCityPlacement(Vertex vertex) {
+        if (vertex.hasSettlement() && vertex.getOwner()==currentPlayer) {
+            return false; // settlement already in place at the vertex
         }
         return true;
     }
@@ -135,16 +122,15 @@ private Robber robber;
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
+            vertex.makeSettlement();
             return true;
         } else if (secondFreeSettelment && currentPlayer.getSettlements().size() < 2) {
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
+            vertex.makeSettlement();
             return true;
         }
-
-
-
 
         // Normal settlement building (after initial placement)
         // Check if player has required resources
@@ -157,7 +143,7 @@ private Robber robber;
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
-            System.out.println("test om byg");
+            vertex.makeSettlement();
             return true;
         }
         return false;
@@ -165,10 +151,9 @@ private Robber robber;
 
     // Upgrade to city
     public boolean buildCity(Vertex vertex) {
-        if (!isValidCityPlacement(vertex)) {
+        if (isNotValidCityPlacement(vertex)) {
             return false; // Invalid placement
         }
-
         // Normal city upgrade
         // Check if player has required resources
         if (canRemoveResource("Ore", 3) && canRemoveResource("Grain", 2)) {
@@ -178,7 +163,7 @@ private Robber robber;
             currentPlayer.getCities().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
-            System.out.println("test om city");
+            vertex.makeCity();
             System.out.println(currentPlayer.getplayerScore());
             return true;
         }
@@ -281,7 +266,14 @@ private Robber robber;
                             String resourceType = tile.getResourcetype().getName();
                             Player owner = vertex.getOwner();
                             int currentAmount = owner.getResources().getOrDefault(resourceType, 0);
-                            owner.getResources().put(resourceType, currentAmount + 1);
+                            System.out.println(vertex.hasCity() +" is here");
+                            if (vertex.getTypeOf().equals("City")) {
+                                System.out.println("a city has been rolled");
+                                owner.getResources().put(resourceType, currentAmount + 2);
+                            } else {
+                                System.out.println("a settlement has been rolled");
+                                owner.getResources().put(resourceType, currentAmount + 1);
+                            }
                             System.out.println(owner + "gets " + resourceType + " " + currentAmount);
                         }
                     }

@@ -84,6 +84,7 @@ public class Player {
                 ", resources=" + resources +
                 ", settlements=" + settlements.size() +
                 ", roads=" + roads.size() +
+                ", cities=" + cities.size() +
                 '}';
     }
 
