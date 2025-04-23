@@ -290,9 +290,39 @@ private Robber robber;
         return playerList;
     }
 
+    public boolean stealResourceFrom(Player victim) {
+        Map<String, Integer> victimResources = victim.getResources();
+        List<String> availableResources = new ArrayList<>();
+
+        for (Map.Entry<String, Integer> entry : victimResources.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                availableResources.add(entry.getKey());
+            }
+        }
+
+        if (availableResources.isEmpty()) {
+            return false;
+        }
+        Collections.shuffle(availableResources);
+        String stolenResource = availableResources.get(0);
+
+        //transfer resource
+        victimResources.put(stolenResource, victimResources.get(stolenResource) - 1);
+        getCurrentPlayer().getResources().put(stolenResource, getCurrentPlayer().getResources().getOrDefault(stolenResource, 0) + 1);
+        System.out.println("Player " + getCurrentPlayer().getPlayerId() + " stole 1 " + stolenResource + " from Player " + victim.getPlayerId());
+        return true;
+    }
+
+    public void initializeRobber(Tile desertTile) {
+        this.robber = new Robber(desertTile);
+    }
+
     public void setRobber(Robber robber) {
         this.robber = robber;
     }
 
+    public Robber getRobber() {
+        return robber;
+    }
 }
 

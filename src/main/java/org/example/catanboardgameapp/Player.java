@@ -77,15 +77,14 @@ public class Player {
     //_________________________toString method_________________________________
     @Override
     public String toString() {
-        return "Player{" +
-                "id=" + playerId +
+        return "Player " + playerId;
+                /*"id=" + playerId +
                 ", color=" + color +
                 ", playerScore=" + playerScore +
                 ", resources=" + resources +
                 ", settlements=" + settlements.size() +
                 ", roads=" + roads.size() +
-                ", cities=" + cities.size() +
-                '}';
+                '}';*/
     }
 
 }
