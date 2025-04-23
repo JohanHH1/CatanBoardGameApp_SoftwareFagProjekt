@@ -148,7 +148,7 @@ public class CatanBoardGameView {
             Circle clickableCircle = new Circle(vertex.getX(), vertex.getY(), 4);
             clickableCircle.setFill(Color.TRANSPARENT);
             clickableCircle.setStroke(Color.TRANSPARENT);
- ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
             clickableCircle.setOnMouseClicked(event -> {
                 if (gameplay.buildSettlement(vertex)) { // if conditions for building are true
                     vertex.setOwner(gameplay.getCurrentPlayer()); // take vertex and set owner to currentPlayer

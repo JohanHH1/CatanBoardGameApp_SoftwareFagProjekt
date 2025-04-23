@@ -80,8 +80,10 @@ private Robber robber;
 
     // Checking if a road placement is valid
     private boolean isValidRoadPlacement(Edge edge) {
-        if (currentPlayer.getRoads().contains(edge)) {
-            return false; // Prevent duplicate roads
+        for (Player player : playerList) {
+            if (player.getRoads().contains(edge)){
+                return false;
+            }
         }
         // A road must be connected to an existing road or settlement owned by the player
         return currentPlayer.getSettlements().contains(edge.getVertex1()) || currentPlayer.getSettlements().contains(edge.getVertex2()) ||
@@ -128,6 +130,12 @@ private Robber robber;
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
+
+            for (Tile tile : vertex.getAdjacentTiles()){
+                if (!tile.getResourcetype().getName().equals("Desert")){
+                int currentAmount = currentPlayer.getResources().getOrDefault(tile.getResourcetype().getName(), 0);
+                currentPlayer.getResources().put(tile.getResourcetype().getName(),currentAmount  + 1);
+            }}
             vertex.makeSettlement();
             return true;
         }
@@ -254,8 +262,6 @@ private Robber robber;
         System.out.println("traded 4" + giveResource + "for 1 " + receiveResource);
         return true;
     }
-
-
 
 
 // Update playerScore by adding 1
