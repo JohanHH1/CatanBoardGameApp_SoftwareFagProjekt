@@ -136,6 +136,7 @@ private Robber robber;
                 int currentAmount = currentPlayer.getResources().getOrDefault(tile.getResourcetype().getName(), 0);
                 currentPlayer.getResources().put(tile.getResourcetype().getName(),currentAmount  + 1);
             }}
+            currentPlayer.setSecondSettlement(vertex);
             vertex.makeSettlement();
             return true;
         }
@@ -199,7 +200,15 @@ private Robber robber;
             }
             currentPlayer.getRoads().add(edge);
             return true;
-        } else if (secondFreeSettelment && currentPlayer.getRoads().size() < 2) {
+        }  else if (secondFreeSettelment && currentPlayer.getRoads().size() < 2) {
+        // Only allow the second road if it's connected to the second settlement
+        Vertex secondSettlement = currentPlayer.getSecondSettlement();
+        if (!edge.isConnectedTo(secondSettlement)) {
+            return false;
+        }
+        currentPlayer.getRoads().add(edge);
+        return true;
+    } else if (secondFreeSettelment && currentPlayer.getRoads().size() < 3) {
             // For initial placement, road must be connected to one of the player's settlements
             boolean connectedToSettlement = false;
             for (Vertex settlement : currentPlayer.getSettlements()) {

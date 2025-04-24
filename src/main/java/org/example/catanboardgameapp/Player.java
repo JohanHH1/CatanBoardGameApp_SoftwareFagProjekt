@@ -13,6 +13,7 @@ public class Player {
     private List<Edge> roads;
     private int playerScore;
     private List<Vertex> cities;
+    private Vertex secondSettlment;
 
     //_____________________________Constructor_____________________________//
     public Player(int playerId, Color color) {
@@ -73,6 +74,10 @@ public class Player {
     public int getplayerScore() {
         return playerScore;
     }
+    public void setSecondSettlement(Vertex secondSettlement) {
+        this.secondSettlment = secondSettlement;
+    }
+    public Vertex getSecondSettlement() {return secondSettlment;}
 
     //_________________________toString method_________________________________
     @Override
