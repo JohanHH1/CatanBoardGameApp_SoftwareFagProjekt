@@ -235,10 +235,11 @@ private Robber robber;
     }
     public void distributeResource (int diceNumber) {
         List<Tile> tiles = Board.getTiles();
-        if (diceNumber == 7){return;
-        }else {
+        if (diceNumber == 7) return;
+
+        Tile robberTile = robber.getCurrentTile();
             for (Tile tile : tiles) {
-                if (tile.getTileDiceNumber() == diceNumber) {
+                if (tile.getTileDiceNumber() == diceNumber && tile != robberTile) {
                     for (Vertex vertex : tile.getVertices()) {
                         if (vertex.getOwner() != null) {
                             String resourceType = tile.getResourcetype().getName();
@@ -259,7 +260,7 @@ private Robber robber;
                 }
             }
         }
-    }
+
 
     public boolean tradeWithBank(String giveResource, String receiveResource) {
         if (!canRemoveResource(giveResource, 4)) {
@@ -333,5 +334,6 @@ private Robber robber;
     public Robber getRobber() {
         return robber;
     }
+
 }
 

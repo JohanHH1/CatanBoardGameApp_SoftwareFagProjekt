@@ -45,6 +45,8 @@ public class CatanBoardGameView {
     public static Button nextTurnButton;
     public static Button rollDiceButton;
     public static int boardRadius;
+    private static Circle currentRobberCircle = null;
+
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
         double sceneWidth = 800;
         double sceneHeight = 600;
@@ -97,6 +99,7 @@ public class CatanBoardGameView {
             int result = gameplay.rollDice();
             diceResult.setText("Dice: " + result);
             if (result == 7) {
+
                 showRobberTargets(boardGroup, board, gameplay);
             } else {
                 gameplay.distributeResource(result);
@@ -218,15 +221,22 @@ public class CatanBoardGameView {
                     boardGroup.getChildren().remove(c);
                 }
 
+                // Remove previous robber indicator if it exists
+                if (currentRobberCircle != null) {
+                    boardGroup.getChildren().remove(currentRobberCircle);
+                }
+
                 // Mark the selected tile with a black circle
                 Circle blackDot = new Circle(circleX, circleY, 50 / boardRadius, Color.TRANSPARENT);
                 blackDot.setStroke(Color.BLACK);
                 blackDot.setStrokeWidth(5);
                 boardGroup.getChildren().add(blackDot);
+                currentRobberCircle = blackDot;
 
                 // Move robber
                 Robber robber = gameplay.getRobber();
                 robber.moveTo(tile);
+
 
                 //Potential victims
                 List<Player> victims = robber.getPotentialVictims(tile, gameplay.getCurrentPlayer());
@@ -536,6 +546,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
             boardGroup.getChildren().addAll(clickableCircle);
     }
     }
+
 }
 
 
