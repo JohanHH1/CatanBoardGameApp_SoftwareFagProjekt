@@ -84,6 +84,7 @@ private boolean robberNeedsToMove = false;
     private boolean isValidRoadPlacement(Edge edge) {
         for (Player player : playerList) {
             if (player.getRoads().contains(edge)){
+                System.out.println("is in here");
                 return false;
             }
         }
@@ -199,17 +200,7 @@ private boolean robberNeedsToMove = false;
         currentPlayer.getRoads().add(edge);
         return true;
 
-    } else { // Placing rest of the roads
-        boolean connectedToSettlement = false;
-            for (Vertex settlement : currentPlayer.getSettlements()) {
-                if (edge.isConnectedTo(settlement)) {
-                    connectedToSettlement = true;
-                    break;
-                }
-            }
-            if (!connectedToSettlement) {
-                return false;
-            }
+        } else { // Placing rest of the roads
         // Normal road building (after initial placement)
         // Check if player has required resources
 
