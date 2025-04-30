@@ -523,9 +523,9 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
 
         return imageView;
     }
+
     public static void showBuildErrorDot(Group boardGroup, Point2D mid) {
         showTemporaryDot(boardGroup, mid.getX(), mid.getY(), Color.RED);
-        System.out.println("dont");
     }
 
     public static void updateRoadAppearance(Line visibleLine, Player currentPlayer) {

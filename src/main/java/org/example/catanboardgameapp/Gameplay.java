@@ -5,6 +5,7 @@ import javafx.scene.paint.Color;
 import java.util.ArrayList;
 import java.util.*;
 
+
 public class Gameplay {
 private final List<Player> playerList = new ArrayList<>();
 private int currentPlayerIndex;
@@ -30,8 +31,8 @@ private boolean robberNeedsToMove = false;
     }
     public void nextPlayerTurn() {
         // Determine if we are in the special condition
-        int oneCount = 0;
-        int twoCount = 0;
+        int oneCount = 0; // have less than one settlement and one road
+        int twoCount = 0; // has less than 2 settlements and 2 roads
         for (Player player : playerList) {
             int settlements = player.getSettlements().size();
             if (settlements == 1) {
@@ -121,17 +122,16 @@ private boolean robberNeedsToMove = false;
         }
 
         // Special case for initial placement (first two settlements)
-        if (currentPlayer.getSettlements().size() < 1) {
+        if (currentPlayer.getSettlements().isEmpty()) { // first settlement
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
             vertex.makeSettlement();
             return true;
-        } else if (secondFreeSettelment && currentPlayer.getSettlements().size() < 2) {
+        } else if (currentPlayer.getSettlements().size() == 1) { // second settlement
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
-
             for (Tile tile : vertex.getAdjacentTiles()){
                 if (!tile.getResourcetype().getName().equals("Desert")){
                 int currentAmount = currentPlayer.getResources().getOrDefault(tile.getResourcetype().getName(), 0);
@@ -185,33 +185,22 @@ private boolean robberNeedsToMove = false;
         if (!isValidRoadPlacement(edge)) {
             return false; // Invalid placement
         }
-
         // Special case for initial placement (first two roads)
-        if (currentPlayer.getRoads().size() < 1) {
-            // For initial placement, road must be connected to one of the player's settlements
-            boolean connectedToSettlement = false;
-            for (Vertex settlement : currentPlayer.getSettlements()) {
-                if (edge.isConnectedTo(settlement)) {
-                    connectedToSettlement = true;
-                    break;
-                }
-            }
-            if (!connectedToSettlement) {
-                return false;
-            }
-            currentPlayer.getRoads().add(edge);
+        if (currentPlayer.getRoads().isEmpty()) {
+            currentPlayer.getRoads().add(edge); // initial road added. Can only be added to the first settlement
+            System.out.println("first road");
             return true;
-        }  else if (secondFreeSettelment && currentPlayer.getRoads().size() < 2) {
-        // Only allow the second road if it's connected to the second settlement
+        }  else if ( currentPlayer.getRoads().size() == 1) { // second free road // Only allow the second road if it's connected to the second settlement
+            System.out.println("second road");
         Vertex secondSettlement = currentPlayer.getSecondSettlement();
         if (!edge.isConnectedTo(secondSettlement)) {
             return false;
         }
         currentPlayer.getRoads().add(edge);
         return true;
-    } else if (secondFreeSettelment && currentPlayer.getRoads().size() < 2) {
-            // For initial placement, road must be connected to one of the player's settlements
-            boolean connectedToSettlement = false;
+
+    } else { // Placing rest of the roads
+        boolean connectedToSettlement = false;
             for (Vertex settlement : currentPlayer.getSettlements()) {
                 if (edge.isConnectedTo(settlement)) {
                     connectedToSettlement = true;
@@ -221,11 +210,9 @@ private boolean robberNeedsToMove = false;
             if (!connectedToSettlement) {
                 return false;
             }
-            currentPlayer.getRoads().add(edge);
-            return true;
-        }
         // Normal road building (after initial placement)
         // Check if player has required resources
+
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
             removeResource("Brick", 1);
             removeResource("Wood", 1);
@@ -233,7 +220,7 @@ private boolean robberNeedsToMove = false;
             return true;
         }
         return false;
-    }
+    }}
     public void distributeResource (int diceNumber) {
         List<Tile> tiles = Board.getTiles();
         if (diceNumber == 7){return;
