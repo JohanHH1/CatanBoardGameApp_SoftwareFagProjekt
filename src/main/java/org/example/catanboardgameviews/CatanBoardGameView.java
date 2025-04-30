@@ -155,6 +155,7 @@ public class CatanBoardGameView {
         HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton,exitButton, tradeButton, currentPlayersOnTurn, diceResult);
         buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
         rollDiceButton.setVisible(false);
+        nextTurnButton.setVisible(false);
 
         root.setTop(buttonBox);
 
@@ -212,6 +213,10 @@ public class CatanBoardGameView {
 
         return scene;
     }
+    public static void showDiceButton(){
+        rollDiceButton.setVisible(true);
+    }
+
     public static void showRobberTargets(Group boardGroup, Board board, Gameplay gameplay) {
         List<Circle> robberTargetCircles = new ArrayList<>();
 
@@ -557,6 +562,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
             boardGroup.getChildren().addAll(clickableCircle);
     }
     }
+
 }
 
 

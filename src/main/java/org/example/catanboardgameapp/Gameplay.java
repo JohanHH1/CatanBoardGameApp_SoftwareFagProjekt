@@ -1,6 +1,7 @@
 package org.example.catanboardgameapp;
 
 import javafx.scene.paint.Color;
+import org.example.catanboardgameviews.CatanBoardGameView;
 
 import java.util.ArrayList;
 import java.util.*;
@@ -58,6 +59,7 @@ private boolean robberNeedsToMove = false;
         }
 
         currentPlayer = getCurrentPlayer();
+
     }
 
     private boolean isValidSettlementPlacement(Vertex vertex) {
@@ -189,15 +191,18 @@ private boolean robberNeedsToMove = false;
         // Special case for initial placement (first two roads)
         if (currentPlayer.getRoads().isEmpty()) {
             currentPlayer.getRoads().add(edge); // initial road added. Can only be added to the first settlement
-            System.out.println("first road");
             return true;
         }  else if ( currentPlayer.getRoads().size() == 1) { // second free road // Only allow the second road if it's connected to the second settlement
-            System.out.println("second road");
         Vertex secondSettlement = currentPlayer.getSecondSettlement();
         if (!edge.isConnectedTo(secondSettlement)) {
             return false;
         }
         currentPlayer.getRoads().add(edge);
+
+        if (currentPlayer.getPlayerId() == (1) && currentPlayer.getRoads().size() == 2) {
+            CatanBoardGameView.showDiceButton();
+            System.out.println("is in here");
+        }
         return true;
 
         } else { // Placing rest of the roads

@@ -12,10 +12,12 @@ import javafx.scene.shape.Rectangle;
 import org.example.catanboardgameapp.Edge;
 import org.example.catanboardgameapp.Gameplay;
 
+import org.example.catanboardgameapp.Player;
 import org.example.catanboardgameapp.Vertex;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
 import static org.example.catanboardgameviews.CatanBoardGameView.createLeftMenu;
+import static org.example.catanboardgameviews.CatanBoardGameView.nextTurnButton;
 
 public class BuildController {
     private final Gameplay gameplay;
@@ -31,6 +33,16 @@ public class BuildController {
 
             if (gameplay.buildRoad(edge)) {
                 CatanBoardGameView.updateRoadAppearance(visibleLine, gameplay.getCurrentPlayer());
+                boolean temp = true;
+                for (Player player : gameplay.getPlayerList() ){
+                    if (player.getRoads().size() > 2){
+                        temp=false;
+                        break;
+                    }
+                }
+                if (temp){
+                    gameplay.nextPlayerTurn();
+                }
                 System.out.println("Road built by player " + gameplay.getCurrentPlayer().getPlayerId());
                 root.setLeft(createLeftMenu(gameplay));
             } else {
