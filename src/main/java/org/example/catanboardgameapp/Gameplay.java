@@ -131,7 +131,7 @@ private boolean robberNeedsToMove = false;
             addScore();
             vertex.makeSettlement();
             return true;
-        } else if (currentPlayer.getSettlements().size() == 1) { // second settlement
+        } else if (currentPlayer.getSettlements().size() == 1 && !(currentPlayer.getRoads().isEmpty())) { // second settlement
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             addScore();
