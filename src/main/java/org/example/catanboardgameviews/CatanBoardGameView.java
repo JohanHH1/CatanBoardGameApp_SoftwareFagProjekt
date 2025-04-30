@@ -45,6 +45,7 @@ public class CatanBoardGameView {
     public static Button nextTurnButton;
     public static Button rollDiceButton;
     public static int boardRadius;
+    private static Circle currentRobberCircle = null;
 
     public static void returnToMainMenu(Stage primaryStage) {
         MenuView.showMainMenu(primaryStage);
@@ -230,12 +231,17 @@ public class CatanBoardGameView {
                 for (Circle c : robberTargetCircles) {
                     boardGroup.getChildren().remove(c);
                 }
+                robberTargetCircles.clear();
 
+                if (CatanBoardGameView.currentRobberCircle != null) {
+                    boardGroup.getChildren().remove(CatanBoardGameView.currentRobberCircle);
+                }
                 // Mark the selected tile with a black circle
                 Circle blackDot = new Circle(circleX, circleY, 50 / boardRadius, Color.TRANSPARENT);
                 blackDot.setStroke(Color.BLACK);
                 blackDot.setStrokeWidth(5);
                 boardGroup.getChildren().add(blackDot);
+                CatanBoardGameView.currentRobberCircle = blackDot;
 
                 // Move robber
                 Robber robber = gameplay.getRobber();
