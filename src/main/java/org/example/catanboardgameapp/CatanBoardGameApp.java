@@ -9,7 +9,7 @@ import static javafx.application.Application.launch;
 public class CatanBoardGameApp extends Application {
     @Override
     public void start(Stage primaryStage) {
-        MenuView.showSetupScreen(primaryStage);
+        MenuView.showMainMenu(primaryStage);
     }
 
 

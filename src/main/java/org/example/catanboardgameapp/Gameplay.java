@@ -208,7 +208,7 @@ private Robber robber;
         }
         currentPlayer.getRoads().add(edge);
         return true;
-    } else if (secondFreeSettelment && currentPlayer.getRoads().size() < 3) {
+    } else if (secondFreeSettelment && currentPlayer.getRoads().size() < 2) {
             // For initial placement, road must be connected to one of the player's settlements
             boolean connectedToSettlement = false;
             for (Vertex settlement : currentPlayer.getSettlements()) {

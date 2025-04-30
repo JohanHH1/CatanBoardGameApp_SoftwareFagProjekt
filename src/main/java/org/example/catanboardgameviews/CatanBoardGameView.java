@@ -45,6 +45,11 @@ public class CatanBoardGameView {
     public static Button nextTurnButton;
     public static Button rollDiceButton;
     public static int boardRadius;
+
+    public static void returnToMainMenu(Stage primaryStage) {
+        MenuView.showMainMenu(primaryStage);
+    }
+
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
         double sceneWidth = 800;
         double sceneHeight = 600;
@@ -134,7 +139,7 @@ public class CatanBoardGameView {
             Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to exit to main menu?", ButtonType.YES, ButtonType.NO);
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.YES) {
-                MenuView.showSetupScreen(primaryStage);
+                returnToMainMenu(primaryStage);
             }
         });
 
@@ -190,7 +195,7 @@ public class CatanBoardGameView {
                     Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to exit to main menu?", ButtonType.YES, ButtonType.NO);
                     Optional<ButtonType> result = alert.showAndWait();
                     if (result.isPresent() && result.get() == ButtonType.YES) {
-                        MenuView.showSetupScreen(primaryStage);
+                        returnToMainMenu(primaryStage);
                     }
                 }
             }

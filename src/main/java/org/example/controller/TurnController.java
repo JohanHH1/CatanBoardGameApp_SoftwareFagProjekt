@@ -31,6 +31,4 @@ public class TurnController {
         rollDiceButton.setVisible(allHavePlacedInitial);
         nextTurnButton.setVisible(!allHavePlacedInitial);
     }
-
 }
-
