@@ -88,8 +88,8 @@ public class CatanBoardGameView {
         Pane boardWrapper = new Pane(boardGroup);
         root.setCenter(boardWrapper);
 
-        Button rollDiceButton = new Button("Roll Dice");
-        Button nextTurnButton = new Button("Next Turn");
+        rollDiceButton = new Button("Roll Dice");
+        nextTurnButton = new Button("Next Turn");
         Button centerButton = new Button("Center Board");
         Button zoomInButton = new Button("+");
         Button zoomOutButton = new Button("-");
@@ -99,16 +99,24 @@ public class CatanBoardGameView {
         Text currentPlayersOnTurn = new Text("");
 
         rollDiceButton.setOnAction(e -> {
+
+            if (gameplay.isRobberMovementRequired()) {
+                System.out.println("move robber pls");
+                return;
+            }
             int result = gameplay.rollDice();
             diceResult.setText("Dice: " + result);
             if (result == 7) {
+                gameplay.requireRobberMove();
+                nextTurnButton.setVisible(false);
                 showRobberTargets(boardGroup, board, gameplay);
             } else {
                 gameplay.distributeResource(result);
+                nextTurnButton.setVisible(true);
             }
             root.setLeft(createLeftMenu(gameplay));
             rollDiceButton.setVisible(false);
-            nextTurnButton.setVisible(true);
+            //nextTurnButton.setVisible(true);
         });
 
         TurnController turnController = new TurnController(gameplay, rollDiceButton, nextTurnButton, currentPlayersOnTurn);
@@ -232,6 +240,8 @@ public class CatanBoardGameView {
                 // Move robber
                 Robber robber = gameplay.getRobber();
                 robber.moveTo(tile);
+                gameplay.robberHasMoved();
+                nextTurnButton.setVisible(true);
 
                 //Potential victims
                 List<Player> victims = robber.getPotentialVictims(tile, gameplay.getCurrentPlayer());

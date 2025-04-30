@@ -11,6 +11,7 @@ private int currentPlayerIndex;
 private Player currentPlayer;
 private boolean secondFreeSettelment=false;
 private Robber robber;
+private boolean robberNeedsToMove = false;
 
     public void initializePlayers (int numberOfPlayers) {
         List<Color> colorList = List.of(Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW);
@@ -332,6 +333,15 @@ private Robber robber;
 
     public Robber getRobber() {
         return robber;
+    }
+    public void requireRobberMove() {
+        robberNeedsToMove = true;
+    }
+    public void robberHasMoved() {
+        robberNeedsToMove = false;
+    }
+    public boolean isRobberMovementRequired() {
+        return robberNeedsToMove;
     }
 }
 
