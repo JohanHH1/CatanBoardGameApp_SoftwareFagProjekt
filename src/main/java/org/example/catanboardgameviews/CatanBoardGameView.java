@@ -116,6 +116,7 @@ public class CatanBoardGameView {
                 nextTurnButton.setVisible(true);
             }
             root.setLeft(createLeftMenu(gameplay));
+
             rollDiceButton.setVisible(false);
             //nextTurnButton.setVisible(true);
         });
@@ -379,6 +380,10 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
             playerName.setFont(Font.font("Arial", FontWeight.BOLD, 14));
             playerName.setFill(player.getColor());
 
+            if (player == gameplay.getCurrentPlayer()){
+                styleActivePlayerText(playerName);
+            }
+
             playerBox.getChildren().add(playerName);
 
             for (String resourceName : player.getResources().keySet()) {
@@ -561,6 +566,29 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
 
             boardGroup.getChildren().addAll(clickableCircle);
     }
+
+    }
+    public static void updatePlayerHighlight(Player currentPlayer, int playerIndex) {
+
+
+     /*   for (Map.Entry<Integer, VBox> entry : playerBoxMap.entrySet()) {
+            VBox box = entry.getValue();
+            if (entry.getKey() == currentPlayer.getPlayerId()) {
+                box.setStyle("-fx-background-color: #ffe4b5; -fx-border-color: firebrick; -fx-border-width: 2px;"); //"-fx-background-color: #ffe4b5; -fx-border-color: #b22222; -fx-border-width: 2px;");
+                box.setScaleX(1.05);
+                box.setScaleY(1.05);
+                System.out.print("playerHighlight:" + currentPlayer);
+
+            } else {
+                box.setStyle("-fx-background-color: transparent;");
+                box.setScaleX(1.0);
+                box.setScaleY(1.0);
+            }
+        }*/
+    }
+    public static void styleActivePlayerText(Text playerName) {
+        playerName.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 18));
+        //playerName.setFill();  // eller t.ex. Color.BLACK för enkel stil
     }
 
 }

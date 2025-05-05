@@ -4,6 +4,7 @@ import org.example.catanboardgameapp.Gameplay;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import org.example.catanboardgameapp.Player;
+import org.example.catanboardgameviews.CatanBoardGameView;
 
 public class TurnController {
     private final Gameplay gameplay;

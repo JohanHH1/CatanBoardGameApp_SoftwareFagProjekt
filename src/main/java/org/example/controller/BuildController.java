@@ -31,19 +31,22 @@ public class BuildController {
     public EventHandler<MouseEvent> createRoadClickHandler(Edge edge, Line visibleLine, BorderPane root) {
         return event -> {
 
+            Player buildingPlayer = gameplay.getCurrentPlayer();
+
             if (gameplay.buildRoad(edge)) {
                 CatanBoardGameView.updateRoadAppearance(visibleLine, gameplay.getCurrentPlayer());
-                boolean temp = true;
+
+                boolean allInInitialPhase = true;
                 for (Player player : gameplay.getPlayerList() ){
                     if (player.getRoads().size() > 2){
-                        temp=false;
+                        allInInitialPhase=false;
                         break;
                     }
                 }
-                if (temp){
+                if (allInInitialPhase){
                     gameplay.nextPlayerTurn();
                 }
-                System.out.println("Road built by player " + gameplay.getCurrentPlayer().getPlayerId());
+                System.out.println("Road built by player " + buildingPlayer.getPlayerId());
                 root.setLeft(createLeftMenu(gameplay));
             } else {
                 Point2D mid = new Point2D(

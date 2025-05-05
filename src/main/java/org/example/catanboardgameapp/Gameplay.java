@@ -15,6 +15,8 @@ private boolean secondFreeSettelment=false;
 private Robber robber;
 private boolean robberNeedsToMove = false;
 
+
+
     public void initializePlayers (int numberOfPlayers) {
         List<Color> colorList = List.of(Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW);
 
@@ -59,6 +61,7 @@ private boolean robberNeedsToMove = false;
         }
 
         currentPlayer = getCurrentPlayer();
+        //CatanBoardGameView.updatePlayerHighlight(currentPlayer, currentPlayerIndex);
 
     }
 
