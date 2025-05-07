@@ -7,7 +7,7 @@ public class Board {
     //Initialize and create lists of tile, vertex and edge classes
     private static final List<Tile> tiles = new ArrayList<>();
     private final List<Vertex> vertices = new ArrayList<>();
-    private final List<Edge> edges = new ArrayList<>();
+    private static final List<Edge> edges = new ArrayList<>();
     private final Map<Point2D, Vertex> vertexMap = new HashMap<>(); // For unifying shared Vertex objects
     private final Map<String, Edge> edgeMap = new HashMap<>();
     private static final String[] TERRAIN_TYPES = {
@@ -201,7 +201,7 @@ public class Board {
         return vertices;
     }
 
-    public List<Edge> getEdges() {
+    public static List<Edge> getEdges() {
         return edges;
     }
 

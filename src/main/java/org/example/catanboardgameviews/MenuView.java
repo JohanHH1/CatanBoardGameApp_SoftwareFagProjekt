@@ -16,8 +16,9 @@ import java.util.List;
 
 public class MenuView {
 
-    private static int playerCount = 3;
+    private static int playerCount = 2;
     private static int boardSize = 3;
+    private static int amoutOfAiai = 1;
 
     public static void showMainMenu(Stage primaryStage) {
         VBox menuLayout = new VBox(25);
@@ -64,6 +65,7 @@ public class MenuView {
         optionsTitle.setTextFill(Color.LIGHTGRAY);
 
         Label playerLabel = new Label("Number of Players (2-6):");
+        playerLabel.setFont(new Font("Arial Black", 15));
         playerLabel.setTextFill(Color.WHITE);
         TextField playerInput = new TextField(String.valueOf(playerCount));
         playerInput.setMaxWidth(200);
@@ -71,15 +73,24 @@ public class MenuView {
 
         Label boardLabel = new Label("Board Size (3-10):");
         boardLabel.setTextFill(Color.WHITE);
+        boardLabel.setFont(new Font("Arial Black", 15));
         TextField boardInput = new TextField(String.valueOf(boardSize));
         boardInput.setMaxWidth(200);
         boardInput.setStyle("-fx-font-size: 16px;");
+
+        Label aiLabel = new Label("Number of the players to be Ai (2-6):");
+        aiLabel.setFont(new Font("Arial Black", 15));
+        aiLabel.setTextFill(Color.WHITE);
+        TextField aiInput = new TextField(String.valueOf(amoutOfAiai));
+        aiInput.setMaxWidth(200);
+        aiInput.setStyle("-fx-font-size: 16px;");
 
         Button backButton = createMenuButton("Accept Changes", 180, 50);
         backButton.setOnAction(e -> {
             try {
                 int players = Integer.parseInt(playerInput.getText());
                 int size = Integer.parseInt(boardInput.getText());
+                int ais = Integer.parseInt(aiInput.getText());
 
                 if (players < 2 || players > 6) {
                     System.out.println("Players must be between 2 and 6.");
@@ -90,9 +101,13 @@ public class MenuView {
                     System.out.println("Board size must be between 3 and 10.");
                     return;
                 }
+                if ((ais < 2 || ais > 6 )&&(ais > players)) {
+                    System.out.println("AI must be between 2 and 6, and no more than the total player amount.");
+                }
 
                 playerCount = players;
                 boardSize = size;
+                amoutOfAiai = ais;
 
                 showMainMenu(primaryStage);
             } catch (NumberFormatException ex) {
@@ -100,7 +115,7 @@ public class MenuView {
             }
         });
 
-        optionsLayout.getChildren().addAll(optionsTitle, playerLabel, playerInput, boardLabel, boardInput, backButton);
+        optionsLayout.getChildren().addAll(optionsTitle, playerLabel, playerInput, boardLabel, boardInput,aiLabel, aiInput, backButton);
         Scene optionsScene = new Scene(optionsLayout, 800, 600);
         primaryStage.setScene(optionsScene);
     }
@@ -114,6 +129,7 @@ public class MenuView {
         Gameplay gameplay = new Gameplay();
         gameplay.reset();
         gameplay.initializePlayers(playerCount);
+        gameplay.initializeAis(amoutOfAiai);
         Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, boardSize - 1, gameplay);
         primaryStage.setScene(gameScene);
     }
