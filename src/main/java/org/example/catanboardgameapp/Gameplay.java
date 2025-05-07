@@ -87,16 +87,50 @@ private boolean robberNeedsToMove = false;
 
     // Checking if a road placement is valid
     private boolean isValidRoadPlacement(Edge edge) {
+        // Rule 1: Can't place a road where one already exists
         for (Player player : playerList) {
-            if (player.getRoads().contains(edge)){
-                System.out.println("is in here");
+            if (player.getRoads().contains(edge)) {
                 return false;
             }
         }
-        // A road must be connected to an existing road or settlement owned by the player
-        return currentPlayer.getSettlements().contains(edge.getVertex1()) || currentPlayer.getSettlements().contains(edge.getVertex2()) ||
-                currentPlayer.getRoads().stream().anyMatch(existingRoad ->
-                        existingRoad.isConnectedTo(edge.getVertex1()) || existingRoad.isConnectedTo(edge.getVertex2()));
+
+        // Rule 2: Can't build through another player's settlement -- needs adjustment
+        /*for (Player player : playerList) {
+            if (player != currentPlayer) {
+                if ((player.getSettlements().contains(edge.getVertex1()) && existingRoad.isConnectedTo(edge.getVertex1())) || player.getSettlements().contains(edge.getVertex2())) {
+                    return false;
+                }
+            }
+        }*/
+        for (Player player : playerList) {
+            if (player != currentPlayer) {
+                // Check vertex1
+                if (player.getSettlements().contains(edge.getVertex1())) {
+                    for (Edge existingRoad : currentPlayer.getRoads()) {
+                        if (existingRoad.isConnectedTo(edge.getVertex1())) {
+                            return false; // Can't build through another player's settlement
+                        }
+                    }
+                }
+
+                // Check vertex2
+                if (player.getSettlements().contains(edge.getVertex2())) {
+                    for (Edge existingRoad : currentPlayer.getRoads()) {
+                        if (existingRoad.isConnectedTo(edge.getVertex2())) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        // Rule 3: Road must connect to player's settlement or another road
+        boolean connectsToSettlement = currentPlayer.getSettlements().contains(edge.getVertex1()) || currentPlayer.getSettlements().contains(edge.getVertex2());
+
+        boolean connectsToRoad = currentPlayer.getRoads().stream().anyMatch(existingRoad ->
+                existingRoad.isConnectedTo(edge.getVertex1()) || existingRoad.isConnectedTo(edge.getVertex2())
+        );
+
+        return connectsToSettlement || connectsToRoad;
     }
 
     // Add resources
@@ -255,13 +289,17 @@ private boolean robberNeedsToMove = false;
 
         removeResource(giveResource,4);
         addResource(receiveResource, 1);
-        System.out.println("traded 4" + giveResource + "for 1 " + receiveResource);
+        System.out.println("traded 4" + giveResource + " for 1 " + receiveResource);
         return true;
     }
 
 
 // Update playerScore by adding 1
-    public void addScore() {currentPlayer.increasePlayerScore();
+    public void addScore() {
+        currentPlayer.increasePlayerScore();
+        if (currentPlayer.getSettlements().size() >= 10) {
+            System.out.print("player" + currentPlayer.getPlayerId() + "is the winner");
+        }
     }
 
     public int rollDice() {
