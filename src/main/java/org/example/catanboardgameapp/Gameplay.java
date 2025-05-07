@@ -406,5 +406,9 @@ private boolean robberNeedsToMove = false;
             }
         }
     }
+
+    public void initializeAis(int amoutOfAiai) {
+
+    }
 }
 
