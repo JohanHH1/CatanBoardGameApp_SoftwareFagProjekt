@@ -14,7 +14,8 @@ private Player currentPlayer;
 private boolean secondFreeSettelment=false;
 private Robber robber;
 private boolean robberNeedsToMove = false;
-
+private boolean initialPhase = true;
+private boolean forwardOrder = true;
 
 
     public void initializePlayers (int numberOfPlayers) {
@@ -30,39 +31,35 @@ private boolean robberNeedsToMove = false;
 
     public Player getCurrentPlayer() {
         return playerList.get(currentPlayerIndex);
-
+    }
+    public String getCurrentPhaseName() {
+        return initialPhase ? "INITIAL PHASE" : "REGULAR PHASE";
     }
     public void nextPlayerTurn() {
-        // Determine if we are in the special condition
-        int oneCount = 0; // have less than one settlement and one road
-        int twoCount = 0; // has less than 2 settlements and 2 roads
-        for (Player player : playerList) {
-            int settlements = player.getSettlements().size();
-            if (settlements == 1) {
-                oneCount++;
-            } else if (settlements == 2) {
-                twoCount++;
-            }
-        }
 
-        // Special condition: either all players have 1, or some have 1 and the rest have 2.
-        boolean specialCondition1 = (oneCount == playerList.size());
-        boolean specialCondition2 = (oneCount >= 1 && (oneCount + twoCount == playerList.size()));
-        if (specialCondition1 ) {
-            currentPlayer = getCurrentPlayer();
-            secondFreeSettelment=true;
-        }
-        else if (specialCondition2) {
-            // Count backwards: decrement the index with wrap-around
-            currentPlayerIndex = (currentPlayerIndex - 1 + playerList.size()) % playerList.size();
+        if (initialPhase) {
+            if (forwardOrder) {
+                currentPlayerIndex++;
+                if (currentPlayerIndex >= playerList.size()) {
+                    currentPlayerIndex = playerList.size() - 1;
+                    forwardOrder = false;
+                }
+            } else {
+                currentPlayerIndex--;
+                if (currentPlayerIndex < 0) {
+                    currentPlayerIndex = 0;
+                    initialPhase = false;
+                    forwardOrder = true;
+                }
+            }
         } else {
-            // Normal turn: count forward
             currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
         }
 
-        currentPlayer = getCurrentPlayer();
-        //CatanBoardGameView.updatePlayerHighlight(currentPlayer, currentPlayerIndex);
+        currentPlayer = playerList.get(currentPlayerIndex);
 
+        System.out.println("Turn switched to Player " + currentPlayer.getPlayerId() +
+                " (" + getCurrentPhaseName() + ")");
     }
 
     public boolean isValidSettlementPlacement(Vertex vertex) {
