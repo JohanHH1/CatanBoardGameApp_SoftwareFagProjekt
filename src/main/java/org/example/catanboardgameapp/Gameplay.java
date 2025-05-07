@@ -289,13 +289,17 @@ private boolean robberNeedsToMove = false;
 
         removeResource(giveResource,4);
         addResource(receiveResource, 1);
-        System.out.println("traded 4" + giveResource + "for 1 " + receiveResource);
+        System.out.println("traded 4" + giveResource + " for 1 " + receiveResource);
         return true;
     }
 
 
 // Update playerScore by adding 1
-    public void addScore() {currentPlayer.increasePlayerScore();
+    public void addScore() {
+        currentPlayer.increasePlayerScore();
+        if (currentPlayer.getSettlements().size() >= 10) {
+            System.out.print("player" + currentPlayer.getPlayerId() + "is the winner");
+        }
     }
 
     public int rollDice() {
