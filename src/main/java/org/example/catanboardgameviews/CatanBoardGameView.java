@@ -1,9 +1,12 @@
 package org.example.catanboardgameviews;
 
+import javafx.event.Event;
+import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -11,10 +14,7 @@ import javafx.scene.control.ChoiceDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ScrollEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
@@ -24,7 +24,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import org.example.catanboardgameapp.*;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
@@ -40,6 +42,7 @@ import java.util.*;
 import org.w3c.dom.css.Rect;
 
 import java.io.InputStream;
+import java.util.function.Consumer;
 
 public class CatanBoardGameView {
     public static Button nextTurnButton;
@@ -73,7 +76,6 @@ public class CatanBoardGameView {
         BorderPane root = new BorderPane();
 
 
-
         // Create initial left menu
         VBox leftMenu = createLeftMenu(gameplay);
         root.setLeft(leftMenu);
@@ -81,7 +83,7 @@ public class CatanBoardGameView {
 
         // Edges with click handlers
         BuildController controller = new BuildController(gameplay, boardGroup);
-        drawEdges(board,boardGroup,controller,radius, root);
+        drawEdges(board, boardGroup, controller, radius, root);
         displayVertices(board, boardGroup, controller, radius, root);
 
         // Draw vertices
@@ -135,7 +137,7 @@ public class CatanBoardGameView {
             }
         });
 
-        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton,exitButton, tradeButton, currentPlayersOnTurn, diceResult);
+        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, exitButton, tradeButton, currentPlayersOnTurn, diceResult);
         buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
         rollDiceButton.setVisible(false);
         nextTurnButton.setVisible(false);
@@ -196,7 +198,8 @@ public class CatanBoardGameView {
 
         return scene;
     }
-    public static void showDiceButton(){
+
+    public static void showDiceButton() {
         rollDiceButton.setVisible(true);
     }
 
@@ -329,7 +332,7 @@ public class CatanBoardGameView {
     // Metod för att skapa och hantera användarklick på vägar och hörn
     // Metod för att skapa och hantera användarklick på vägar och hörn
 
-private static void centerBoard(Board board, Group boardGroup, double screenWidth, double screenHeight) {
+    private static void centerBoard(Board board, Group boardGroup, double screenWidth, double screenHeight) {
 
         Tile centerTile = board.getTiles().get((board.getTiles().size() - 1) / 2);
         Point2D centerPoint = centerTile.getCenter();
@@ -362,7 +365,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
             playerName.setFont(Font.font("Arial", FontWeight.BOLD, 14));
             playerName.setFill(player.getColor());
 
-            if (player == gameplay.getCurrentPlayer()){
+            if (player == gameplay.getCurrentPlayer()) {
                 styleActivePlayerText(playerName);
             }
 
@@ -398,8 +401,8 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
     }
 
     public static void showPlacementError(Group boardGroup, double x, double y) {
-        Line line1 = new Line(x-5, y-5, x+5, y+5);
-        Line line2 = new Line(x-5, y+5, x+5, y-5);
+        Line line1 = new Line(x - 5, y - 5, x + 5, y + 5);
+        Line line2 = new Line(x - 5, y + 5, x + 5, y - 5);
         line1.setStroke(Color.RED);
         line2.setStroke(Color.RED);
         line1.setStrokeWidth(2);
@@ -420,10 +423,10 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
     public static void updateVertexAppearance(Circle circle, Vertex vertex) {
         if (vertex.getOwner() != null) { // If vertex.getOwner() is not null then set color to the owner
             circle.setFill(vertex.getOwner().getColor());
-            circle.setRadius(16./boardRadius);
+            circle.setRadius(16. / boardRadius);
         } else {
             circle.setFill(Color.TRANSPARENT);
-            circle.setRadius(8./boardRadius); // Vertices without settlement are smaller
+            circle.setRadius(8. / boardRadius); // Vertices without settlement are smaller
         }
     }
 
@@ -501,7 +504,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
 
         InputStream stream = CatanBoardGameView.class.getResourceAsStream(filename);
         if (stream == null) {
-            System.err.println("⚠️ Image not found: " + filename);
+            System.err.println(" Image not found: " + filename);
             return new ImageView(); // fallback
         }
         // Increase tile coverage size
@@ -534,7 +537,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
     private static void displayVertices(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
 
         for (Vertex vertex : board.getVertices()) {
-            Circle visibleCircle = new Circle(vertex.getX(), vertex.getY(), 10/radius); // vertex circle
+            Circle visibleCircle = new Circle(vertex.getX(), vertex.getY(), 10 / radius); // vertex circle
             visibleCircle.setFill(Color.TRANSPARENT);
             //visibleCircle.setStroke(Color.BLACK);
             //visibleCircle.setStroke(Color.TRANSPARENT);
@@ -547,9 +550,10 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
             clickableCircle.setOnMouseClicked(controller.createSettlementClickHandler(visibleCircle, vertex, root));
 
             boardGroup.getChildren().addAll(clickableCircle);
-    }
+        }
 
     }
+
     public static void updatePlayerHighlight(Player currentPlayer, int playerIndex) {
 
 
@@ -568,6 +572,7 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
             }
         }*/
     }
+
     public static void styleActivePlayerText(Text playerName) {
         playerName.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 18));
         //playerName.setFill();  // eller t.ex. Color.BLACK för enkel stil
@@ -587,7 +592,93 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
         rollDiceButton.setVisible(false);
     }
 
+    public static Map<String, Integer> showDiscardDialog(Player player, Gameplay gameplay) {
+        Map<String, Integer> playerResources = new HashMap<>(player.getResources());
+        int totalCards = playerResources.values().stream().mapToInt(Integer::intValue).sum();
+        int cardsToDiscard = totalCards / 2;
+
+        if (cardsToDiscard == 0) return null;
+
+
+        Stage dialogStage = new Stage();
+        dialogStage.initModality(Modality.APPLICATION_MODAL);
+        dialogStage.initStyle(StageStyle.UNDECORATED);
+        dialogStage.setTitle("Discard Resources");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(10));
+
+        ColumnConstraints labelCol = new ColumnConstraints();
+        labelCol.setMinWidth(100);
+        grid.getColumnConstraints().addAll(labelCol, new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints());
+
+        Map<String, Integer> discardSelection = new HashMap<>();
+        Map<String, Text> counterTexts = new HashMap<>();
+        Button discardButton = new Button("Discard");
+        discardButton.setDisable(true);
+
+        int row = 0;
+        for (Map.Entry<String, Integer> entry : playerResources.entrySet()) {
+            String resource = entry.getKey();
+            int count = entry.getValue();
+
+            Text label = new Text(resource + " (" + count + ")");
+            Button minus = new Button("-");
+            Button plus = new Button("+");
+            Text counter = new Text("0");
+            counter.setWrappingWidth(30);
+            counter.setTextAlignment(TextAlignment.CENTER);
+
+            discardSelection.put(resource, 0);
+            counterTexts.put(resource, counter);
+
+            plus.setOnAction(e -> {
+                if (discardSelection.get(resource) < count &&
+                        gameplay.getTotalSelectedCards(discardSelection) < cardsToDiscard) {
+
+                    discardSelection.put(resource, discardSelection.get(resource) + 1);
+                    counter.setText(String.valueOf(discardSelection.get(resource)));
+                    discardButton.setDisable(gameplay.getTotalSelectedCards(discardSelection) != cardsToDiscard);
+                }
+            });
+
+            minus.setOnAction(e -> {
+                if (discardSelection.get(resource) > 0) {
+                    discardSelection.put(resource, discardSelection.get(resource) - 1);
+                    counter.setText(String.valueOf(discardSelection.get(resource)));
+                    discardButton.setDisable(gameplay.getTotalSelectedCards(discardSelection) != cardsToDiscard);
+                }
+            });
+            grid.add(label, 0, row);
+            grid.add(minus, 1, row);
+            grid.add(counter, 2, row);
+            grid.add(plus, 3, row);
+            row++;
+        }
+
+
+        Map<String, Integer>[] result = new Map[]{null}; // boxed result container
+
+        discardButton.setOnAction(e -> {
+            result[0] = discardSelection;
+            dialogStage.close();
+        });
+
+        VBox container = new VBox(15,
+                new Text(player + " You must discard " + cardsToDiscard + " resource cards."),
+                grid,
+                discardButton
+        );
+        container.setPadding(new Insets(15));
+        container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
+
+        Scene scene = new Scene(container);
+        dialogStage.setScene(scene);
+        dialogStage.showAndWait();
+
+        return result[0];
+    }
 }
-
-
 

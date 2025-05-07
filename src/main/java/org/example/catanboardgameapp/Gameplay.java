@@ -346,6 +346,22 @@ private boolean robberNeedsToMove = false;
         System.out.println("Player " + getCurrentPlayer().getPlayerId() + " stole 1 " + stolenResource + " from Player " + victim.getPlayerId());
         return true;
     }
+    public void discardResourcesForPlayer(Player player, Map<String, Integer> discarded) {
+        Map<String, Integer> resources = player.getResources();
+        for (Map.Entry<String, Integer> entry : discarded.entrySet()) {
+            String resource = entry.getKey();
+            int amount = entry.getValue();
+            int current = resources.getOrDefault(resource, 0);
+            resources.put(resource, Math.max(0, current - amount));
+        }
+    }
+    public int getTotalSelectedCards(Map<String, Integer> selection) {
+        int total = 0;
+        for (int count : selection.values()) {
+            total += count;
+        }
+        return total;
+    }
 
     public void initializeRobber(Tile desertTile) {
         this.robber = new Robber(desertTile);
