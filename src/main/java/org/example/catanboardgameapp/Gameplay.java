@@ -367,5 +367,44 @@ private boolean robberNeedsToMove = false;
     public boolean isRobberMovementRequired() {
         return robberNeedsToMove;
     }
+
+    public void AiBuilds(){
+        Random random = new Random();
+        if(canRemoveResource("Ore", 3) && canRemoveResource("Grain", 2)){ // builds city if possible
+            List<Vertex> settlements = getCurrentPlayer().getSettlements();
+            if (!settlements.isEmpty()) {
+                int randomIndex = random.nextInt(settlements.size());
+                buildCity(settlements.get(randomIndex));
+            }
+        }
+        List<Vertex> validSettlementSpots = new ArrayList<>();
+        for (Edge road : getCurrentPlayer().getRoads()) {
+            if (isValidSettlementPlacement(road.getVertex1()) && !validSettlementSpots.contains(road.getVertex1()) ){ // makes a list of all places to place a settelment
+                validSettlementSpots.add(road.getVertex1());
+            }
+            if (isValidSettlementPlacement(road.getVertex2()) && !validSettlementSpots.contains(road.getVertex2()) ) {
+                validSettlementSpots.add(road.getVertex2());
+            }
+            }
+        if(!validSettlementSpots.isEmpty() && canRemoveResource("Wood", 1) && canRemoveResource("Wool", 1) && canRemoveResource("Brick", 1 ) && canRemoveResource("Grain", 1)){
+            Collections.shuffle(validSettlementSpots);
+            Vertex randomValidSettlementSpot = validSettlementSpots.get(0);
+            buildSettlement(randomValidSettlementSpot);
+        } else if (false ){ //  temp men skal tælle et par runder for at samle sammen til et hus
+            //wait a coupel of turn
+        }
+        List<Edge> validPlacmentForRoad = new ArrayList<>();
+        if (canRemoveResource("Wood", 1) && canRemoveResource("Brick",1)) {
+            for (Edge road : Board.getEdges()) {
+                if (isValidRoadPlacement(road)) {
+                    validPlacmentForRoad.add(road);
+                }
+            }
+            if (!validPlacmentForRoad.isEmpty()) {
+                Collections.shuffle(validPlacmentForRoad);
+                buildRoad(validPlacmentForRoad.get(0));
+            }
+        }
+    }
 }
 

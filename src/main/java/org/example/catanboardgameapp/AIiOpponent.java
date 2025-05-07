@@ -10,4 +10,6 @@ public class AIiOpponent extends Player {
     }
 
     // Add AI-specific methods and behavior here
+    public void AiBuilds (){
+    }
 }

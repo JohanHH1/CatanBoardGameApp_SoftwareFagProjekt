@@ -201,7 +201,7 @@ public class Board {
         return vertices;
     }
 
-    public List<Edge> getEdges() {
+    public static List<Edge> getEdges() {
         return edges;
     }
 
