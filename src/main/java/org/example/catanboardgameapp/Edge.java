@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Edge {
-    public Vertex vertex1;
-    public Vertex vertex2;
+    private final Vertex vertex1;
+    private final Vertex vertex2;
     private final List<Tile> adjacentTiles = new ArrayList<>();
 
     //___________________CONSTRUCTOR______________________
@@ -21,23 +21,26 @@ public class Edge {
 
     //___________________FUNCTIONS_________________________
 
-    // Check if edge is connected to a given vertex
+    // Check if this edge is connected to a specific vertex
     public boolean isConnectedTo(Vertex vertex) {
         return vertex.equals(vertex1) || vertex.equals(vertex2);
     }
 
+    // Add a tile that this edge borders
     public void addAdjacentTile(Tile tile) {
         if (!adjacentTiles.contains(tile)) {
             adjacentTiles.add(tile);
         }
     }
 
+    // Check if two edges share any common vertex
     public boolean sharesVertexWith(Edge other) {
-        return getVertex1().equals(other.getVertex1()) || getVertex1().equals(other.getVertex2()) ||
-                getVertex2().equals(other.getVertex1()) || getVertex2().equals(other.getVertex2());
+        return vertex1.equals(other.vertex1) || vertex1.equals(other.vertex2) ||
+                vertex2.equals(other.vertex1) || vertex2.equals(other.vertex2);
     }
 
     //___________________GETTERS_________________________
+
     public Vertex getVertex1() {
         return vertex1;
     }
@@ -49,6 +52,4 @@ public class Edge {
     public List<Tile> getAdjacentTiles() {
         return adjacentTiles;
     }
-
-
 }

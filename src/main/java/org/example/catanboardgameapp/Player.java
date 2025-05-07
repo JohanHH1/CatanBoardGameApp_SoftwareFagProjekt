@@ -13,7 +13,7 @@ public class Player {
     private List<Edge> roads;
     private int playerScore;
     private List<Vertex> cities;
-    private Vertex secondSettlment;
+    private Vertex secondSettlement; // Used to validate the second free road connection
 
     //_____________________________Constructor_____________________________//
     public Player(int playerId, Color color) {
@@ -25,8 +25,8 @@ public class Player {
         this.resources = new HashMap<>();
         this.settlements = new ArrayList<>();
         this.roads = new ArrayList<>();
-        this.playerScore = 0;
         this.cities = new ArrayList<>();
+        this.playerScore = 0;
 
         // Initialize each resource count to 0
         resources.put("Brick", 0);
@@ -38,19 +38,26 @@ public class Player {
 
     //_____________________________Functions_____________________________//
 
-    // Checks if a settlement placement is valid
-
-
+    // Increase the player's score by 1
     public void increasePlayerScore() {
         playerScore += 1;
     }
-    public void decreasePlayerScore() { playerScore -= 1; }
+
+    // Decrease the player's score by 1
+    public void decreasePlayerScore() {
+        playerScore -= 1;
+    }
+
+    // Store the second settlement to validate road placement
+    public void setSecondSettlement(Vertex secondSettlement) {
+        this.secondSettlement = secondSettlement;
+    }
 
     //_____________________________Getters_____________________________//
+
     public int getPlayerId() {
         return playerId;
     }
-
 
     public Color getColor() {
         return color;
@@ -63,6 +70,7 @@ public class Player {
     public List<Vertex> getSettlements() {
         return settlements;
     }
+
     public List<Vertex> getCities() {
         return cities;
     }
@@ -71,25 +79,28 @@ public class Player {
         return roads;
     }
 
-    public int getplayerScore() {
+    public int getPlayerScore() {
         return playerScore;
     }
-    public void setSecondSettlement(Vertex secondSettlement) {
-        this.secondSettlment = secondSettlement;
+
+    public Vertex getSecondSettlement() {
+        return secondSettlement;
     }
-    public Vertex getSecondSettlement() {return secondSettlment;}
 
     //_________________________toString method_________________________________
+
     @Override
     public String toString() {
         return "Player " + playerId;
-                /*"id=" + playerId +
+        /*
+        return "Player{" +
+                "id=" + playerId +
                 ", color=" + color +
                 ", playerScore=" + playerScore +
                 ", resources=" + resources +
                 ", settlements=" + settlements.size() +
                 ", roads=" + roads.size() +
-                '}';*/
+                '}';
+        */
     }
-
 }

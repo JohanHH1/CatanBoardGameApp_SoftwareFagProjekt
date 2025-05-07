@@ -3,40 +3,63 @@ package org.example.catanboardgameapp;
 import javafx.scene.paint.Color;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
-import java.util.ArrayList;
 import java.util.*;
 
-
 public class Gameplay {
-private final List<Player> playerList = new ArrayList<>();
-private int currentPlayerIndex;
-private Player currentPlayer;
-private boolean secondFreeSettelment=false;
-private Robber robber;
-private boolean robberNeedsToMove = false;
-private boolean initialPhase = true;
-private boolean forwardOrder = true;
+    private final List<Player> playerList = new ArrayList<>();
+    private int currentPlayerIndex;
+    private Player currentPlayer;
+    private boolean initialPhase = true;
+    private boolean forwardOrder = true;
+    private Robber robber;
+    private boolean robberNeedsToMove = false;
+    private Board board;
+    private int lastRolledDie1;
+    private int lastRolledDie2;
 
+    // -------------------- Initialization --------------------
 
-    public void initializePlayers (int numberOfPlayers) {
-        List<Color> colorList = List.of(Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW);
+    public void setBoard(Board board) {
+        this.board = board;
+    }
 
-        for (int i = 0; i < numberOfPlayers && i < colorList.size(); i++) {
-            Player player = new Player(i+1, colorList.get(i));
-            playerList.add(player);
+    public Board getBoard() {
+        return board;
+    }
+
+    public void initializePlayers(int numberOfPlayers) {
+        List<Color> colors = List.of(Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW);
+        for (int i = 0; i < numberOfPlayers && i < colors.size(); i++) {
+            playerList.add(new Player(i + 1, colors.get(i)));
         }
-        currentPlayerIndex = 0; // Determines which player starts
+        currentPlayerIndex = 0;
         currentPlayer = playerList.get(currentPlayerIndex);
     }
 
-    public Player getCurrentPlayer() {
-        return playerList.get(currentPlayerIndex);
+    public void initializeAis(int amountOfAi) {
+        List<Color> colors = new ArrayList<>(List.of(Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW));
+        for (int i = 0; i < playerList.size(); i++) {
+            if (!colors.isEmpty()) colors.remove(0);
+        }
+        for (int i = 0; i < amountOfAi && i < colors.size(); i++) {
+            int id = playerList.size() + 1;
+            playerList.add(new AIOpponent(id, colors.get(i), AIOpponent.StrategyLevel.EASY));
+        }
+        if (currentPlayer == null && !playerList.isEmpty()) {
+            currentPlayerIndex = 0;
+            currentPlayer = playerList.get(currentPlayerIndex);
+        }
     }
-    public String getCurrentPhaseName() {
-        return initialPhase ? "INITIAL PHASE" : "REGULAR PHASE";
-    }
-    public void nextPlayerTurn() {
 
+    public void reset() {
+        playerList.clear();
+        currentPlayerIndex = 0;
+        currentPlayer = null;
+    }
+
+    // -------------------- Turn Management --------------------
+
+    public void nextPlayerTurn() {
         if (initialPhase) {
             if (forwardOrder) {
                 currentPlayerIndex++;
@@ -55,132 +78,107 @@ private boolean forwardOrder = true;
         } else {
             currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
         }
-
         currentPlayer = playerList.get(currentPlayerIndex);
-
-        System.out.println("Turn switched to Player " + currentPlayer.getPlayerId() +
-                " (" + getCurrentPhaseName() + ")");
+        System.out.println("Turn switched to Player " + currentPlayer.getPlayerId() + " (" + getCurrentPhaseName() + ")");
     }
 
-    public boolean isValidSettlementPlacement(Vertex vertex) {
-        if (vertex.hasSettlement()) {
-            return false; // settlement already in place at the vertex
-        }
-        // Check if any neighboring vertex already has a settlement
-        for (Vertex neighbor : vertex.getNeighbors()) {
-            if (neighbor.hasSettlement()) {
-                return false; // Settlement too close
-            }
-        }
-        return true;
+    public String getCurrentPhaseName() {
+        return initialPhase ? "INITIAL PHASE" : "REGULAR PHASE";
     }
 
-    public boolean isNotValidCityPlacement(Vertex vertex) {
-        if (vertex.hasSettlement() && vertex.getOwner()==currentPlayer) {
-            return false; // settlement already in place at the vertex
-        }
-        return true;
+    // -------------------- Getters --------------------
+
+    public Player getCurrentPlayer() {
+        return currentPlayer;
     }
 
-    // Checking if a road placement is valid
-    public boolean isValidRoadPlacement(Edge edge) {
-        // Rule 1: Can't place a road where one already exists
-        for (Player player : playerList) {
-            if (player.getRoads().contains(edge)) {
-                return false;
-            }
-        }
-
-        // Rule 2: Can't build through another player's settlement -- needs adjustment
-        /*for (Player player : playerList) {
-            if (player != currentPlayer) {
-                if ((player.getSettlements().contains(edge.getVertex1()) && existingRoad.isConnectedTo(edge.getVertex1())) || player.getSettlements().contains(edge.getVertex2())) {
-                    return false;
-                }
-            }
-        }*/
-        for (Player player : playerList) {
-            if (player != currentPlayer) {
-                // Check vertex1
-                if (player.getSettlements().contains(edge.getVertex1())) {
-                    for (Edge existingRoad : currentPlayer.getRoads()) {
-                        if (existingRoad.isConnectedTo(edge.getVertex1())) {
-                            return false; // Can't build through another player's settlement
-                        }
-                    }
-                }
-
-                // Check vertex2
-                if (player.getSettlements().contains(edge.getVertex2())) {
-                    for (Edge existingRoad : currentPlayer.getRoads()) {
-                        if (existingRoad.isConnectedTo(edge.getVertex2())) {
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-        // Rule 3: Road must connect to player's settlement or another road
-        boolean connectsToSettlement = currentPlayer.getSettlements().contains(edge.getVertex1()) || currentPlayer.getSettlements().contains(edge.getVertex2());
-
-        boolean connectsToRoad = currentPlayer.getRoads().stream().anyMatch(existingRoad ->
-                existingRoad.isConnectedTo(edge.getVertex1()) || existingRoad.isConnectedTo(edge.getVertex2())
-        );
-
-        return connectsToSettlement || connectsToRoad;
+    public List<Player> getPlayerList() {
+        return playerList;
     }
 
-    // Add resources
-    public void addResource(String resource, int amount) {
-        // "getOrDefault" returns the current count of given resource and returns 0
-        // if player does not have any of that specific resource type.
-        currentPlayer.getResources().put(resource, currentPlayer.getResources().getOrDefault(resource, 0) + amount);
+    public int getLastRolledDie1() {
+        return lastRolledDie1;
     }
 
-    // check if player has the needed resource amount
+    public int getLastRolledDie2() {
+        return lastRolledDie2;
+    }
+
+    // -------------------- Dice --------------------
+
+    public int rollDice() {
+        Random rand = new Random();
+        lastRolledDie1 = rand.nextInt(6) + 1;
+        lastRolledDie2 = rand.nextInt(6) + 1;
+        int roll = lastRolledDie1 + lastRolledDie2;
+        System.out.println("Dice rolled: " + lastRolledDie1 + " + " + lastRolledDie2 + " = " + roll);
+        return roll;
+    }
+
+    public int rollDiceAndDistributeResources() {
+        int roll = rollDice();
+        if (roll == 7) {
+            requireRobberMove();
+        } else {
+            distributeResource(roll);
+        }
+        return roll;
+    }
+
+    // -------------------- Resource add/remove / Trading --------------------
+
     public boolean canRemoveResource(String resource, int amount) {
-        // Returns true if player has "amount" or more of "resource"
         return currentPlayer.getResources().getOrDefault(resource, 0) >= amount;
     }
 
-    // Remove resources
     public void removeResource(String resource, int amount) {
-        // if enough resources ->
-        if (currentPlayer.getResources().getOrDefault(resource, 0) >= amount) {
-            // remove those resources and return true
-            currentPlayer.getResources().put(resource, currentPlayer.getResources().get(resource) - amount);
+        int current = currentPlayer.getResources().getOrDefault(resource, 0);
+        if (current >= amount) {
+            currentPlayer.getResources().put(resource, current - amount);
         }
     }
 
-    // Build settlement if enough resources and no neighbors/duplicates
-    public boolean buildSettlement(Vertex vertex) {
-        if (!isValidSettlementPlacement(vertex)) {
-            return false; // Invalid placement
-        }
+    public void addResource(String resource, int amount) {
+        currentPlayer.getResources().put(resource,
+                currentPlayer.getResources().getOrDefault(resource, 0) + amount);
+    }
 
-        // Special case for initial placement (first two settlements)
-        if (currentPlayer.getSettlements().isEmpty()) { // first settlement
+    public boolean tradeWithBank(String give, String receive) {
+        if (!canRemoveResource(give, 4)) return false;
+        removeResource(give, 4);
+        addResource(receive, 1);
+        System.out.println("Traded 4 " + give + " for 1 " + receive);
+        return true;
+    }
+
+    // -------------------- Building --------------------
+
+    public boolean buildSettlement(Vertex vertex) {
+        if (!isValidSettlementPlacement(vertex)) return false;
+
+        if (currentPlayer.getSettlements().isEmpty()) {
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
-            addScore();
+            increasePlayerScore();
             vertex.makeSettlement();
             return true;
-        } else if (currentPlayer.getSettlements().size() == 1 && !(currentPlayer.getRoads().isEmpty())) { // second settlement
+        }
+
+        if (currentPlayer.getSettlements().size() == 1 && !currentPlayer.getRoads().isEmpty()) {
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
-            addScore();
-            for (Tile tile : vertex.getAdjacentTiles()){
-                if (!tile.getResourcetype().getName().equals("Desert")){
-                int currentAmount = currentPlayer.getResources().getOrDefault(tile.getResourcetype().getName(), 0);
-                currentPlayer.getResources().put(tile.getResourcetype().getName(),currentAmount  + 1);
-            }}
+            increasePlayerScore();
+            for (Tile tile : vertex.getAdjacentTiles()) {
+                if (!tile.getResourcetype().getName().equals("Desert")) {
+                    String res = tile.getResourcetype().getName();
+                    currentPlayer.getResources().put(res, currentPlayer.getResources().getOrDefault(res, 0) + 1);
+                }
+            }
             currentPlayer.setSecondSettlement(vertex);
             vertex.makeSettlement();
             return true;
         }
 
-        // Normal settlement building (after initial placement)
-        // Check if player has required resources
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1) &&
                 canRemoveResource("Grain", 1) && canRemoveResource("Wool", 1)) {
             removeResource("Brick", 1);
@@ -189,58 +187,46 @@ private boolean forwardOrder = true;
             removeResource("Wool", 1);
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
-            addScore();
+            increasePlayerScore();
             vertex.makeSettlement();
             return true;
         }
         return false;
     }
 
-    // Upgrade to city
     public boolean buildCity(Vertex vertex) {
-        if (isNotValidCityPlacement(vertex)) {
-            return false; // Invalid placement
-        }
-        // Normal city upgrade
-        // Check if player has required resources
+        if (isNotValidCityPlacement(vertex)) return false;
         if (canRemoveResource("Ore", 3) && canRemoveResource("Grain", 2)) {
             removeResource("Ore", 3);
             removeResource("Grain", 2);
             currentPlayer.getSettlements().remove(vertex);
             currentPlayer.getCities().add(vertex);
             vertex.setOwner(currentPlayer);
-            addScore();
+            increasePlayerScore();
             vertex.makeCity();
-            System.out.println(currentPlayer.getplayerScore());
+            System.out.println(currentPlayer.getPlayerScore());
             return true;
         }
         return false;
     }
 
-    // Build road if enough resources and connected to other road/settlement
     public boolean buildRoad(Edge edge) {
-        if (!isValidRoadPlacement(edge)) {
-            return false; // Invalid placement
-        }
-        // Special case for initial placement (first two roads)
+        if (!isValidRoadPlacement(edge)) return false;
+
         if (currentPlayer.getRoads().isEmpty()) {
-            currentPlayer.getRoads().add(edge); // initial road added. Can only be added to the first settlement
+            currentPlayer.getRoads().add(edge);
             return true;
-        }  else if ( currentPlayer.getRoads().size() == 1) { // second free road // Only allow the second road if it's connected to the second settlement
-        Vertex secondSettlement = currentPlayer.getSecondSettlement();
-        if (!edge.isConnectedTo(secondSettlement)) {
-            return false;
         }
-        currentPlayer.getRoads().add(edge);
 
-        if (currentPlayer.getPlayerId() == (1) && currentPlayer.getRoads().size() == 2) {
-            CatanBoardGameView.showDiceButton();
+        if (currentPlayer.getRoads().size() == 1) {
+            Vertex second = currentPlayer.getSecondSettlement();
+            if (!edge.isConnectedTo(second)) return false;
+            currentPlayer.getRoads().add(edge);
+            if (currentPlayer.getPlayerId() == 1 && currentPlayer.getRoads().size() == 2) {
+                CatanBoardGameView.showDiceButton();
+            }
+            return true;
         }
-        return true;
-
-        } else { // Placing rest of the roads
-        // Normal road building (after initial placement)
-        // Check if player has required resources
 
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
             removeResource("Brick", 1);
@@ -249,172 +235,143 @@ private boolean forwardOrder = true;
             return true;
         }
         return false;
-    }}
-    public void distributeResource (int diceNumber) {
-        List<Tile> tiles = Board.getTiles();
-        if (diceNumber == 7){return;
-        }else {
-            for (Tile tile : tiles) {
-                if (tile.getTileDiceNumber() == diceNumber) {
-                    for (Vertex vertex : tile.getVertices()) {
-                        if (vertex.getOwner() != null) {
-                            String resourceType = tile.getResourcetype().getName();
-                            Player owner = vertex.getOwner();
-                            int currentAmount = owner.getResources().getOrDefault(resourceType, 0);
-                            if (vertex.getTypeOf().equals("City")) {
-                                System.out.println("a city has been rolled");
-                                owner.getResources().put(resourceType, currentAmount + 2);
-                            } else {
-                                System.out.println("a settlement has been rolled");
-                                owner.getResources().put(resourceType, currentAmount + 1);
-                            }
-                            System.out.println("player " + owner.getPlayerId() + " gets " + resourceType + " " + currentAmount);
-                        }
-                    }
+    }
 
+    // -------------------- Validation --------------------
+
+    public boolean isValidSettlementPlacement(Vertex vertex) {
+        if (vertex.hasSettlement()) return false;
+        for (Vertex neighbor : vertex.getNeighbors()) {
+            if (neighbor.hasSettlement()) return false;
+        }
+        return true;
+    }
+
+    public boolean isNotValidCityPlacement(Vertex vertex) {
+        return !(vertex.hasSettlement() && vertex.getOwner() == currentPlayer);
+    }
+
+    public boolean isValidRoadPlacement(Edge edge) {
+        for (Player player : playerList) {
+            if (player.getRoads().contains(edge)) return false;
+        }
+        for (Player player : playerList) {
+            if (player != currentPlayer) {
+                if (player.getSettlements().contains(edge.getVertex1()) &&
+                        currentPlayer.getRoads().stream().anyMatch(r -> r.isConnectedTo(edge.getVertex1()))) {
+                    return false;
+                }
+                if (player.getSettlements().contains(edge.getVertex2()) &&
+                        currentPlayer.getRoads().stream().anyMatch(r -> r.isConnectedTo(edge.getVertex2()))) {
+                    return false;
+                }
+            }
+        }
+        boolean connectsToSettlement = currentPlayer.getSettlements().contains(edge.getVertex1()) ||
+                currentPlayer.getSettlements().contains(edge.getVertex2());
+        boolean connectsToRoad = currentPlayer.getRoads().stream().anyMatch(r -> r.isConnectedTo(edge.getVertex1()) || r.isConnectedTo(edge.getVertex2()));
+        return connectsToSettlement || connectsToRoad;
+    }
+
+    // -------------------- Resource Distribution --------------------
+    public void distributeResource(int diceRoll) {
+        if (diceRoll == 7) return;
+        for (Tile tile : Board.getTiles()) {
+            if (tile.getTileDiceNumber() == diceRoll) {
+                for (Vertex vertex : tile.getVertices()) {
+                    Player owner = vertex.getOwner();
+                    if (owner != null) {
+                        String res = tile.getResourcetype().getName();
+                        int current = owner.getResources().getOrDefault(res, 0);
+                        owner.getResources().put(res, current + (vertex.getTypeOf().equals("City") ? 2 : 1));
+                        System.out.println("Player " + owner.getPlayerId() + " gets " + res);
+                    }
                 }
             }
         }
     }
 
-    public boolean tradeWithBank(String giveResource, String receiveResource) {
-        if (!canRemoveResource(giveResource, 4)) {
-            return false;
-        }
-
-        removeResource(giveResource,4);
-        addResource(receiveResource, 1);
-        System.out.println("traded 4" + giveResource + " for 1 " + receiveResource);
-        return true;
-    }
-
-
-// Update playerScore by adding 1
-    public void addScore() {
-        currentPlayer.increasePlayerScore();
-        if (currentPlayer.getSettlements().size() >= 10) {
-            System.out.print("player" + currentPlayer.getPlayerId() + "is the winner");
-        }
-    }
-
-    public int rollDice() {
-        Random random = new Random();
-        int diceRoll= (random.nextInt(6) + 1)+(random.nextInt(6) + 1);
-        System.out.println("Dice rolled: " + diceRoll);
-        return diceRoll;
-    }
-
-    public void reset() {
-        playerList.clear();            // clear all players
-        currentPlayerIndex = 0;        // reset turn counter
-        currentPlayer = null;          // reset player reference
-    }
-
-
-    public void decreasePlayerScore(){
-            currentPlayer.decreasePlayerScore();
-    }
-
-    public List<Player> getPlayerList() {
-        return playerList;
-    }
-
-    public boolean stealResourceFrom(Player victim) {
-        Map<String, Integer> victimResources = victim.getResources();
-        List<String> availableResources = new ArrayList<>();
-
-        for (Map.Entry<String, Integer> entry : victimResources.entrySet()) {
-            for (int i = 0; i < entry.getValue(); i++) {
-                availableResources.add(entry.getKey());
-            }
-        }
-
-        if (availableResources.isEmpty()) {
-            return false;
-        }
-        Collections.shuffle(availableResources);
-        String stolenResource = availableResources.get(0);
-
-        //transfer resource
-        victimResources.put(stolenResource, victimResources.get(stolenResource) - 1);
-        getCurrentPlayer().getResources().put(stolenResource, getCurrentPlayer().getResources().getOrDefault(stolenResource, 0) + 1);
-        System.out.println("Player " + getCurrentPlayer().getPlayerId() + " stole 1 " + stolenResource + " from Player " + victim.getPlayerId());
-        return true;
-    }
-    public void discardResourcesForPlayer(Player player, Map<String, Integer> discarded) {
-        Map<String, Integer> resources = player.getResources();
-        for (Map.Entry<String, Integer> entry : discarded.entrySet()) {
-            String resource = entry.getKey();
-            int amount = entry.getValue();
-            int current = resources.getOrDefault(resource, 0);
-            resources.put(resource, Math.max(0, current - amount));
-        }
-    }
     public int getTotalSelectedCards(Map<String, Integer> selection) {
+        return selection.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    public int getSettlementDiceValue(Vertex v) {
         int total = 0;
-        for (int count : selection.values()) {
-            total += count;
+        for (Tile tile : Board.getTiles()) {
+            if (tile.getVertices().contains(v)) {
+                total += getDiceProbabilityValue(tile.getTileDiceNumber());
+            }
         }
         return total;
     }
 
+    private int getDiceProbabilityValue(int dice) {
+        return switch (dice) {
+            case 6, 8 -> 5;
+            case 5, 9 -> 4;
+            case 4, 10 -> 3;
+            case 3, 11 -> 2;
+            case 2, 12 -> 1;
+            default -> 0;
+        };
+    }
+
+    // -------------------- Score Management --------------------
+
+    public void increasePlayerScore() {
+        currentPlayer.increasePlayerScore();
+        if (currentPlayer.getPlayerScore() >= 10) {
+            System.out.println("Player " + currentPlayer.getPlayerId() + " is the winner!");
+        }
+    }
+
+    public void decreasePlayerScore() {
+        currentPlayer.decreasePlayerScore();
+    }
+
+    // -------------------- Robber --------------------
+
     public void initializeRobber(Tile desertTile) {
         this.robber = new Robber(desertTile);
+    }
+
+    public Robber getRobber() {
+        return robber;
+    }
+
+    public boolean isRobberMovementRequired() {
+        return robberNeedsToMove;
     }
 
     public void setRobber(Robber robber) {
         this.robber = robber;
     }
 
-    public Robber getRobber() {
-        return robber;
-    }
     public void requireRobberMove() {
         robberNeedsToMove = true;
     }
+
     public void robberHasMoved() {
         robberNeedsToMove = false;
     }
-    public boolean isRobberMovementRequired() {
-        return robberNeedsToMove;
+    public void discardResourcesForPlayer(Player player, Map<String, Integer> discarded) {
+        discarded.forEach((res, amt) -> {
+            int current = player.getResources().getOrDefault(res, 0);
+            player.getResources().put(res, Math.max(0, current - amt));
+        });
     }
-
-    public void initializeAis(int amountOfAi) {
-        // Make a mutable color list
-        List<Color> colorList = new ArrayList<>(List.of(
-                Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW
-        ));
-
-        // Remove colors already used by human players
-        for (int i = 0; i < playerList.size(); i++) {
-            if (!colorList.isEmpty()) {
-                colorList.remove(0);
-            }
-        }
-
-        // Add AI players using remaining colors
-        for (int i = 0; i < amountOfAi && i < colorList.size(); i++) {
-            int id = playerList.size() + 1;
-            AIiOpponent ai = new AIiOpponent(id, colorList.get(i));
-            playerList.add(ai);
-        }
-
-        if (currentPlayer == null && !playerList.isEmpty()) {
-            currentPlayerIndex = 0;
-            currentPlayer = playerList.get(currentPlayerIndex);
-        }
-    }
-    public int rollDiceAndDistributeResources() {
-        int result = rollDice();
-
-        if (result == 7) {
-            requireRobberMove(); // game state tracks robber
-        } else {
-            distributeResource(result);
-        }
-
-        return result;
+    public boolean stealResourceFrom(Player victim) {
+        List<String> pool = new ArrayList<>();
+        victim.getResources().forEach((res, count) -> {
+            for (int i = 0; i < count; i++) pool.add(res);
+        });
+        if (pool.isEmpty()) return false;
+        Collections.shuffle(pool);
+        String stolen = pool.get(0);
+        victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
+        getCurrentPlayer().getResources().put(stolen, getCurrentPlayer().getResources().getOrDefault(stolen, 0) + 1);
+        System.out.println("Player " + getCurrentPlayer().getPlayerId() + " stole 1 " + stolen + " from Player " + victim.getPlayerId());
+        return true;
     }
 
 }
-

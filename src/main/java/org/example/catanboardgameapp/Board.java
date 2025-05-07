@@ -4,18 +4,20 @@ import javafx.geometry.Point2D;
 import java.util.*;
 
 public class Board {
-    //Initialize and create lists of tile, vertex and edge classes
+    // Initialize and create lists of tile, vertex, and edge classes
     private static final List<Tile> tiles = new ArrayList<>();
     private final List<Vertex> vertices = new ArrayList<>();
     private static final List<Edge> edges = new ArrayList<>();
     private final Map<Point2D, Vertex> vertexMap = new HashMap<>(); // For unifying shared Vertex objects
-    private final Map<String, Edge> edgeMap = new HashMap<>();
+    private final Map<String, Edge> edgeMap = new HashMap<>();      // For unifying shared Edge objects
+
     private static final String[] TERRAIN_TYPES = {
             "Grain", "Grain", "Grain", "Grain", "Wood", "Wood", "Wood", "Wood",
             "Wool", "Wool", "Wool", "Wool", "Brick", "Brick", "Brick",
-            "Ore", "Ore", "Ore" };
+            "Ore", "Ore", "Ore"
+    };
 
-    List<List<Integer>> originalNumberTokensAll = List.of(
+    private final List<List<Integer>> originalNumberTokensAll = List.of(
             new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11)),
             new ArrayList<>(List.of(6, 4, 5, 11, 3, 9, 10, 6, 2, 12, 8, 3, 5, 10, 9, 4, 8, 11)),
             new ArrayList<>(List.of(8, 4, 9, 3, 11, 5, 10, 8, 12, 2, 6, 11, 9, 10, 5, 4, 6, 3)),
@@ -26,14 +28,14 @@ public class Board {
             new ArrayList<>(List.of(3, 6, 10, 5, 4, 9, 11, 8, 12, 2, 8, 4, 5, 11, 3, 9, 10, 6))
     );
 
-    //Board size parameters
-    private final int radius;         // e.g., 2 for standard 19-hex
-    private final double hexSize;     // distance from hex center to a corner
-    private final double offsetX;     // shift everything horizontally
-    private final double offsetY;
+    // Board size parameters
+    private final int radius;      // e.g., 2 for standard 19-hex
+    private final double hexSize;  // distance from hex center to a corner
+    private final double offsetX;  // horizontal offset for centering
+    private final double offsetY;  // vertical offset for centering
     private final int boardsize;
 
-    //Constructor
+    //___________________________CONSTRUCTOR___________________________
     public Board(int radius, double screenWidth, double screenHeight) {
         this.radius = radius;
         this.hexSize = calculateHexSize(radius, screenWidth, screenHeight);
@@ -43,156 +45,106 @@ public class Board {
         initializeBoard();
     }
 
+    //___________________________FUNCTIONS___________________________
+
     private double calculateHexSize(int radius, double screenWidth, double screenHeight) {
         double maxCols = 2 * radius + 1.5;
         double maxRows = 2 * radius * 1.5 + 1;
         double maxHexWidth = screenWidth / maxCols;
         double maxHexHeight = screenHeight / maxRows;
-        double hexSize = Math.min(maxHexWidth / Math.sqrt(3), maxHexHeight / 1.5);
-        return Math.round(hexSize); // round to integer
+        return Math.round(Math.min(maxHexWidth / Math.sqrt(3), maxHexHeight / 1.5));
     }
 
     private void initializeBoard() {
-        //Initialize empty list of all the tiles.
         tiles.clear();
         List<Tile> allTiles = new ArrayList<>();
 
-        //Calculating number of times to add the 18 resources and 18 numbers. ex: 1 time for a standard 3*3 board.
-        int numberOfTimesTilesAndNumbers = ((3 * boardsize * boardsize - (3 * boardsize) + 1))/18;
-
-        String[] desertArray;
-        //Calculating the number of deserts to add. either 7 or 1 depending on the size.
-        if (boardsize%3 ==2) {
-            desertArray = new String[]{"Desert", "Desert", "Desert", "Desert", "Desert", "Desert", "Desert"};
-        } else {
-            desertArray = new String[]{"Desert"};
-        }
+        int tileCountMultiplier = ((3 * boardsize * boardsize - (3 * boardsize) + 1)) / 18;
+        String[] desertArray = (boardsize % 3 == 2) ?
+                new String[]{"Desert", "Desert", "Desert", "Desert", "Desert", "Desert", "Desert"} :
+                new String[]{"Desert"};
 
         List<Integer> numberTokens = new ArrayList<>();
-        int newSize = TERRAIN_TYPES.length * numberOfTimesTilesAndNumbers + desertArray.length; //calculating the size of the new array with all terrains and deserts
-        String[] TerrainWithAllDesertsAndNTerrains = new String[newSize]; // making the array of the right size
-        for (int i = 0; i < numberOfTimesTilesAndNumbers; i++) {// copying the terrains to the new array
-            System.arraycopy(TERRAIN_TYPES, 0, TerrainWithAllDesertsAndNTerrains, i * TERRAIN_TYPES.length, TERRAIN_TYPES.length);
-            numberTokens.addAll(originalNumberTokensAll.get((int) (Math.random() * originalNumberTokensAll.size()) ));
+        int fullSize = TERRAIN_TYPES.length * tileCountMultiplier + desertArray.length;
+        String[] terrainPool = new String[fullSize];
+
+        for (int i = 0; i < tileCountMultiplier; i++) {
+            System.arraycopy(TERRAIN_TYPES, 0, terrainPool, i * TERRAIN_TYPES.length, TERRAIN_TYPES.length);
+            numberTokens.addAll(originalNumberTokensAll.get((int) (Math.random() * originalNumberTokensAll.size())));
         }
-        // Copy extra deserts at the end
-        System.arraycopy(desertArray, 0, TerrainWithAllDesertsAndNTerrains, TERRAIN_TYPES.length * numberOfTimesTilesAndNumbers, desertArray.length);
+        System.arraycopy(desertArray, 0, terrainPool, TERRAIN_TYPES.length * tileCountMultiplier, desertArray.length);
 
-        //Changing it from an array to a list
-        List<String> shuffledTerrains = new ArrayList<>(Arrays.asList(TerrainWithAllDesertsAndNTerrains));
-        Collections.shuffle(shuffledTerrains); //shuffeling the list so it is in a random order
+        List<String> shuffledTerrains = new ArrayList<>(Arrays.asList(terrainPool));
+        Collections.shuffle(shuffledTerrains);
 
-        //if the bordsize is standart, we dont want to mix the borard to keep the right numbering
-        if (boardsize != 3) {
-            Collections.shuffle(numberTokens);
-        }
+        if (boardsize != 3) Collections.shuffle(numberTokens);
 
-        // Generates all the tiles in axial coordinates (q,r). Goes from -r to r (radius) and then
-        // check if abs(q+r) <= radius. If it is more than the radius,
-        // the tile would be outside our board.
-        // For axial coordinate explanation: https://www.redblobgames.com/grids/hexagons/
         for (int q = -radius; q <= radius; q++) {
             for (int r = -radius; r <= radius; r++) {
                 if (Math.abs(q + r) <= radius) {
-                    String resourceTypeString = shuffledTerrains.remove(0); // saves a Random first resource and removes it from the list
-                    int number = (resourceTypeString.equals("Desert")) ? 7 : numberTokens.remove(0); // removes the first element in the number list and if it is a dessert then 7
-                    // Convert string to enum using fromString method
-                    Resource.ResourceType resourceType = Resource.ResourceType.fromString(resourceTypeString);
-                    // This (q,r) is inside the hex region
-                    Point2D center = axialToPixel(q,r);
-                    Tile tile = new Tile(q, r, resourceType, number, center);
+                    String type = shuffledTerrains.remove(0);
+                    int num = type.equals("Desert") ? 7 : numberTokens.remove(0);
+                    Resource.ResourceType resType = Resource.ResourceType.fromString(type);
+                    Point2D center = axialToPixel(q, r);
+                    Tile tile = new Tile(q, r, resType, num, center);
                     allTiles.add(tile);
                 }
             }
         }
 
         for (Tile tile : allTiles) {
-            //Compute tile centers in pixels
             Point2D center = axialToPixel(tile.getQ(), tile.getR());
-
-            //Array with 6 vertex objects for this tile
             Vertex[] corners = new Vertex[6];
 
-            for (int cornerNumber = 0; cornerNumber < 6; cornerNumber++) {
-                // Corner angle = 60*cornerNumber - 30 for a pointy top hex (compared to flat top hex)
-                double angleDeg = 60. * cornerNumber - 30.;
-                double angleRad = Math.toRadians(angleDeg);
+            for (int i = 0; i < 6; i++) {
+                double angleRad = Math.toRadians(60. * i - 30.);
+                double x = center.getX() + hexSize * Math.cos(angleRad);
+                double y = center.getY() + hexSize * Math.sin(angleRad);
+                x = Math.round(x * 1000.0) / 1000.0;
+                y = Math.round(y * 1000.0) / 1000.0;
+                Point2D point = new Point2D(x, y);
 
-                //Calculate corner point locations in pixel coordinates.
-                //Corner point calculation from "pointy_hex_corner": https://www.redblobgames.com/grids/hexagons/
-                double centerX = center.getX() + hexSize * Math.cos(angleRad);
-                double centerY = center.getY() + hexSize * Math.sin(angleRad);
-
-                // Rounding the corner coordinates to avoid floating errors when multiple tiles share the same corner.
-                centerX = Math.round(centerX * 1000.0) / 1000.0;
-                centerY = Math.round(centerY * 1000.0) / 1000.0;
-                Point2D cornerPoint = new Point2D(centerX, centerY);
-
-                //Check if there is already a vertex for this cornerpoint
-                Vertex vertex = vertexMap.get(cornerPoint);
-                if (vertex == null) {
-                    //Create the new vertex
-                    vertex = new Vertex(cornerPoint.getX(), cornerPoint.getY());
-                    vertexMap.put(cornerPoint, vertex);
-                }
-
+                Vertex vertex = vertexMap.computeIfAbsent(point, p -> new Vertex(p.getX(), p.getY()));
                 vertex.addAdjacentTile(tile);
-                corners[cornerNumber] = vertex;
+                corners[i] = vertex;
             }
 
-            // Unifying Edges that are between corners[cornerNumber] and corners[cornerNumber+1 mod 6]
             List<Edge> tileEdges = new ArrayList<>();
-            for (int cornerNumber = 0; cornerNumber < 6; cornerNumber++) {
-                Vertex vertex1 = corners[cornerNumber];
-                Vertex vertex2 = corners[(cornerNumber + 1) % 6];
-
-                //Ensure correct order of the vertices for the edge
-                String correctOrder = sortEdgeVertices(vertex1, vertex2);
-                Edge edge = edgeMap.get(correctOrder);
-                if (edge == null) {
-                    //Create the new edge
-                    edge = new Edge(vertex1, vertex2);
-                    edgeMap.put(correctOrder, edge);
-                }
-                //Connect tile and edge
+            for (int i = 0; i < 6; i++) {
+                Vertex v1 = corners[i];
+                Vertex v2 = corners[(i + 1) % 6];
+                String key = sortEdgeVertices(v1, v2);
+                Edge edge = edgeMap.computeIfAbsent(key, k -> new Edge(v1, v2));
                 edge.addAdjacentTile(tile);
                 tileEdges.add(edge);
             }
 
-            //Add for each tile
             tile.setVertices(List.of(corners));
             tile.setEdges(tileEdges);
         }
 
-        //Add everything
-        this.tiles.addAll(allTiles);
-        this.vertices.addAll(vertexMap.values());
-        this.edges.addAll(edgeMap.values());
+        tiles.addAll(allTiles);
+        vertices.addAll(vertexMap.values());
+        edges.addAll(edgeMap.values());
     }
 
-    //Point2D is built in class in JavaFX which stores a coordinate
-    //Formula used is "pointy_hex_to_pixel(hex)" from https://www.redblobgames.com/grids/hexagons/
-    private Point2D axialToPixel(int q, int r){
-        double x = hexSize * (Math.sqrt(3) * q + Math.sqrt(3)/2 * r) + offsetX; //offset for correct placement in app window
-        double y = hexSize * (3./2.) * r + offsetY; //offset for correct placement in app window
-        return new Point2D(x,y);
+    private Point2D axialToPixel(int q, int r) {
+        double x = hexSize * (Math.sqrt(3) * q + Math.sqrt(3) / 2 * r) + offsetX;
+        double y = hexSize * (3.0 / 2.0) * r + offsetY;
+        return new Point2D(x, y);
     }
 
-    private String sortEdgeVertices(Vertex vertex1, Vertex vertex2) {
-        //First sort by x, then y
-        if (vertex1.getX() > vertex2.getX() ||
-                (vertex1.getX() == vertex2.getX() && vertex1.getY() > vertex2.getY())){
-            //set vertex 2 first in the string since its lowest
-            Vertex tempVertex = vertex1;
-            vertex1 = vertex2;
-            vertex2 = tempVertex;
+    private String sortEdgeVertices(Vertex v1, Vertex v2) {
+        if (v1.getX() > v2.getX() || (v1.getX() == v2.getX() && v1.getY() > v2.getY())) {
+            Vertex temp = v1;
+            v1 = v2;
+            v2 = temp;
         }
-        return String.format("(%.3f,%.3f)-(%.3f,%.3f)",
-                vertex1.getX(), vertex1.getY(),
-                vertex2.getX(), vertex2.getY());
+        return String.format("(%.3f,%.3f)-(%.3f,%.3f)", v1.getX(), v1.getY(), v2.getX(), v2.getY());
     }
 
-    //Getters
+    //___________________________GETTERS___________________________
+
     public static List<Tile> getTiles() {
         return tiles;
     }
@@ -212,6 +164,4 @@ public class Board {
     public int getRadius() {
         return radius;
     }
-
-    //Setters
 }

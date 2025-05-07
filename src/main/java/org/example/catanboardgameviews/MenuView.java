@@ -18,7 +18,7 @@ public class MenuView {
 
     private static int playerCount = 3;
     private static int boardSize = 3;
-    private static int amoutOfAiai = 0;
+    private static int AIOpponentsCount = 0;
 
     public static void showMainMenu(Stage primaryStage) {
         VBox menuLayout = new VBox(25);
@@ -81,7 +81,7 @@ public class MenuView {
         Label aiLabel = new Label("Number of the players to be Ai (2-6):");
         aiLabel.setFont(new Font("Arial Black", 15));
         aiLabel.setTextFill(Color.WHITE);
-        TextField aiInput = new TextField(String.valueOf(amoutOfAiai));
+        TextField aiInput = new TextField(String.valueOf(AIOpponentsCount));
         aiInput.setMaxWidth(200);
         aiInput.setStyle("-fx-font-size: 16px;");
 
@@ -107,7 +107,7 @@ public class MenuView {
 
                 playerCount = players;
                 boardSize = size;
-                amoutOfAiai = ais;
+                AIOpponentsCount = ais;
 
                 showMainMenu(primaryStage);
             } catch (NumberFormatException ex) {
@@ -128,8 +128,8 @@ public class MenuView {
 
         Gameplay gameplay = new Gameplay();
         gameplay.reset();
-        gameplay.initializePlayers(playerCount-amoutOfAiai);
-        gameplay.initializeAis(amoutOfAiai);
+        gameplay.initializePlayers(playerCount-AIOpponentsCount);
+        gameplay.initializeAis(AIOpponentsCount);
         Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, boardSize - 1, gameplay);
         primaryStage.setScene(gameScene);
     }

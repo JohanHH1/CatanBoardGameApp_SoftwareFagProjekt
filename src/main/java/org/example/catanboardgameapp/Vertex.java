@@ -6,13 +6,14 @@ import java.util.List;
 public class Vertex {
     private Player owner = null;
     private String typeOf = null;
-    private double x;
-    private double y;
+    private final double x;
+    private final double y;
 
     private final List<Tile> adjacentTiles = new ArrayList<>();
-    private final List<Vertex> neighbors = new ArrayList<>(); // Added to store neighboring vertices
+    private final List<Vertex> neighbors = new ArrayList<>(); // Stores neighboring vertices
 
     //___________________CONSTRUCTOR_________________________
+
     public Vertex(double x, double y) {
         this.x = x;
         this.y = y;
@@ -26,47 +27,60 @@ public class Vertex {
             neighbors.add(neighbor);
         }
     }
-    public void makeSettlement(){
+
+    // Set this vertex as a settlement
+    public void makeSettlement() {
         this.typeOf = "Settlement";
     }
-    public void makeCity(){
+
+    // Upgrade this vertex to a city
+    public void makeCity() {
         this.typeOf = "City";
     }
 
-    // Get all neighboring vertices
-    public List<Vertex> getNeighbors() {
-        return neighbors;
+    // Check if a player owns this vertex (settlement or city)
+    public boolean hasSettlement() {
+        return owner != null;
     }
 
+    public boolean hasCity() {
+        return owner != null; // Same logic as hasSettlement; refined logic may be added if needed
+    }
+
+    // Add a tile adjacent to this vertex
     public void addAdjacentTile(Tile tile) {
         if (!adjacentTiles.contains(tile)) {
             adjacentTiles.add(tile);
         }
     }
-    public boolean hasSettlement() {
-        return owner != null;
-    }
-    public boolean hasCity() {
-
-        return owner != null;
-    }
-
 
     //___________________GETTERS_________________________
+
     public double getX() {
         return x;
     }
+
     public double getY() {
         return y;
     }
+
     public List<Tile> getAdjacentTiles() {
         return adjacentTiles;
     }
-    public Player getOwner() {return owner;}
+
+    public Player getOwner() {
+        return owner;
+    }
+
     public String getTypeOf() {
         return typeOf;
     }
 
+    public List<Vertex> getNeighbors() {
+        return neighbors;
+    }
+
     public void setOwner(Player owner) {
-        this.owner = owner;}
+        this.owner = owner;
+    }
 }
