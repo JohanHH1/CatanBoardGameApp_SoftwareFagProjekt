@@ -94,15 +94,35 @@ private boolean robberNeedsToMove = false;
             }
         }
 
-        // Rule 2: Can't build through another player's settlement
-        for (Player player : playerList) {
+        // Rule 2: Can't build through another player's settlement -- needs adjustment
+        /*for (Player player : playerList) {
             if (player != currentPlayer) {
-                if (player.getSettlements().contains(edge.getVertex1()) || player.getSettlements().contains(edge.getVertex2())) {
+                if ((player.getSettlements().contains(edge.getVertex1()) && existingRoad.isConnectedTo(edge.getVertex1())) || player.getSettlements().contains(edge.getVertex2())) {
                     return false;
                 }
             }
-        }
+        }*/
+        for (Player player : playerList) {
+            if (player != currentPlayer) {
+                // Check vertex1
+                if (player.getSettlements().contains(edge.getVertex1())) {
+                    for (Edge existingRoad : currentPlayer.getRoads()) {
+                        if (existingRoad.isConnectedTo(edge.getVertex1())) {
+                            return false; // Can't build through another player's settlement
+                        }
+                    }
+                }
 
+                // Check vertex2
+                if (player.getSettlements().contains(edge.getVertex2())) {
+                    for (Edge existingRoad : currentPlayer.getRoads()) {
+                        if (existingRoad.isConnectedTo(edge.getVertex2())) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
         // Rule 3: Road must connect to player's settlement or another road
         boolean connectsToSettlement = currentPlayer.getSettlements().contains(edge.getVertex1()) || currentPlayer.getSettlements().contains(edge.getVertex2());
 
