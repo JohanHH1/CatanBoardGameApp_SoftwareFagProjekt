@@ -80,20 +80,19 @@ public class CatanBoardGameView {
         Button centerButton = new Button("Centralize Board");
         Button zoomInButton = new Button("+");
         Button zoomOutButton = new Button("-");
-        Button exitButton = new Button("Exit");
+        Button showCostsButton = new Button("Show Building Costs");
         Button tradeButton = new Button("Trade with Bank 4:1");
         ImageView diceImage1 = new ImageView();
         ImageView diceImage2 = new ImageView();
         HBox diceBox = new HBox(5, diceImage1, diceImage2);
         diceBox.setPadding(new Insets(5));
+        Button exitButton = new Button("Exit");
 
 
         // Button Actions
         rollDiceButton.setOnAction(e ->
                 rollDiceAndDistribute(gameplay, diceImage1, diceImage2, root, boardGroup, board)
         );
-
-
 
         TurnController turnController = new TurnController(gameplay, rollDiceButton, nextTurnButton);
         nextTurnButton.setOnAction(turnController::handleNextTurnButtonPressed);
@@ -113,6 +112,7 @@ public class CatanBoardGameView {
         });
 
         TradeController.tradeButton(tradeButton, gameplay, root);
+        showCostsButton.setOnAction(e -> showBuildingCostsPopup());
 
         exitButton.setOnAction(e -> {
             Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
@@ -123,7 +123,7 @@ public class CatanBoardGameView {
         });
 
         // Add all buttons to top bar
-        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, exitButton, tradeButton, diceBox);
+        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, tradeButton, showCostsButton, diceBox, exitButton);
         buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
         rollDiceButton.setVisible(false);
         nextTurnButton.setVisible(false);
@@ -488,6 +488,29 @@ public class CatanBoardGameView {
         alert.setContentText(message);
         alert.showAndWait();
     }
+    public static void showBuildingCostsPopup() {
+        Stage popup = new Stage();
+        popup.initModality(Modality.APPLICATION_MODAL);
+        popup.setTitle("Building Costs");
+
+        InputStream imageStream = CatanBoardGameView.class.getResourceAsStream("/UI/catanBuildingCosts.png");
+        if (imageStream == null) {
+            System.err.println("Could not load building_costs.png");
+            return;
+        }
+
+        ImageView imageView = new ImageView(new Image(imageStream));
+        imageView.setPreserveRatio(true);
+        imageView.setFitWidth(400); // Adjust to your preferred size
+
+        VBox layout = new VBox(imageView);
+        layout.setPadding(new Insets(10));
+
+        Scene scene = new Scene(layout);
+        popup.setScene(scene);
+        popup.showAndWait();
+    }
+
 
     // Make Dice button visible
     public static void showDiceButton() {
