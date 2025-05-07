@@ -16,9 +16,9 @@ import java.util.List;
 
 public class MenuView {
 
-    private static int playerCount = 2;
+    private static int playerCount = 3;
     private static int boardSize = 3;
-    private static int amoutOfAiai = 1;
+    private static int amoutOfAiai = 0;
 
     public static void showMainMenu(Stage primaryStage) {
         VBox menuLayout = new VBox(25);
