@@ -111,6 +111,7 @@ public class CatanBoardGameView {
                 gameplay.requireRobberMove();
                 nextTurnButton.setVisible(false);
                 showRobberTargets(boardGroup, board, gameplay);
+
             } else {
                 gameplay.distributeResource(result);
                 nextTurnButton.setVisible(true);

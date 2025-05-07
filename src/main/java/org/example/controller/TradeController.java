@@ -15,9 +15,19 @@ import java.util.Optional;
 public class TradeController {
     public static void tradeButton(Button tradeButton, Gameplay gameplay, BorderPane root) {
         tradeButton.setOnAction(e -> {
-            List<String> resourceOptions = Arrays.asList("Brick", "Wood", "Grain", "Wool", "Ore");
+            List<String> resourceOptions = new ArrayList<>();
+            gameplay.getCurrentPlayer().getResources().forEach((resource, amount) -> {
+                if (amount >= 4) {
+                    resourceOptions.add(resource);
+                }
+            });
 
-            ChoiceDialog<String> giveDialog = new ChoiceDialog<>("Brick", resourceOptions);
+            if (resourceOptions.isEmpty()) {
+                CatanBoardGameView.showTradeError("You don't have 4 of any resources to trade.");
+                return;
+            }
+
+            ChoiceDialog<String> giveDialog = new ChoiceDialog<>("Choose a resource...", resourceOptions);
             giveDialog.setTitle("Trade with Bank");
             giveDialog.setHeaderText("Select resource you want to give 4x of:");
             giveDialog.setContentText("Give:");
@@ -25,7 +35,7 @@ public class TradeController {
             if (giveResult.isEmpty()) return;
 
             String giveResource = giveResult.get();
-            List<String> receiveOptions = new ArrayList<>(resourceOptions);
+            ArrayList<String> receiveOptions = new ArrayList<>(Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool"));
             receiveOptions.remove(giveResource);
 
             ChoiceDialog<String> receiveDialog = new ChoiceDialog<>(receiveOptions.get(0), receiveOptions);
