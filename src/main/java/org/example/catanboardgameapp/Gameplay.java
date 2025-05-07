@@ -238,7 +238,6 @@ private boolean robberNeedsToMove = false;
 
         if (currentPlayer.getPlayerId() == (1) && currentPlayer.getRoads().size() == 2) {
             CatanBoardGameView.showDiceButton();
-            System.out.println("is in here");
         }
         return true;
 
@@ -265,7 +264,6 @@ private boolean robberNeedsToMove = false;
                             String resourceType = tile.getResourcetype().getName();
                             Player owner = vertex.getOwner();
                             int currentAmount = owner.getResources().getOrDefault(resourceType, 0);
-                            System.out.println(vertex.hasCity() +" is here");
                             if (vertex.getTypeOf().equals("City")) {
                                 System.out.println("a city has been rolled");
                                 owner.getResources().put(resourceType, currentAmount + 2);
@@ -273,7 +271,7 @@ private boolean robberNeedsToMove = false;
                                 System.out.println("a settlement has been rolled");
                                 owner.getResources().put(resourceType, currentAmount + 1);
                             }
-                            System.out.println(owner + "gets " + resourceType + " " + currentAmount);
+                            System.out.println("player " + owner.getPlayerId() + " gets " + resourceType + " " + currentAmount);
                         }
                     }
 
