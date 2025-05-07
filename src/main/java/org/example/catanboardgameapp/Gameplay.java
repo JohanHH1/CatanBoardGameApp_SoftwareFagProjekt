@@ -65,7 +65,7 @@ private boolean robberNeedsToMove = false;
 
     }
 
-    private boolean isValidSettlementPlacement(Vertex vertex) {
+    public boolean isValidSettlementPlacement(Vertex vertex) {
         if (vertex.hasSettlement()) {
             return false; // settlement already in place at the vertex
         }
@@ -78,7 +78,7 @@ private boolean robberNeedsToMove = false;
         return true;
     }
 
-    private boolean isNotValidCityPlacement(Vertex vertex) {
+    public boolean isNotValidCityPlacement(Vertex vertex) {
         if (vertex.hasSettlement() && vertex.getOwner()==currentPlayer) {
             return false; // settlement already in place at the vertex
         }
@@ -86,7 +86,7 @@ private boolean robberNeedsToMove = false;
     }
 
     // Checking if a road placement is valid
-    private boolean isValidRoadPlacement(Edge edge) {
+    public boolean isValidRoadPlacement(Edge edge) {
         // Rule 1: Can't place a road where one already exists
         for (Player player : playerList) {
             if (player.getRoads().contains(edge)) {
@@ -368,47 +368,42 @@ private boolean robberNeedsToMove = false;
         return robberNeedsToMove;
     }
 
-    public void AiBuilds(){
-        Random random = new Random();
-        if(canRemoveResource("Ore", 3) && canRemoveResource("Grain", 2)){ // builds city if possible
-            List<Vertex> settlements = getCurrentPlayer().getSettlements();
-            if (!settlements.isEmpty()) {
-                int randomIndex = random.nextInt(settlements.size());
-                buildCity(settlements.get(randomIndex));
+    public void initializeAis(int amountOfAi) {
+        // Make a mutable color list
+        List<Color> colorList = new ArrayList<>(List.of(
+                Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW
+        ));
+
+        // Remove colors already used by human players
+        for (int i = 0; i < playerList.size(); i++) {
+            if (!colorList.isEmpty()) {
+                colorList.remove(0);
             }
         }
-        List<Vertex> validSettlementSpots = new ArrayList<>();
-        for (Edge road : getCurrentPlayer().getRoads()) {
-            if (isValidSettlementPlacement(road.getVertex1()) && !validSettlementSpots.contains(road.getVertex1()) ){ // makes a list of all places to place a settelment
-                validSettlementSpots.add(road.getVertex1());
-            }
-            if (isValidSettlementPlacement(road.getVertex2()) && !validSettlementSpots.contains(road.getVertex2()) ) {
-                validSettlementSpots.add(road.getVertex2());
-            }
-            }
-        if(!validSettlementSpots.isEmpty() && canRemoveResource("Wood", 1) && canRemoveResource("Wool", 1) && canRemoveResource("Brick", 1 ) && canRemoveResource("Grain", 1)){
-            Collections.shuffle(validSettlementSpots);
-            Vertex randomValidSettlementSpot = validSettlementSpots.get(0);
-            buildSettlement(randomValidSettlementSpot);
-        } else if (false ){ //  temp men skal tælle et par runder for at samle sammen til et hus
-            //wait a coupel of turn
+
+        // Add AI players using remaining colors
+        for (int i = 0; i < amountOfAi && i < colorList.size(); i++) {
+            int id = playerList.size() + 1;
+            AIiOpponent ai = new AIiOpponent(id, colorList.get(i));
+            playerList.add(ai);
         }
-        List<Edge> validPlacmentForRoad = new ArrayList<>();
-        if (canRemoveResource("Wood", 1) && canRemoveResource("Brick",1)) {
-            for (Edge road : Board.getEdges()) {
-                if (isValidRoadPlacement(road)) {
-                    validPlacmentForRoad.add(road);
-                }
-            }
-            if (!validPlacmentForRoad.isEmpty()) {
-                Collections.shuffle(validPlacmentForRoad);
-                buildRoad(validPlacmentForRoad.get(0));
-            }
+
+        if (currentPlayer == null && !playerList.isEmpty()) {
+            currentPlayerIndex = 0;
+            currentPlayer = playerList.get(currentPlayerIndex);
         }
     }
+    public int rollDiceAndDistributeResources() {
+        int result = rollDice();
 
-    public void initializeAis(int amoutOfAiai) {
+        if (result == 7) {
+            requireRobberMove(); // game state tracks robber
+        } else {
+            distributeResource(result);
+        }
 
+        return result;
     }
+
 }
 

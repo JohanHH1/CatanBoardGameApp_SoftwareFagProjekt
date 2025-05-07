@@ -128,7 +128,7 @@ public class MenuView {
 
         Gameplay gameplay = new Gameplay();
         gameplay.reset();
-        gameplay.initializePlayers(playerCount);
+        gameplay.initializePlayers(playerCount-amoutOfAiai);
         gameplay.initializeAis(amoutOfAiai);
         Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, boardSize - 1, gameplay);
         primaryStage.setScene(gameScene);

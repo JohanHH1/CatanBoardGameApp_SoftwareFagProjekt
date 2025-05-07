@@ -100,26 +100,7 @@ public class CatanBoardGameView {
         Text currentPlayersOnTurn = new Text("");
 
         rollDiceButton.setOnAction(e -> {
-
-            if (gameplay.isRobberMovementRequired()) {
-                System.out.println("move robber pls");
-                return;
-            }
-            int result = gameplay.rollDice();
-            diceResult.setText("Dice: " + result);
-            if (result == 7) {
-                gameplay.requireRobberMove();
-                nextTurnButton.setVisible(false);
-                showRobberTargets(boardGroup, board, gameplay);
-
-            } else {
-                gameplay.distributeResource(result);
-                nextTurnButton.setVisible(true);
-            }
-            root.setLeft(createLeftMenu(gameplay));
-
-            rollDiceButton.setVisible(false);
-            //nextTurnButton.setVisible(true);
+            CatanBoardGameView.rollDiceAndDistribute(gameplay, diceResult, root, boardGroup, board);
         });
 
         TurnController turnController = new TurnController(gameplay, rollDiceButton, nextTurnButton, currentPlayersOnTurn);
@@ -590,6 +571,20 @@ private static void centerBoard(Board board, Group boardGroup, double screenWidt
     public static void styleActivePlayerText(Text playerName) {
         playerName.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 18));
         //playerName.setFill();  // eller t.ex. Color.BLACK för enkel stil
+    }
+    public static void rollDiceAndDistribute(Gameplay gameplay, Text diceResult, BorderPane root, Group boardGroup, Board board) {
+        int result = gameplay.rollDiceAndDistributeResources();
+        diceResult.setText("Dice: " + result);
+
+        if (result == 7) {
+            nextTurnButton.setVisible(false);
+            showRobberTargets(boardGroup, board, gameplay);
+        } else {
+            nextTurnButton.setVisible(true);
+        }
+
+        root.setLeft(createLeftMenu(gameplay));
+        rollDiceButton.setVisible(false);
     }
 
 }
