@@ -1,6 +1,7 @@
 package org.example.controller;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import org.example.catanboardgameapp.DrawOrDisplay;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
 import javafx.scene.control.Button;
@@ -23,7 +24,7 @@ public class TradeController {
             });
 
             if (resourceOptions.isEmpty()) {
-                CatanBoardGameView.showTradeError("You don't have 4 of any resources to trade.");
+                DrawOrDisplay.showTradeError("You don't have 4 of any resources to trade.");
                 return;
             }
 
@@ -47,7 +48,7 @@ public class TradeController {
 
             String receiveResource = receiveResult.get();
             if (!gameplay.tradeWithBank(giveResource, receiveResource)) {
-                CatanBoardGameView.showTradeError("You don't have enough " + giveResource + " to trade.");
+                DrawOrDisplay.showTradeError("You don't have enough " + giveResource + " to trade.");
             } else {
                 root.setLeft(CatanBoardGameView.createLeftMenu(gameplay));
             }

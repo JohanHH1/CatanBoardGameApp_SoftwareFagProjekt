@@ -9,11 +9,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
-import org.example.catanboardgameapp.Edge;
-import org.example.catanboardgameapp.Gameplay;
+import org.example.catanboardgameapp.*;
 
-import org.example.catanboardgameapp.Player;
-import org.example.catanboardgameapp.Vertex;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
 import static org.example.catanboardgameviews.CatanBoardGameView.createLeftMenu;
@@ -34,7 +31,7 @@ public class BuildController {
             Player buildingPlayer = gameplay.getCurrentPlayer();
 
             if (gameplay.buildRoad(edge)) {
-                CatanBoardGameView.updateRoadAppearance(visibleLine, gameplay.getCurrentPlayer());
+                DrawOrDisplay.drawPlayerRoad(visibleLine, gameplay.getCurrentPlayer());
 
                 boolean allInInitialPhase = true;
                 for (Player player : gameplay.getPlayerList() ){
@@ -53,7 +50,7 @@ public class BuildController {
                         (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2,
                         (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2
                 );
-                CatanBoardGameView.showBuildErrorDot(boardGroup, mid);
+                DrawOrDisplay.showBuildErrorDot(boardGroup, mid);
             }
         };
 
@@ -63,7 +60,7 @@ public class BuildController {
         return MouseEvent -> {
             if (gameplay.buildSettlement(vertex)) { // if conditions for building are true
                 vertex.setOwner(gameplay.getCurrentPlayer()); // take vertex and set owner to currentPlayer
-                CatanBoardGameView.updateVertexAppearance(visibleCircle, vertex); // update appearance
+                DrawOrDisplay.updateVertexAppearance(visibleCircle, vertex); // update appearance
                 System.out.println("Settlement built by player " + gameplay.getCurrentPlayer().getPlayerId());
                 root.setLeft(createLeftMenu(gameplay));
             }
@@ -80,7 +77,7 @@ public class BuildController {
                 root.setLeft(createLeftMenu(gameplay));
             }
             else {
-                CatanBoardGameView.showPlacementError(boardGroup, vertex.getX(), vertex.getY()); // if conditions for building are false
+                DrawOrDisplay.showPlacementError(boardGroup, vertex.getX(), vertex.getY()); // if conditions for building are false
             }
         };
     }

@@ -4,6 +4,7 @@ import javafx.scene.paint.Color;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.example.catanboardgameapp.Robber.robberDeNiro;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GameplayTest {
@@ -43,7 +44,7 @@ public class GameplayTest {
         Player victim = gameplay.getPlayerList().get(1);
         victim.getResources().put("Ore", 2);
 
-        boolean success = gameplay.stealResourceFrom(victim);
+        boolean success = Robber.stealResourceFrom(victim);
         assertTrue(success);
     }
 
@@ -52,7 +53,7 @@ public class GameplayTest {
         Player victim = gameplay.getPlayerList().get(1);
         victim.getResources().clear();
 
-        boolean success = gameplay.stealResourceFrom(victim);
+        boolean success = Robber.stealResourceFrom(victim);
         assertFalse(success);
     }
 }

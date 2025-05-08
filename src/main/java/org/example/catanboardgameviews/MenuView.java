@@ -20,6 +20,20 @@ public class MenuView {
     private static int boardSize = 3;
     private static int AIOpponentsCount = 0;
 
+    private static void startGame(Stage primaryStage) {
+        if (boardSize < 3 || boardSize > 10 || playerCount < 2 || playerCount > 6) {
+            System.out.println("Please configure game options first.");
+            return;
+        }
+
+        Gameplay gameplay = new Gameplay();
+        gameplay.reset();
+        gameplay.initializePlayers(playerCount-AIOpponentsCount);
+        gameplay.initializeAis(AIOpponentsCount);
+        Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, boardSize - 1, gameplay);
+        primaryStage.setScene(gameScene);
+    }
+
     public static void showMainMenu(Stage primaryStage) {
         VBox menuLayout = new VBox(25);
         menuLayout.setAlignment(Pos.CENTER);
@@ -120,42 +134,6 @@ public class MenuView {
         primaryStage.setScene(optionsScene);
     }
 
-    private static void startGame(Stage primaryStage) {
-        if (boardSize < 3 || boardSize > 10 || playerCount < 2 || playerCount > 6) {
-            System.out.println("Please configure game options first.");
-            return;
-        }
-
-        Gameplay gameplay = new Gameplay();
-        gameplay.reset();
-        gameplay.initializePlayers(playerCount-AIOpponentsCount);
-        gameplay.initializeAis(AIOpponentsCount);
-        Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, boardSize - 1, gameplay);
-        primaryStage.setScene(gameScene);
-    }
-
-    private static Button createMenuButton(String text, int width, int height) {
-        Button button = new Button(text);
-        button.setPrefSize(width, height);
-        button.setFont(new Font("Arial", 20));
-        button.setStyle(
-                "-fx-background-color: #4CAF50;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-background-radius: 10;" +
-                        "-fx-cursor: hand;"
-        );
-        button.setOnMouseEntered(e -> button.setStyle(
-                "-fx-background-color: #45a049;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-background-radius: 10;"
-        ));
-        button.setOnMouseExited(e -> button.setStyle(
-                "-fx-background-color: #4CAF50;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-background-radius: 10;"
-        ));
-        return button;
-    }
     public static void showCreditsScreen(Stage primaryStage) {
         VBox creditsLayout = new VBox(15);
         creditsLayout.setAlignment(Pos.CENTER);
@@ -186,6 +164,29 @@ public class MenuView {
         creditsLayout.getChildren().addAll(title, name1, name2, name3, name4, backButton);
         Scene creditsScene = new Scene(creditsLayout, 800, 600);
         primaryStage.setScene(creditsScene);
+    }
+
+    private static Button createMenuButton(String text, int width, int height) {
+        Button button = new Button(text);
+        button.setPrefSize(width, height);
+        button.setFont(new Font("Arial", 20));
+        button.setStyle(
+                "-fx-background-color: #4CAF50;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-cursor: hand;"
+        );
+        button.setOnMouseEntered(e -> button.setStyle(
+                "-fx-background-color: #45a049;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-background-radius: 10;"
+        ));
+        button.setOnMouseExited(e -> button.setStyle(
+                "-fx-background-color: #4CAF50;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-background-radius: 10;"
+        ));
+        return button;
     }
 
 }

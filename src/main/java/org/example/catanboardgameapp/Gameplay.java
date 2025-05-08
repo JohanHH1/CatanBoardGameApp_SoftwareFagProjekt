@@ -5,14 +5,14 @@ import org.example.catanboardgameviews.CatanBoardGameView;
 
 import java.util.*;
 
+import static org.example.catanboardgameapp.Robber.robberDeNiro;
+
 public class Gameplay {
     private final List<Player> playerList = new ArrayList<>();
     private int currentPlayerIndex;
     private Player currentPlayer;
     private boolean initialPhase = true;
     private boolean forwardOrder = true;
-    private Robber robber;
-    private boolean robberNeedsToMove = false;
     private Board board;
     private int lastRolledDie1;
     private int lastRolledDie2;
@@ -86,24 +86,6 @@ public class Gameplay {
         return initialPhase ? "INITIAL PHASE" : "REGULAR PHASE";
     }
 
-    // -------------------- Getters --------------------
-
-    public Player getCurrentPlayer() {
-        return currentPlayer;
-    }
-
-    public List<Player> getPlayerList() {
-        return playerList;
-    }
-
-    public int getLastRolledDie1() {
-        return lastRolledDie1;
-    }
-
-    public int getLastRolledDie2() {
-        return lastRolledDie2;
-    }
-
     // -------------------- Dice --------------------
 
     public int rollDice() {
@@ -118,7 +100,7 @@ public class Gameplay {
     public int rollDiceAndDistributeResources() {
         int roll = rollDice();
         if (roll == 7) {
-            requireRobberMove();
+            robberDeNiro.requireRobberMove();
         } else {
             distributeResource(roll);
         }
@@ -329,49 +311,22 @@ public class Gameplay {
         currentPlayer.decreasePlayerScore();
     }
 
-    // -------------------- Robber --------------------
+    // -------------------- Getters --------------------
 
-    public void initializeRobber(Tile desertTile) {
-        this.robber = new Robber(desertTile);
-    }
-
-    public Robber getRobber() {
-        return robber;
+    public Player getCurrentPlayer() {
+        return currentPlayer;
     }
 
-    public boolean isRobberMovementRequired() {
-        return robberNeedsToMove;
+    public List<Player> getPlayerList() {
+        return playerList;
     }
 
-    public void setRobber(Robber robber) {
-        this.robber = robber;
+    public int getLastRolledDie1() {
+        return lastRolledDie1;
     }
 
-    public void requireRobberMove() {
-        robberNeedsToMove = true;
-    }
-
-    public void robberHasMoved() {
-        robberNeedsToMove = false;
-    }
-    public void discardResourcesForPlayer(Player player, Map<String, Integer> discarded) {
-        discarded.forEach((res, amt) -> {
-            int current = player.getResources().getOrDefault(res, 0);
-            player.getResources().put(res, Math.max(0, current - amt));
-        });
-    }
-    public boolean stealResourceFrom(Player victim) {
-        List<String> pool = new ArrayList<>();
-        victim.getResources().forEach((res, count) -> {
-            for (int i = 0; i < count; i++) pool.add(res);
-        });
-        if (pool.isEmpty()) return false;
-        Collections.shuffle(pool);
-        String stolen = pool.get(0);
-        victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
-        getCurrentPlayer().getResources().put(stolen, getCurrentPlayer().getResources().getOrDefault(stolen, 0) + 1);
-        System.out.println("Player " + getCurrentPlayer().getPlayerId() + " stole 1 " + stolen + " from Player " + victim.getPlayerId());
-        return true;
+    public int getLastRolledDie2() {
+        return lastRolledDie2;
     }
 
 }
