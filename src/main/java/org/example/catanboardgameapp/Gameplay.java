@@ -19,6 +19,9 @@ public class Gameplay {
     private Board board;
     private int lastRolledDie1;
     private int lastRolledDie2;
+    private boolean hasRolledThisTurn = false;
+
+
 
     // -------------------- Initialization --------------------
 
@@ -30,29 +33,39 @@ public class Gameplay {
         return board;
     }
 
-    public void initializePlayers(int numberOfPlayers) {
-        List<Color> colors = List.of(Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW);
-        for (int i = 0; i < numberOfPlayers && i < colors.size(); i++) {
-            playerList.add(new Player(i + 1, colors.get(i)));
+    public void initializeAllPlayers(int humanCount, int aiEasy, int aiMedium, int aiHard) {
+        playerList.clear();
+        List<Color> colors = new ArrayList<>(List.of(
+                Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW
+        ));
+
+        int idCounter = 1;
+
+        // Add human players
+        for (int i = 0; i < humanCount && !colors.isEmpty(); i++) {
+            playerList.add(new Player(idCounter++, colors.remove(0)));
         }
-        currentPlayerIndex = 0;
-        currentPlayer = playerList.get(currentPlayerIndex);
+
+        // Add AIs by difficulty
+        for (int i = 0; i < aiEasy && !colors.isEmpty(); i++) {
+            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.EASY));
+        }
+
+        for (int i = 0; i < aiMedium && !colors.isEmpty(); i++) {
+            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.MEDIUM));
+        }
+
+        for (int i = 0; i < aiHard && !colors.isEmpty(); i++) {
+            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.HARD));
+        }
+
+        if (!playerList.isEmpty()) {
+            currentPlayerIndex = 0;
+            currentPlayer = playerList.get(0);
+        }
     }
 
-    public void initializeAis(int amountOfAi) {
-        List<Color> colors = new ArrayList<>(List.of(Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW));
-        for (int i = 0; i < playerList.size(); i++) {
-            if (!colors.isEmpty()) colors.remove(0);
-        }
-        for (int i = 0; i < amountOfAi && i < colors.size(); i++) {
-            int id = playerList.size() + 1;
-            playerList.add(new AIOpponent(id, colors.get(i), AIOpponent.StrategyLevel.EASY));
-        }
-        if (currentPlayer == null && !playerList.isEmpty()) {
-            currentPlayerIndex = 0;
-            currentPlayer = playerList.get(currentPlayerIndex);
-        }
-    }
+
 
     public void reset() {
         playerList.clear();
@@ -63,6 +76,7 @@ public class Gameplay {
     // -------------------- Turn Management --------------------
 
     public void nextPlayerTurn() {
+        hasRolledThisTurn = false;
         // Handle AI initial placement (and visual drawing)
         if (initialPhase && currentPlayer instanceof AIOpponent ai) {
             ai.placeInitialSettlementAndRoad(this, CatanBoardGameView.getBoardGroup());
@@ -132,7 +146,7 @@ public class Gameplay {
         lastRolledDie1 = rand.nextInt(6) + 1;
         lastRolledDie2 = rand.nextInt(6) + 1;
         int roll = lastRolledDie1 + lastRolledDie2;
-        System.out.println("Dice rolled: " + lastRolledDie1 + " + " + lastRolledDie2 + " = " + roll);
+        CatanBoardGameView.logToGameLog("Dice rolled: " + lastRolledDie1 + " + " + lastRolledDie2 + " = " + roll);
         return roll;
     }
 
@@ -168,7 +182,7 @@ public class Gameplay {
         if (!canRemoveResource(give, 4)) return false;
         removeResource(give, 4);
         addResource(receive, 1);
-        System.out.println("Traded 4 " + give + " for 1 " + receive);
+        CatanBoardGameView.logToGameLog("Traded 4 " + give + " for 1 " + receive);
         return true;
     }
 
@@ -321,7 +335,7 @@ public class Gameplay {
                         int current = owner.getResources().getOrDefault(res, 0);
                         // GIVE 100 RESOURCES SO PLAYER CAN WIN THE GAME FOR TESTING (CHANGE TO 1 FOR ACTUAL GAME)
                         owner.getResources().put(res, current + (vertex.getTypeOf().equals("City") ? 2 : 1));
-                        System.out.println("Player " + owner.getPlayerId() + " gets " + res);
+                        CatanBoardGameView.logToGameLog("Player " + owner.getPlayerId() + " gets " + res);
                     }
                 }
             }
@@ -396,5 +410,11 @@ public class Gameplay {
     public boolean isInInitialPhase() {
         return initialPhase;
     }
+    public boolean hasPlayerRolledThisTurn() {
+        return hasRolledThisTurn;
+    }
 
+    public void setHasRolledThisTurn(boolean rolled) {
+        this.hasRolledThisTurn = rolled;
+    }
 }

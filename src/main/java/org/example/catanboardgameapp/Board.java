@@ -54,6 +54,10 @@ public class Board {
         double maxHexHeight = screenHeight / maxRows;
         return Math.round(Math.min(maxHexWidth / Math.sqrt(3), maxHexHeight / 1.5));
     }
+    public static void clearBoard() {
+        tiles.clear();
+        edges.clear();
+    }
 
     private void initializeBoard() {
         tiles.clear();

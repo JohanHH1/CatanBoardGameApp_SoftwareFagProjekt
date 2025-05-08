@@ -14,7 +14,9 @@ import javafx.scene.text.TextAlignment;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Tile {
     private final int q;
@@ -24,6 +26,8 @@ public class Tile {
     private final Resource.ResourceType resourcetype;
     private List<Vertex> vertices;
     private List<Edge> edges;
+    private static final Map<Resource.ResourceType, Image> imageCache = new HashMap<>();
+
 
     //___________________CONSTRUCTOR______________________
 
@@ -104,24 +108,28 @@ public class Tile {
 
     // Loads the correct resource icon for a tile
     public ImageView getResourceIcon(Resource.ResourceType type, double x, double y, double hexSize) {
-        String filename = switch (type) {
-            case BRICK -> "/Icons/brick.png";
-            case WOOD -> "/Icons/wood.png";
-            case ORE -> "/Icons/ore.png";
-            case GRAIN -> "/Icons/grain.png";
-            case WOOL -> "/Icons/wool.png";
-            case DESERT -> "/Icons/desert.png";
-        };
-
-        InputStream stream = CatanBoardGameView.class.getResourceAsStream(filename);
-        if (stream == null) {
-            System.err.println("Image not found: " + filename);
-            return new ImageView(); // fallback
+        // Check cache first (this way program dont load same image 100 times for giant board and crashes the game)
+        Image image = imageCache.get(type);
+        if (image == null) {
+            String filename = switch (type) {
+                case BRICK -> "/Icons/brick.png";
+                case WOOD -> "/Icons/wood.png";
+                case ORE -> "/Icons/ore.png";
+                case GRAIN -> "/Icons/grain.png";
+                case WOOL -> "/Icons/wool.png";
+                case DESERT -> "/Icons/desert.png";
+            };
+            InputStream stream = CatanBoardGameView.class.getResourceAsStream(filename);
+            if (stream == null) {
+                System.err.println("Image not found: " + filename);
+                image = new Image("/Icons/error.png"); // fallback
+            } else {
+                image = new Image(stream);
+            }
+            imageCache.put(type, image); // cache it
         }
 
-        Image image = new Image(stream);
         ImageView imageView = new ImageView(image);
-
         double imageWidth = Math.sqrt(3) * hexSize;
         double imageHeight = 2 * hexSize;
 
@@ -134,6 +142,7 @@ public class Tile {
 
         return imageView;
     }
+
 
     public List<Vertex> getVertices() {
         return vertices;

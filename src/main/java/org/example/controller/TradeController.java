@@ -16,6 +16,10 @@ import java.util.Optional;
 public class TradeController {
     public static void tradeButton(Button tradeButton, Gameplay gameplay, BorderPane root) {
         tradeButton.setOnAction(e -> {
+            if (!gameplay.isInInitialPhase() && !gameplay.hasPlayerRolledThisTurn()) {
+                DrawOrDisplay.showPopup("You must roll the dice before Trading!");
+                return;
+            }
             List<String> resourceOptions = new ArrayList<>();
             gameplay.getCurrentPlayer().getResources().forEach((resource, amount) -> {
                 if (amount >= 4) {

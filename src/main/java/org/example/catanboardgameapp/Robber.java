@@ -100,7 +100,7 @@ public class Robber {
                 List<Player> victims = showPotentialVictims(tile, robberDeNiro.gameplay.getCurrentPlayer());
 
                 if (victims.isEmpty()) {
-                    System.out.println("No players to steal from");
+                    CatanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from");
                     return;
                 }
 
@@ -113,7 +113,7 @@ public class Robber {
                 result.ifPresent(victim -> {
                     boolean success = stealResourceFrom(victim);
                     if (!success) {
-                        System.out.println("Failed to steal a resource from " + victim);
+                        CatanBoardGameView.logToGameLog("Failed to steal a resource from " + victim);
                     }
 
                     // Refresh left player menu to show updated resources
@@ -258,7 +258,7 @@ public class Robber {
         String stolen = pool.get(0);
         victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
         robberDeNiro.gameplay.getCurrentPlayer().getResources().put(stolen, robberDeNiro.gameplay.getCurrentPlayer().getResources().getOrDefault(stolen, 0) + 1);
-        System.out.println("Player " + robberDeNiro.gameplay.getCurrentPlayer().getPlayerId() + " stole 1 " + stolen + " from Player " + victim.getPlayerId());
+        CatanBoardGameView.logToGameLog("Player " + robberDeNiro.gameplay.getCurrentPlayer().getPlayerId() + " stole 1 " + stolen + " from Player " + victim.getPlayerId());
         return true;
     }
 }

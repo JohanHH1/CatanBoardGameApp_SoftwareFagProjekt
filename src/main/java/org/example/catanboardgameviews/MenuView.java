@@ -9,7 +9,9 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import org.example.catanboardgameapp.AIOpponent;
 import org.example.catanboardgameapp.Gameplay;
 
 import java.util.List;
@@ -18,13 +20,14 @@ public class MenuView {
 
     private static int playerCount = 3;
     private static int boardSize = 3;
-    private static int AIOpponentsCount = 0;
+    private static int AIOpponentsCountEASY = 0;
+    private static int AIOpponentsCountMEDIUM = 0;
+    private static int AIOpponentsCountHARD = 0;
 
     private static void startGame(Stage primaryStage) {
         Gameplay gameplay = new Gameplay();
         gameplay.reset();
-        gameplay.initializePlayers(playerCount);
-        gameplay.initializeAis(AIOpponentsCount);
+        gameplay.initializeAllPlayers(playerCount, AIOpponentsCountEASY, AIOpponentsCountMEDIUM, AIOpponentsCountHARD);
         Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, boardSize - 1, gameplay);
         primaryStage.setScene(gameScene);
     }
@@ -61,73 +64,144 @@ public class MenuView {
     }
 
     public static void showOptionsMenu(Stage primaryStage) {
+        CatanBoardGameView.resetGameUIState();
+
         VBox optionsLayout = new VBox(20);
         optionsLayout.setAlignment(Pos.CENTER);
         optionsLayout.setStyle(
                 "-fx-padding: 40;" +
-                        "-fx-background-color: linear-gradient(to bottom, #2c2c3f, #505080);" +
-                        "-fx-alignment: center;"
+                        "-fx-background-color: linear-gradient(to bottom, #2c2c3f, #505080);"
         );
 
         Label optionsTitle = new Label("Game Options");
         optionsTitle.setFont(new Font("Arial Black", 28));
         optionsTitle.setTextFill(Color.LIGHTGRAY);
 
-        Label playerLabel = new Label("Number of Players (2-6):");
-        playerLabel.setFont(new Font("Arial Black", 15));
-        playerLabel.setTextFill(Color.WHITE);
-        TextField playerInput = new TextField(String.valueOf(playerCount));
-        playerInput.setMaxWidth(200);
-        playerInput.setStyle("-fx-font-size: 16px;");
+        Label totalNote = new Label("Choose 2–6 Total Players");
+        totalNote.setFont(Font.font("Arial", 16));
+        totalNote.setTextFill(Color.LIGHTGRAY);
 
-        Label boardLabel = new Label("Board Size (3-10):");
-        boardLabel.setTextFill(Color.WHITE);
-        boardLabel.setFont(new Font("Arial Black", 15));
-        TextField boardInput = new TextField(String.valueOf(boardSize));
-        boardInput.setMaxWidth(200);
-        boardInput.setStyle("-fx-font-size: 16px;");
+        int[] humanPlayers = {3}, boardSizeVal = {3}, easyAI = {0}, mediumAI = {0}, hardAI = {0};
+        
+        Font labelFont = Font.font("Arial", FontWeight.BOLD, 14);
+        Color fontColor = Color.WHITE;
 
-        Label aiLabel = new Label("Number of the players to be Ai (2-6):");
-        aiLabel.setFont(new Font("Arial Black", 15));
-        aiLabel.setTextFill(Color.WHITE);
-        TextField aiInput = new TextField(String.valueOf(AIOpponentsCount));
-        aiInput.setMaxWidth(200);
-        aiInput.setStyle("-fx-font-size: 16px;");
+        Label[] labels = {
+                new Label("Number of Human Players:"),
+                new Label("Number of EASY AI:"),
+                new Label("Number of MEDIUM AI:"),
+                new Label("Number of HARD AI:"),
+                new Label("Board Size (3-10):")
+        };
+        Label[] values = {
+                new Label(String.valueOf(humanPlayers[0])),
+                new Label(String.valueOf(easyAI[0])),
+                new Label(String.valueOf(mediumAI[0])),
+                new Label(String.valueOf(hardAI[0])),
+                new Label(String.valueOf(boardSizeVal[0]))
+        };
+        for (int i = 0; i < labels.length; i++) {
+            labels[i].setFont(labelFont);
+            labels[i].setTextFill(fontColor);
+            values[i].setFont(labelFont);
+            values[i].setTextFill(fontColor);
+        }
 
-        Button backButton = createMenuButton("Accept Changes", 180, 50);
-        backButton.setOnAction(e -> {
-            try {
-                int players = Integer.parseInt(playerInput.getText());
-                int size = Integer.parseInt(boardInput.getText());
-                int ais = Integer.parseInt(aiInput.getText());
+        Runnable updateCounts = () -> {
+            values[0].setText(String.valueOf(humanPlayers[0]));
+            values[1].setText(String.valueOf(easyAI[0]));
+            values[2].setText(String.valueOf(mediumAI[0]));
+            values[3].setText(String.valueOf(hardAI[0]));
+            values[4].setText(String.valueOf(boardSizeVal[0]));
+        };
 
-                if (players < 2 || players > 6) {
-                    System.out.println("Players must be between 2 and 6.");
-                    return;
-                }
+        Button[][] controls = new Button[5][2];
+        for (int i = 0; i < 5; i++) {
+            controls[i][0] = new Button("-");
+            controls[i][1] = new Button("+");
+            controls[i][0].setMinWidth(35);
+            controls[i][1].setMinWidth(35);
+        }
 
-                if (size < 3 || size > 10) {
-                    System.out.println("Board size must be between 3 and 10.");
-                    return;
-                }
-                if ((ais < 2 || ais > 6 )&&(ais > players)) {
-                    System.out.println("AI must be between 2 and 6, and no more than the total player amount.");
-                }
-
-                playerCount = players;
-                boardSize = size;
-                AIOpponentsCount = ais;
-
-                showMainMenu(primaryStage);
-            } catch (NumberFormatException ex) {
-                System.out.println("Invalid input.");
-            }
+        controls[0][1].setOnAction(e -> {
+            if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) humanPlayers[0]++;
+            updateCounts.run();
+        });
+        controls[0][0].setOnAction(e -> {
+            if (humanPlayers[0] > 1) humanPlayers[0]--;
+            updateCounts.run();
         });
 
-        optionsLayout.getChildren().addAll(optionsTitle, playerLabel, playerInput, boardLabel, boardInput,aiLabel, aiInput, backButton);
-        Scene optionsScene = new Scene(optionsLayout, 800, 600);
-        primaryStage.setScene(optionsScene);
+        controls[1][1].setOnAction(e -> {
+            if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) easyAI[0]++;
+            updateCounts.run();
+        });
+        controls[1][0].setOnAction(e -> {
+            if (easyAI[0] > 0) easyAI[0]--;
+            updateCounts.run();
+        });
+
+        controls[2][1].setOnAction(e -> {
+            if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) mediumAI[0]++;
+            updateCounts.run();
+        });
+        controls[2][0].setOnAction(e -> {
+            if (mediumAI[0] > 0) mediumAI[0]--;
+            updateCounts.run();
+        });
+
+        controls[3][1].setOnAction(e -> {
+            if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) hardAI[0]++;
+            updateCounts.run();
+        });
+        controls[3][0].setOnAction(e -> {
+            if (hardAI[0] > 0) hardAI[0]--;
+            updateCounts.run();
+        });
+
+        controls[4][1].setOnAction(e -> {
+            if (boardSizeVal[0] < 10) boardSizeVal[0]++;
+            updateCounts.run();
+        });
+        controls[4][0].setOnAction(e -> {
+            if (boardSizeVal[0] > 3) boardSizeVal[0]--;
+            updateCounts.run();
+        });
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(15);
+        grid.setAlignment(Pos.CENTER);
+        for (int i = 0; i < labels.length; i++) {
+            grid.add(labels[i], 0, i);
+            grid.add(controls[i][0], 1, i);
+            grid.add(values[i], 2, i);
+            grid.add(controls[i][1], 3, i);
+        }
+
+        Button accept = new Button("Accept Changes");
+        accept.setStyle("-fx-font-size: 18px; -fx-background-color: #28a745; -fx-text-fill: white; -fx-padding: 10 20 10 20;");
+        accept.setOnAction(e -> {
+            int total = humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0];
+            if (total < 2 || total > 6) {
+                System.out.println("Total players must be between 2 and 6.");
+                return;
+            }
+            MenuView.playerCount = humanPlayers[0];
+            MenuView.boardSize = boardSizeVal[0];
+            MenuView.AIOpponentsCountEASY = easyAI[0];
+            MenuView.AIOpponentsCountMEDIUM = mediumAI[0];
+            MenuView.AIOpponentsCountHARD = hardAI[0];
+            MenuView.showMainMenu(primaryStage);
+        });
+
+        optionsLayout.getChildren().addAll(optionsTitle, totalNote, grid, accept);
+        Scene scene = new Scene(optionsLayout, 800, 600);
+        primaryStage.setScene(scene);
     }
+
+
+
 
     public static void showCreditsScreen(Stage primaryStage) {
         VBox creditsLayout = new VBox(15);

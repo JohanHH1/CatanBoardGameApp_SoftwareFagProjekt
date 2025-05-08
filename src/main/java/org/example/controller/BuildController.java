@@ -27,6 +27,10 @@ public class BuildController {
 
     public EventHandler<MouseEvent> createRoadClickHandler(Edge edge, Line visibleLine, BorderPane root) {
         return event -> {
+            if (!gameplay.isInInitialPhase() && !gameplay.hasPlayerRolledThisTurn()) {
+                DrawOrDisplay.showPopup("You must roll the dice before building!");
+                return;
+            }
             Player currentPlayer = gameplay.getCurrentPlayer();
 
             if (gameplay.buildRoad(edge)) {
@@ -40,7 +44,7 @@ public class BuildController {
                     CatanBoardGameView.handleInitialAITurn(gameplay, boardGroup);
                 }
 
-                System.out.println("Road built by player " + currentPlayer.getPlayerId());
+                CatanBoardGameView.logToGameLog("Road built by player " + currentPlayer.getPlayerId());
                 root.setLeft(createLeftMenu(gameplay));
             } else {
                 Point2D mid = new Point2D(
@@ -55,6 +59,10 @@ public class BuildController {
 
     public EventHandler<MouseEvent> createSettlementClickHandler(Circle visibleCircle, Vertex vertex, BorderPane root) {
         return MouseEvent -> {
+            if (!gameplay.isInInitialPhase() && !gameplay.hasPlayerRolledThisTurn()) {
+                DrawOrDisplay.showPopup("You must roll the dice before building!");
+                return;
+            }
             Player currentPlayer = gameplay.getCurrentPlayer();
 
             boolean success;
@@ -67,7 +75,7 @@ public class BuildController {
             if (success) {
                 vertex.setOwner(currentPlayer);
                 DrawOrDisplay.drawPlayerSettlement(visibleCircle, vertex);
-                System.out.println("Settlement built by player " + currentPlayer.getPlayerId());
+                CatanBoardGameView.logToGameLog("Settlement built by player " + currentPlayer.getPlayerId());
                 root.setLeft(createLeftMenu(gameplay));
             }
             else if (gameplay.buildCity(vertex)) {
@@ -78,8 +86,11 @@ public class BuildController {
                 citySquare.setFill(currentPlayer.getColor());
                 citySquare.setStroke(Color.BLACK);
                 boardGroup.getChildren().add(citySquare);
+                CatanBoardGameView.logToGameLog(
+                        "Player " + currentPlayer.getPlayerId() + " built a Settlement at (" +
+                                vertex.getX() + ", " + vertex.getY() + ")"
+                );
 
-                System.out.println("Settlement built");
                 root.setLeft(createLeftMenu(gameplay));
             }
             else {

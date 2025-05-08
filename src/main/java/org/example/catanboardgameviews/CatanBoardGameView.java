@@ -1,8 +1,11 @@
 package org.example.catanboardgameviews;
 
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -46,15 +49,20 @@ public class CatanBoardGameView {
     public static Circle currentRobberCircle = null;
     public static Group boardGroup;
     private static Stage primaryStage;
+    private static final TextArea gameLogArea = new TextArea();
+
 
     // __________________________KINDA CONSTRUCTOR - Creating the Game Scene_________________________
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
+        ImageView diceImage1 = new ImageView();
+        ImageView diceImage2 = new ImageView();
         setPrimaryStage(primaryStage);
         double sceneWidth = 800;
         double sceneHeight = 600;
         boardRadius = radius;
 
-        // Initialize Board
+        // Initialize Board (clear old one first...)
+        Board.clearBoard(); //  Clear old static tile/edge data
         Board board = new Board(radius, sceneWidth, sceneHeight);
         gameplay.setBoard(board); // Link board to gameplay logic
 
@@ -87,23 +95,22 @@ public class CatanBoardGameView {
         // Initializing top screen Buttons
         rollDiceButton = new Button("Roll Dice");
         nextTurnButton = new Button("Next Turn");
-        Button centerButton = new Button("Centralize Board");
+        Button centerButton = new Button("Center");
         Button zoomInButton = new Button("+");
         Button zoomOutButton = new Button("-");
-        Button showCostsButton = new Button("Show Building Costs");
+        Button showCostsButton = new Button("Show Recipes");
         Button tradeButton = new Button("Trade with Bank 4:1");
-        ImageView diceImage1 = new ImageView();
-        ImageView diceImage2 = new ImageView();
-        HBox diceBox = new HBox(5, diceImage1, diceImage2);
-        diceBox.setPadding(new Insets(5));
         Button exitButton = new Button("Exit");
 
         // Button Actions
         // Dice and next turn
-        rollDiceButton.setOnAction(e ->
-                rollDiceAndDistribute(gameplay, diceImage1, diceImage2, root, boardGroup, board)
-        );
-        TurnController turnController = new TurnController(gameplay, rollDiceButton, nextTurnButton);
+        rollDiceButton.setOnAction(e -> {
+            rollDiceAndDistribute(gameplay, diceImage1, diceImage2, root, boardGroup, board);
+            gameplay.setHasRolledThisTurn(true);
+            rollDiceButton.setDisable(true);
+        });
+
+        TurnController turnController = new TurnController(gameplay, rollDiceButton, nextTurnButton, root);
         nextTurnButton.setOnAction(turnController::handleNextTurnButtonPressed);
 
         // Centralize and zoom buttons
@@ -126,18 +133,102 @@ public class CatanBoardGameView {
             Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.YES) {
+
                 returnToMainMenu();
             }
         });
 
-        // Add all buttons to top bar
-        HBox buttonBox = new HBox(10, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, tradeButton, showCostsButton, diceBox, exitButton);
-        buttonBox.setStyle("-fx-padding: 10; -fx-alignment: top-left;");
+        // TOP BAR - Buttons etc
+        HBox buttonBox = new HBox(12, rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, tradeButton, showCostsButton, exitButton);
+        buttonBox.setPadding(new Insets(10));
+        buttonBox.setAlignment(Pos.CENTER_LEFT);
+        buttonBox.setStyle("-fx-background-color: linear-gradient(to bottom, #ececec, #d4d4d4); -fx-border-color: #aaa; -fx-border-width: 0 0 1 0;");
+        String fancyButtonStyle = """
+            -fx-background-color: linear-gradient(to bottom, #f9f9f9, #e0e0e0);
+            -fx-background-radius: 8;
+            -fx-border-radius: 8;
+            -fx-border-color: #b0b0b0;
+            -fx-font-weight: bold;
+            -fx-cursor: hand;
+            -fx-padding: 8 14 8 14;
+        """;
+        String hoverStyle = "-fx-background-color: linear-gradient(to bottom, #e6e6e6, #cccccc);";
+        for (Button btn : List.of(rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton, tradeButton, showCostsButton, exitButton)) {
+            btn.setStyle(fancyButtonStyle);
+            btn.setOnMouseEntered(e -> btn.setStyle(fancyButtonStyle + hoverStyle));
+            btn.setOnMouseExited(e -> btn.setStyle(fancyButtonStyle));
+        }
 
         // Dont show roll dice or next turn button until initial placements and game starting
         rollDiceButton.setVisible(false);
         nextTurnButton.setVisible(false);
         root.setTop(buttonBox);
+
+        // Dice title + images
+        Label diceTitle = new Label("Dice Roll");
+        diceTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        diceTitle.setPadding(new Insets(0, 0, 5, 5));
+
+        diceImage1.setFitWidth(40);
+        diceImage2.setFitWidth(40);
+        diceImage1.setFitHeight(40);
+        diceImage2.setFitHeight(40);
+        HBox diceImages = new HBox(5, diceImage1, diceImage2);
+        diceImages.setAlignment(Pos.CENTER_LEFT);
+        diceImages.setPadding(new Insets(0, 0, 0, 5));
+
+        VBox diceColumn = new VBox(diceTitle, diceImages);
+        diceColumn.setAlignment(Pos.TOP_LEFT);
+        diceColumn.setPadding(new Insets(5));
+        diceColumn.setSpacing(5);
+
+        // Game log title + scroll
+        Label logTitle = new Label("Game Log");
+        logTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        logTitle.setPadding(new Insets(0, 0, 5, 0));
+
+        gameLogArea.setEditable(false);
+        gameLogArea.setWrapText(true);
+        gameLogArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12;");
+        ScrollPane scrollPane = new ScrollPane(gameLogArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setPrefHeight(100);
+
+        VBox logColumn = new VBox(logTitle, scrollPane);
+        logColumn.setSpacing(5);
+        logColumn.setPadding(new Insets(5, 10, 5, 0));
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+        // Final horizontal layout: Dice | Log
+        HBox bottomContent = new HBox(diceColumn, logColumn);
+        bottomContent.setSpacing(10);
+        bottomContent.setPadding(new Insets(5));
+        HBox.setHgrow(logColumn, Priority.ALWAYS);
+
+        // Wrap in a vertical container for use in SplitPane
+        VBox logBox = new VBox(bottomContent);
+        VBox.setVgrow(bottomContent, Priority.ALWAYS);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        logBox.setMinHeight(80);
+
+        // Combine board + bottom section with resizable divider
+        VBox boardOnly = new VBox(boardWrapper);
+        SplitPane splitPane = new SplitPane();
+        splitPane.setOrientation(Orientation.VERTICAL);
+        splitPane.getItems().addAll(boardOnly, logBox);
+        splitPane.setDividerPositions(0.85); // adjust if needed
+        root.setCenter(splitPane);
+
+// ✅ Ensure log area grows with window resizing
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        VBox.setVgrow(logColumn, Priority.ALWAYS);
+        VBox.setVgrow(bottomContent, Priority.ALWAYS);
+        VBox.setVgrow(logBox, Priority.ALWAYS);
+        SplitPane.setResizableWithParent(logBox, true);
+
+
 
         // Scroll Zoom Handler
         boardWrapper.setOnScroll((ScrollEvent event) -> {
@@ -195,14 +286,39 @@ public class CatanBoardGameView {
 
     //__________________________ACTION FUNCTIONS_____________________________________
 
-    // Navigate back to the main menu
+    // Clear STATIC variables/cache etc.
+    public static void resetGameUIState() {
+        if (boardGroup != null) {
+            boardGroup.getChildren().clear();
+            boardGroup = null;
+        }
+        gameLogArea.clear();
+        currentRobberCircle = null;
+        robberDeNiro = null;
+        boardRadius = 0;
+        Board.clearBoard();
+    }
+
+    // Navigate back to the main menu (AND RESET EVERYTHING)
     public static void returnToMainMenu() {
+        resetGameUIState();
+        // Clear persistent UI state
+        if (boardGroup != null) {
+            boardGroup.getChildren().clear();
+        }
+        gameLogArea.clear();
+        currentRobberCircle = null;
+        robberDeNiro = null;
+        boardGroup = null;
+        boardRadius = 0;
+        // Now safely return to menu
         if (primaryStage != null) {
             MenuView.showMainMenu(primaryStage);
         } else {
             System.err.println("Error: primaryStage is null.");
         }
     }
+
 
 
     // Builds the left player information menu
@@ -293,7 +409,7 @@ public class CatanBoardGameView {
         Tile centerTile = Board.getTiles().get((Board.getTiles().size() - 1) / 2);
         Point2D centerPoint = centerTile.getCenter();
         double centerX = (screenWidth - 200) / 2 - centerPoint.getX();
-        double centerY = (screenHeight - 70) / 2 - centerPoint.getY();
+        double centerY = (screenHeight - 130) / 2 - centerPoint.getY();
         boardGroup.setTranslateX(centerX);
         boardGroup.setTranslateY(centerY);
         boardGroup.setScaleX(1.0);
@@ -337,6 +453,10 @@ public class CatanBoardGameView {
     public static void showDiceButton() {
         rollDiceButton.setVisible(true);
     }
+    // Make Dice button visible
+    public static void showTradeButton() {
+        rollDiceButton.setVisible(true);
+    }
 
 
 
@@ -360,5 +480,10 @@ public class CatanBoardGameView {
     public static Stage getPrimaryStage() {
         return primaryStage;
     }
-
+    public static void logToGameLog(String message) {
+        Platform.runLater(() -> {
+            gameLogArea.appendText(message + "\n");
+            gameLogArea.setScrollTop(Double.MAX_VALUE); // auto-scroll down
+        });
+    }
 }

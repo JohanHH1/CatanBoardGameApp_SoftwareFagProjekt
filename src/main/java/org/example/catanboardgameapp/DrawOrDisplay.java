@@ -1,11 +1,15 @@
 package org.example.catanboardgameapp;
 
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -96,7 +100,7 @@ public class DrawOrDisplay {
         Group errorGroup = new Group(line1, line2);
         boardGroup.getChildren().add(errorGroup);
         // Error goes away after 1s
-        System.out.println("Placement is invalid");
+        CatanBoardGameView.logToGameLog("Placement is invalid");
         PauseTransition delay = new PauseTransition(Duration.seconds(1));
         delay.setOnFinished(e -> boardGroup.getChildren().remove(errorGroup));
         delay.play();
@@ -128,6 +132,27 @@ public class DrawOrDisplay {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
+    public static void showPopup(String message) {
+        Platform.runLater(() -> {
+            Stage popup = new Stage();
+            popup.initModality(Modality.APPLICATION_MODAL);
+            popup.setTitle("Action Blocked");
+
+            VBox box = new VBox(10);
+            box.setPadding(new Insets(20));
+            box.setAlignment(Pos.CENTER);
+            Label label = new Label(message);
+            Button closeButton = new Button("OK");
+            closeButton.setOnAction(e -> popup.close());
+
+            box.getChildren().addAll(label, closeButton);
+            Scene scene = new Scene(box);
+            popup.setScene(scene);
+            popup.showAndWait();
+        });
+    }
+
 
     // Creates a hex tile polygon from the tile's vertices
     public static Polygon createTilePolygon(Tile tile) {

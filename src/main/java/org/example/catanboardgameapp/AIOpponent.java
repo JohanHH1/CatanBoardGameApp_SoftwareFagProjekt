@@ -88,7 +88,7 @@ public class AIOpponent extends Player {
                 }
             });
 
-            System.out.println("AI Player " + getPlayerId() + " built an INITIAL settlement and road.");
+            CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built an INITIAL settlement and road.");
         }
     }
 
@@ -131,7 +131,7 @@ public class AIOpponent extends Player {
             List<Vertex> settlements = getSettlements();
             if (!settlements.isEmpty()) {
                 gameplay.buildCity(settlements.get(random.nextInt(settlements.size())));
-                System.out.println("AI Player " + getPlayerId() + " built a city.");
+                CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a city.");
             }
         }
     }
@@ -145,7 +145,7 @@ public class AIOpponent extends Player {
         if (!validSpots.isEmpty()) {
             Collections.shuffle(validSpots);
             gameplay.buildSettlement(validSpots.get(0));
-            System.out.println("AI Player " + getPlayerId() + " built a settlement.");
+            CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a settlement.");
         }
     }
 
@@ -167,7 +167,7 @@ public class AIOpponent extends Player {
         }
 
         if (bestSpot != null) gameplay.buildSettlement(bestSpot);
-        System.out.println("AI Player " + getPlayerId() + " built a settlement.");
+        CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a settlement.");
     }
 
     // Tries to build a road randomly on a valid edge
@@ -182,7 +182,7 @@ public class AIOpponent extends Player {
         if (!validRoads.isEmpty()) {
             Collections.shuffle(validRoads);
             gameplay.buildRoad(validRoads.get(0));
-            System.out.println("AI Player " + getPlayerId() + " built a road.");
+            CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a road.");
         }
     }
 
@@ -196,7 +196,7 @@ public class AIOpponent extends Player {
                 for (String give : allTypes) {
                     if (!give.equals(need) && resources.getOrDefault(give, 0) >= 4) {
                         gameplay.tradeWithBank(give, need); //
-                        System.out.println("AI Player " + getPlayerId() + " traded with the bank.");
+                        CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " traded with the bank.");
                         return;
                     }
                 }

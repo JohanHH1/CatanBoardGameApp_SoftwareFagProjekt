@@ -1,5 +1,6 @@
 package org.example.controller;
 import javafx.animation.PauseTransition;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import org.example.catanboardgameapp.AIOpponent;
@@ -14,16 +15,20 @@ public class TurnController {
     private final Gameplay gameplay;
     private final Button rollDiceButton;
     private final Button nextTurnButton;
+    private final BorderPane root;
 
-    public TurnController(Gameplay gameplay, Button rollDiceButton, Button nextTurnButton) {
+    public TurnController(Gameplay gameplay, Button rollDiceButton, Button nextTurnButton, BorderPane root) {
         this.gameplay = gameplay;
         this.rollDiceButton = rollDiceButton;
         this.nextTurnButton = nextTurnButton;
+        this.root = root;
     }
+
 
     public void handleNextTurnButtonPressed(ActionEvent event) {
 
         gameplay.nextPlayerTurn();
+        root.setLeft(CatanBoardGameView.createLeftMenu(gameplay));
         Player currentPlayer = gameplay.getCurrentPlayer();
 
         int totalRoads = 0;
