@@ -320,7 +320,7 @@ public class Gameplay {
                         String res = tile.getResourcetype().getName();
                         int current = owner.getResources().getOrDefault(res, 0);
                         // GIVE 100 RESOURCES SO PLAYER CAN WIN THE GAME FOR TESTING (CHANGE TO 1 FOR ACTUAL GAME)
-                        owner.getResources().put(res, current + (vertex.getTypeOf().equals("City") ? 2 : 100));
+                        owner.getResources().put(res, current + (vertex.getTypeOf().equals("City") ? 2 : 1));
                         System.out.println("Player " + owner.getPlayerId() + " gets " + res);
                     }
                 }

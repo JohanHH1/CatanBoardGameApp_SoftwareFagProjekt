@@ -233,6 +233,15 @@ public class Robber {
 
     public void requireRobberMove() {
         robberNeedsToMove = true;
+        for (Player player : gameplay.getPlayerList()) {
+            int totalCards = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
+            if (totalCards > 7) {
+                Map<String, Integer> discarded = showDiscardDialog(player, gameplay);
+                if (discarded != null) {
+                    discardResourcesForPlayer(player, discarded);
+                }
+            }
+        }
     }
 
     public static void robberHasMoved() {
