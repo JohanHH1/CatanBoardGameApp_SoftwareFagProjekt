@@ -150,13 +150,30 @@ public class DrawOrDisplay {
     }
 
     // Show whether a vertex belongs to a player or is empty
-    public static void updateVertexAppearance(Circle circle, Vertex vertex) {
+    public static void drawPlayerSettlement(Circle circle, Vertex vertex) {
         if (vertex.getOwner() != null) {
             circle.setFill(vertex.getOwner().getColor());
             circle.setRadius(16.0 / boardRadius);
         } else {
             circle.setFill(Color.TRANSPARENT);
             circle.setRadius(8.0 / boardRadius);
+        }
+    }
+
+    // Call this after AI places initial moves to reflect them visually
+    public static void drawAIMoves(Group boardGroup, Player ai) {
+        for (Vertex v : ai.getSettlements()) {
+            Circle circle = new Circle(v.getX(), v.getY(), 8);
+            DrawOrDisplay.drawPlayerSettlement(circle, v);
+            boardGroup.getChildren().add(circle);
+        }
+        for (Edge e : ai.getRoads()) {
+            Line line = new Line(
+                    e.getVertex1().getX(), e.getVertex1().getY(),
+                    e.getVertex2().getX(), e.getVertex2().getY()
+            );
+            DrawOrDisplay.drawPlayerRoad(line, ai);
+            boardGroup.getChildren().add(line);
         }
     }
 }

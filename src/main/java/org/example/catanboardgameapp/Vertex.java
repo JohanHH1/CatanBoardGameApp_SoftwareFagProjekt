@@ -2,6 +2,7 @@ package org.example.catanboardgameapp;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Vertex {
     private Player owner = null;
@@ -83,4 +84,19 @@ public class Vertex {
     public void setOwner(Player owner) {
         this.owner = owner;
     }
+
+    //_______________________OVERRIDE____________________
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Vertex other = (Vertex) obj;
+        return Double.compare(x, other.x) == 0 && Double.compare(y, other.y) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
+    }
+
 }

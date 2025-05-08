@@ -27,23 +27,20 @@ public class BuildController {
 
     public EventHandler<MouseEvent> createRoadClickHandler(Edge edge, Line visibleLine, BorderPane root) {
         return event -> {
-
-            Player buildingPlayer = gameplay.getCurrentPlayer();
+            Player currentPlayer = gameplay.getCurrentPlayer();
 
             if (gameplay.buildRoad(edge)) {
-                DrawOrDisplay.drawPlayerRoad(visibleLine, gameplay.getCurrentPlayer());
+                DrawOrDisplay.drawPlayerRoad(visibleLine, currentPlayer);
 
-                boolean allInInitialPhase = true;
-                for (Player player : gameplay.getPlayerList() ){
-                    if (player.getRoads().size() > 2){
-                        allInInitialPhase=false;
-                        break;
-                    }
-                }
-                if (allInInitialPhase){
+                boolean allInInitialPhase = gameplay.getPlayerList().stream()
+                        .allMatch(p -> p.getRoads().size() <= 2);
+
+                if (allInInitialPhase) {
                     gameplay.nextPlayerTurn();
+                    CatanBoardGameView.handleInitialAITurn(gameplay, boardGroup);
                 }
-                System.out.println("Road built by player " + buildingPlayer.getPlayerId());
+
+                System.out.println("Road built by player " + currentPlayer.getPlayerId());
                 root.setLeft(createLeftMenu(gameplay));
             } else {
                 Point2D mid = new Point2D(
@@ -53,32 +50,42 @@ public class BuildController {
                 DrawOrDisplay.showBuildErrorDot(boardGroup, mid);
             }
         };
-
     }
+
 
     public EventHandler<MouseEvent> createSettlementClickHandler(Circle visibleCircle, Vertex vertex, BorderPane root) {
         return MouseEvent -> {
-            if (gameplay.buildSettlement(vertex)) { // if conditions for building are true
-                vertex.setOwner(gameplay.getCurrentPlayer()); // take vertex and set owner to currentPlayer
-                DrawOrDisplay.updateVertexAppearance(visibleCircle, vertex); // update appearance
-                System.out.println("Settlement built by player " + gameplay.getCurrentPlayer().getPlayerId());
+            Player currentPlayer = gameplay.getCurrentPlayer();
+
+            boolean success;
+            if (gameplay.isInInitialPhase()) {
+                success = gameplay.buildInitialSettlement(vertex);
+            } else {
+                success = gameplay.buildSettlement(vertex);
+            }
+
+            if (success) {
+                vertex.setOwner(currentPlayer);
+                DrawOrDisplay.drawPlayerSettlement(visibleCircle, vertex);
+                System.out.println("Settlement built by player " + currentPlayer.getPlayerId());
                 root.setLeft(createLeftMenu(gameplay));
             }
             else if (gameplay.buildCity(vertex)) {
-                vertex.setOwner(gameplay.getCurrentPlayer());
+                vertex.setOwner(currentPlayer);
                 boardGroup.getChildren().remove(visibleCircle);
 
                 Rectangle citySquare = new Rectangle(vertex.getX() - 6, vertex.getY() - 6, 12, 12);
-                citySquare.setFill(gameplay.getCurrentPlayer().getColor());
+                citySquare.setFill(currentPlayer.getColor());
                 citySquare.setStroke(Color.BLACK);
-
                 boardGroup.getChildren().add(citySquare);
-                System.out.println("city built");
+
+                System.out.println("Settlement built");
                 root.setLeft(createLeftMenu(gameplay));
             }
             else {
-                DrawOrDisplay.showPlacementError(boardGroup, vertex.getX(), vertex.getY()); // if conditions for building are false
+                DrawOrDisplay.showPlacementError(boardGroup, vertex.getX(), vertex.getY());
             }
         };
     }
+
 }

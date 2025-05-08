@@ -44,9 +44,12 @@ public class CatanBoardGameView {
     public static Button rollDiceButton;
     public static int boardRadius;
     public static Circle currentRobberCircle = null;
+    public static Group boardGroup;
+    private static Stage primaryStage;
 
     // __________________________KINDA CONSTRUCTOR - Creating the Game Scene_________________________
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
+        setPrimaryStage(primaryStage);
         double sceneWidth = 800;
         double sceneHeight = 600;
         boardRadius = radius;
@@ -56,7 +59,7 @@ public class CatanBoardGameView {
         gameplay.setBoard(board); // Link board to gameplay logic
 
         // Draw hex tiles
-        Group boardGroup = Tile.createBoardTiles(board, radius);
+        boardGroup = Tile.createBoardTiles(board, radius);
 
         // Find and assign the desert tile (dice number 7)
         Tile desertTile = Board.getTiles().stream()
@@ -78,7 +81,7 @@ public class CatanBoardGameView {
 
         Pane boardWrapper = new Pane(boardGroup);
         root.setCenter(boardWrapper);
-        centerBoard(board, boardGroup, sceneWidth, sceneHeight);
+        centerBoard(boardGroup, sceneWidth, sceneHeight);
 
         //________________________________BUTTONS_______________________________________________
         // Initializing top screen Buttons
@@ -104,7 +107,7 @@ public class CatanBoardGameView {
         nextTurnButton.setOnAction(turnController::handleNextTurnButtonPressed);
 
         // Centralize and zoom buttons
-        centerButton.setOnAction(e -> {centerBoard(board, boardGroup, sceneWidth, sceneHeight);});
+        centerButton.setOnAction(e -> {centerBoard(boardGroup, sceneWidth, sceneHeight);});
         zoomInButton.setOnAction(e -> {
             double scale = boardGroup.getScaleX() * 1.1;
             boardGroup.setScaleX(scale);
@@ -123,7 +126,7 @@ public class CatanBoardGameView {
             Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.YES) {
-                returnToMainMenu(primaryStage);
+                returnToMainMenu();
             }
         });
 
@@ -175,13 +178,13 @@ public class CatanBoardGameView {
                 case A -> boardGroup.setTranslateX(boardGroup.getTranslateX() - step);
                 case S -> boardGroup.setTranslateY(boardGroup.getTranslateY() + step);
                 case D -> boardGroup.setTranslateX(boardGroup.getTranslateX() + step);
-                case R, C -> {centerBoard(board, boardGroup, sceneWidth, sceneHeight);
+                case R, C -> {centerBoard(boardGroup, sceneWidth, sceneHeight);
                 }
                 case ESCAPE -> {
                     Alert alert = new Alert(AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
                     Optional<ButtonType> result = alert.showAndWait();
                     if (result.isPresent() && result.get() == ButtonType.YES) {
-                        returnToMainMenu(primaryStage);
+                        returnToMainMenu();
                     }
                 }
             }
@@ -193,9 +196,14 @@ public class CatanBoardGameView {
     //__________________________ACTION FUNCTIONS_____________________________________
 
     // Navigate back to the main menu
-    public static void returnToMainMenu(Stage primaryStage) {
-        MenuView.showMainMenu(primaryStage);
+    public static void returnToMainMenu() {
+        if (primaryStage != null) {
+            MenuView.showMainMenu(primaryStage);
+        } else {
+            System.err.println("Error: primaryStage is null.");
+        }
     }
+
 
     // Builds the left player information menu
     public static VBox createLeftMenu(Gameplay gameplay) {
@@ -213,7 +221,15 @@ public class CatanBoardGameView {
         for (Player player : gameplay.getPlayerList()) {
             VBox playerBox = new VBox(5);
 
-            Text playerName = new Text("Player " + player.getPlayerId());
+            // Add name correct for players AND AI players
+            String displayName;
+            if (player instanceof AIOpponent ai) {
+                displayName = "AIPlayer " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")";
+            } else {
+                displayName = "Player " + player.getPlayerId();
+            }
+            Text playerName = new Text(displayName);
+
             playerName.setFont(Font.font("Arial", FontWeight.BOLD, nameFontSize));
             playerName.setFill(player.getColor());
 
@@ -273,7 +289,7 @@ public class CatanBoardGameView {
     }
 
     // Centralize the Board, called via centerButton or keyPressed R/C
-    private static void centerBoard(Board board, Group boardGroup, double screenWidth, double screenHeight) {
+    private static void centerBoard(Group boardGroup, double screenWidth, double screenHeight) {
         Tile centerTile = Board.getTiles().get((Board.getTiles().size() - 1) / 2);
         Point2D centerPoint = centerTile.getCenter();
         double centerX = (screenWidth - 200) / 2 - centerPoint.getX();
@@ -321,4 +337,28 @@ public class CatanBoardGameView {
     public static void showDiceButton() {
         rollDiceButton.setVisible(true);
     }
+
+
+
+
+    // Updated turn handler to visually display AI placement
+    public static void handleInitialAITurn(Gameplay gameplay, Group boardGroup) {
+        Player currentPlayer = gameplay.getCurrentPlayer();
+        if (gameplay.isInInitialPhase() && currentPlayer instanceof AIOpponent ai) {
+            ai.placeInitialSettlementAndRoad(gameplay, boardGroup);
+            DrawOrDisplay.drawAIMoves(boardGroup, ai);
+        }
+    }
+
+    public static Group getBoardGroup() {
+        return boardGroup;
+    }
+    public static void setPrimaryStage(Stage stage) {
+        primaryStage = stage;
+    }
+
+    public static Stage getPrimaryStage() {
+        return primaryStage;
+    }
+
 }

@@ -21,11 +21,6 @@ public class Edge {
 
     //___________________FUNCTIONS_________________________
 
-    // Check if this edge is connected to a specific vertex
-    public boolean isConnectedTo(Vertex vertex) {
-        return vertex.equals(vertex1) || vertex.equals(vertex2);
-    }
-
     // Add a tile that this edge borders
     public void addAdjacentTile(Tile tile) {
         if (!adjacentTiles.contains(tile)) {
@@ -38,6 +33,13 @@ public class Edge {
         return vertex1.equals(other.vertex1) || vertex1.equals(other.vertex2) ||
                 vertex2.equals(other.vertex1) || vertex2.equals(other.vertex2);
     }
+
+    // Check if this edge is connected to a specific vertex
+    public boolean isConnectedTo(Vertex vertex) {
+        if (vertex == null) return false; // Prevent null pointer
+        return vertex.equals(vertex1) || vertex.equals(vertex2);
+    }
+
 
     //___________________GETTERS_________________________
 
@@ -52,4 +54,20 @@ public class Edge {
     public List<Tile> getAdjacentTiles() {
         return adjacentTiles;
     }
+
+    //_______________________OVERRIDE____________________
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Edge other = (Edge) obj;
+        return (vertex1.equals(other.vertex1) && vertex2.equals(other.vertex2)) ||
+                (vertex1.equals(other.vertex2) && vertex2.equals(other.vertex1));
+    }
+
+    @Override
+    public int hashCode() {
+        return vertex1.hashCode() + vertex2.hashCode();
+    }
+
 }

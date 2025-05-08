@@ -1,6 +1,9 @@
 package org.example.catanboardgameapp;
 
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
 import java.util.*;
@@ -60,6 +63,35 @@ public class Gameplay {
     // -------------------- Turn Management --------------------
 
     public void nextPlayerTurn() {
+        // Handle AI initial placement (and visual drawing)
+        if (initialPhase && currentPlayer instanceof AIOpponent ai) {
+            ai.placeInitialSettlementAndRoad(this, CatanBoardGameView.getBoardGroup());
+
+            // Immediately move to next player if AI placed both settlement and road
+            if (currentPlayer.getSettlements().size() == 2 && currentPlayer.getRoads().size() == 2) {
+                currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
+
+                if (forwardOrder && currentPlayerIndex >= playerList.size()) {
+                    currentPlayerIndex = playerList.size() - 1;
+                    forwardOrder = false;
+                } else if (!forwardOrder && currentPlayerIndex < 0) {
+                    currentPlayerIndex = 0;
+                    initialPhase = false;
+                    forwardOrder = true;
+                }
+
+                currentPlayer = playerList.get(currentPlayerIndex);
+
+                // Handle next AI if in initial phase
+                if (initialPhase && currentPlayer instanceof AIOpponent nextAi) {
+                    nextAi.placeInitialSettlementAndRoad(this, CatanBoardGameView.getBoardGroup());
+                }
+
+                return;
+            }
+        }
+
+        // Regular turn handling
         if (initialPhase) {
             if (forwardOrder) {
                 currentPlayerIndex++;
@@ -78,9 +110,16 @@ public class Gameplay {
         } else {
             currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
         }
+
         currentPlayer = playerList.get(currentPlayerIndex);
-        System.out.println("Turn switched to Player " + currentPlayer.getPlayerId() + " (" + getCurrentPhaseName() + ")");
+
+        if (!initialPhase && currentPlayer instanceof AIOpponent ai) {
+            new Thread(() -> ai.makeMoveAI(this)).start();
+        }
     }
+
+
+
 
     public String getCurrentPhaseName() {
         return initialPhase ? "INITIAL PHASE" : "REGULAR PHASE";
@@ -135,46 +174,61 @@ public class Gameplay {
 
     // -------------------- Building --------------------
 
-    public boolean buildSettlement(Vertex vertex) {
-        if (!isValidSettlementPlacement(vertex)) return false;
+    public boolean buildInitialSettlement(Vertex vertex) {
+        // Prevent invalid or duplicate placement
+        if (vertex == null || !isValidSettlementPlacement(vertex)) return false;
+        if (currentPlayer.getSettlements().contains(vertex)) return false;
 
-        if (currentPlayer.getSettlements().isEmpty()) {
-            currentPlayer.getSettlements().add(vertex);
-            vertex.setOwner(currentPlayer);
-            increasePlayerScore();
-            vertex.makeSettlement();
-            return true;
-        }
+        // Add the settlement
+        currentPlayer.getSettlements().add(vertex);
+        vertex.setOwner(currentPlayer);
+        vertex.makeSettlement();
+        increasePlayerScore();
 
-        if (currentPlayer.getSettlements().size() == 1 && !currentPlayer.getRoads().isEmpty()) {
-            currentPlayer.getSettlements().add(vertex);
-            vertex.setOwner(currentPlayer);
-            increasePlayerScore();
+        // Store this settlement as the "second" for AI/road connection logic
+        if (currentPlayer.getSettlements().size() == 2) {
+            currentPlayer.setSecondSettlement(vertex);
+
+            // Grant starting resources from adjacent tiles (excluding desert)
             for (Tile tile : vertex.getAdjacentTiles()) {
-                if (!tile.getResourcetype().getName().equals("Desert")) {
-                    String res = tile.getResourcetype().getName();
-                    currentPlayer.getResources().put(res, currentPlayer.getResources().getOrDefault(res, 0) + 1);
+                String type = tile.getResourcetype().getName();
+                if (!type.equals("Desert")) {
+                    currentPlayer.getResources().merge(type, 1, Integer::sum);
                 }
             }
-            currentPlayer.setSecondSettlement(vertex);
-            vertex.makeSettlement();
-            return true;
         }
 
-        if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1) &&
-                canRemoveResource("Grain", 1) && canRemoveResource("Wool", 1)) {
+        return true;
+    }
+
+    public boolean buildSettlement(Vertex vertex) {
+        // Validate and check duplicates
+        if (vertex == null || !isValidSettlementPlacement(vertex)) return false;
+        if (currentPlayer.getSettlements().contains(vertex)) return false;
+
+        // Check and pay resources
+        if (canRemoveResource("Brick", 1) &&
+                canRemoveResource("Wood", 1) &&
+                canRemoveResource("Grain", 1) &&
+                canRemoveResource("Wool", 1)) {
+
             removeResource("Brick", 1);
             removeResource("Wood", 1);
             removeResource("Grain", 1);
             removeResource("Wool", 1);
+
+            // Place settlement
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
-            increasePlayerScore();
             vertex.makeSettlement();
+            increasePlayerScore();
             return true;
         }
+
         return false;
     }
+
+
 
     public boolean buildCity(Vertex vertex) {
         if (isNotValidCityPlacement(vertex)) return false;
@@ -265,7 +319,8 @@ public class Gameplay {
                     if (owner != null) {
                         String res = tile.getResourcetype().getName();
                         int current = owner.getResources().getOrDefault(res, 0);
-                        owner.getResources().put(res, current + (vertex.getTypeOf().equals("City") ? 2 : 1));
+                        // GIVE 100 RESOURCES SO PLAYER CAN WIN THE GAME FOR TESTING (CHANGE TO 1 FOR ACTUAL GAME)
+                        owner.getResources().put(res, current + (vertex.getTypeOf().equals("City") ? 2 : 100));
                         System.out.println("Player " + owner.getPlayerId() + " gets " + res);
                     }
                 }
@@ -302,10 +357,19 @@ public class Gameplay {
 
     public void increasePlayerScore() {
         currentPlayer.increasePlayerScore();
+
         if (currentPlayer.getPlayerScore() >= 10) {
-            System.out.println("Player " + currentPlayer.getPlayerId() + " is the winner!");
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Game Over");
+                alert.setHeaderText("We have a winner!");
+                alert.setContentText("Player " + currentPlayer.getPlayerId() + " has won the game!");
+                alert.setOnHidden(e -> CatanBoardGameView.returnToMainMenu());
+                alert.show();
+            });
         }
     }
+
 
     public void decreasePlayerScore() {
         currentPlayer.decreasePlayerScore();
@@ -327,6 +391,10 @@ public class Gameplay {
 
     public int getLastRolledDie2() {
         return lastRolledDie2;
+    }
+
+    public boolean isInInitialPhase() {
+        return initialPhase;
     }
 
 }

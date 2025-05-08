@@ -21,14 +21,9 @@ public class MenuView {
     private static int AIOpponentsCount = 0;
 
     private static void startGame(Stage primaryStage) {
-        if (boardSize < 3 || boardSize > 10 || playerCount < 2 || playerCount > 6) {
-            System.out.println("Please configure game options first.");
-            return;
-        }
-
         Gameplay gameplay = new Gameplay();
         gameplay.reset();
-        gameplay.initializePlayers(playerCount-AIOpponentsCount);
+        gameplay.initializePlayers(playerCount);
         gameplay.initializeAis(AIOpponentsCount);
         Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, boardSize - 1, gameplay);
         primaryStage.setScene(gameScene);
