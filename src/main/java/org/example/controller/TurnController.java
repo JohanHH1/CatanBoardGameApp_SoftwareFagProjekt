@@ -36,9 +36,6 @@ public class TurnController {
             totalRoads += player.getRoads().size();
         }
 
-        boolean allHavePlacedInitial = totalRoads >= (gameplay.getPlayerList().size() * 2 - 1);
-        rollDiceButton.setVisible(allHavePlacedInitial);
-        nextTurnButton.setVisible(!allHavePlacedInitial);
 
         if (currentPlayer instanceof AIOpponent && allHavePlacedInitial) {
             rollDiceButton.setDisable(true);

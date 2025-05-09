@@ -11,14 +11,10 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
-import javafx.scene.shape.Polygon;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.*;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -32,90 +28,60 @@ import static org.example.catanboardgameviews.CatanBoardGameView.boardRadius;
 
 public class DrawOrDisplay {
 
-    //_______________________________CatanBoardGameView draw/display functions______________________________________
+    //______________________________SETTLEMENTS & ROADS_________________________________
 
-    // Creates a background rectangle behind each dice number
-    public static Rectangle createBoxBehindDiceNumber(Text sample, double centerX, double centerY) {
-        double boxPadding = 5;
-        double boxWidth = sample.getLayoutBounds().getWidth() + boxPadding;
-        double boxHeight = sample.getLayoutBounds().getHeight() + boxPadding;
-
-        Rectangle background = new Rectangle(
-                centerX - boxWidth / 2,
-                centerY - boxHeight / 2,
-                boxWidth,
-                boxHeight
-        );
-
-        background.setFill(Color.BEIGE);
-        background.setStroke(Color.BLACK);
-        background.setArcWidth(5);
-        background.setArcHeight(5);
-
-        return background;
+    // Draw a player's road with visual thickness tuned to avoid overpowering board
+    public static void drawPlayerRoad(Line line, Player player) {
+        line.setStroke(player.getColor());
+        line.setStrokeWidth(1.5 * (10.0 / boardRadius)); // thinner than before
     }
 
-    // Draws both visible and clickable lines for edges
-    public static void drawEdges(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
-        for (Edge edge : Board.getEdges()) {
-            Line visibleLine = new Line(
-                    edge.getVertex1().getX(), edge.getVertex1().getY(),
-                    edge.getVertex2().getX(), edge.getVertex2().getY()
-            );
-            visibleLine.setStroke(Color.WHITE);
-            visibleLine.setStrokeWidth(2);
-
-            Line clickableLine = new Line(
-                    edge.getVertex1().getX(), edge.getVertex1().getY(),
-                    edge.getVertex2().getX(), edge.getVertex2().getY()
-            );
-            clickableLine.setStrokeWidth(10);
-            clickableLine.setOpacity(0); // invisible but interactive
-
-            clickableLine.setOnMouseClicked(controller.createRoadClickHandler(edge, visibleLine, root));
-
-            boardGroup.getChildren().addAll(visibleLine, clickableLine);
+    // Draw a player's settlement or city with tuned radius
+    public static void drawPlayerSettlement(Circle circle, Vertex vertex) {
+        if (vertex.getOwner() != null) {
+            circle.setFill(vertex.getOwner().getColor());
+            circle.setRadius(20.0 / boardRadius); // slightly larger
+        } else {
+            circle.setFill(Color.TRANSPARENT);
+            circle.setRadius(10.0 / boardRadius);
         }
     }
 
-    // Displays a temporary red dot at a location (used for feedback like invalid placement)
-    public static void showTemporaryDot(Group boardGroup, double midX, double midY, Color color) {
-        Circle dot = new Circle(midX, midY, 5, color);
-        boardGroup.getChildren().add(dot);
+    //______________________________EDGES & VERTICES_____________________________________
 
-        PauseTransition delay = new PauseTransition(Duration.seconds(1));
-        delay.setOnFinished(e -> boardGroup.getChildren().remove(dot));
-        delay.play();
+    // Draws board edges and clickable hitboxes — now with refined sizing
+    public static void drawEdges(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
+        for (Edge edge : Board.getEdges()) {
+            Line visible = new Line(
+                    edge.getVertex1().getX(), edge.getVertex1().getY(),
+                    edge.getVertex2().getX(), edge.getVertex2().getY()
+            );
+            visible.setStroke(Color.WHITE);
+            visible.setStrokeWidth(0.8 * (10.0 / boardRadius)); // thinner base line
+
+            Line clickable = new Line(
+                    edge.getVertex1().getX(), edge.getVertex1().getY(),
+                    edge.getVertex2().getX(), edge.getVertex2().getY()
+            );
+            clickable.setStrokeWidth(4.0 * (10.0 / boardRadius)); // tighter hitbox
+            clickable.setOpacity(0);
+            clickable.setOnMouseClicked(controller.createRoadClickHandler(edge, visible, root));
+
+            boardGroup.getChildren().addAll(visible, clickable);
+        }
     }
 
-    // Displays an 'X' at an invalid placement spot
-    public static void showPlacementError(Group boardGroup, double x, double y) {
-        Line line1 = new Line(x - 5, y - 5, x + 5, y + 5);
-        Line line2 = new Line(x - 5, y + 5, x + 5, y - 5);
-        line1.setStroke(Color.RED);
-        line2.setStroke(Color.RED);
-        line1.setStrokeWidth(2);
-        line2.setStrokeWidth(2);
-
-        Group errorGroup = new Group(line1, line2);
-        boardGroup.getChildren().add(errorGroup);
-        // Error goes away after 1s
-        CatanBoardGameView.logToGameLog("Placement is invalid");
-        PauseTransition delay = new PauseTransition(Duration.seconds(1));
-        delay.setOnFinished(e -> boardGroup.getChildren().remove(errorGroup));
-        delay.play();
-    }
-
-    // Displays all vertex points on the board and registers click events
-    public static void displayVertices(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
+    // Enlarged clickable vertex area for easier settlement placement
+    public static void initVerticeClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
         for (Vertex vertex : board.getVertices()) {
-            // Visual vertex
-            Circle visible = new Circle(vertex.getX(), vertex.getY(), 10.0 / radius);
+            double visibleRadius = 10.0 / boardRadius;
+            double clickableRadius = 10.0 / boardRadius; // increased for UX
+
+            Circle visible = new Circle(vertex.getX(), vertex.getY(), visibleRadius);
             visible.setFill(Color.TRANSPARENT);
             boardGroup.getChildren().add(visible);
 
-            // Invisible click handler
-            Circle clickable = new Circle(vertex.getX(), vertex.getY(), 4);
+            Circle clickable = new Circle(vertex.getX(), vertex.getY(), clickableRadius);
             clickable.setFill(Color.TRANSPARENT);
             clickable.setStroke(Color.TRANSPARENT);
             clickable.setOnMouseClicked(controller.createSettlementClickHandler(visible, vertex, root));
@@ -124,16 +90,85 @@ public class DrawOrDisplay {
         }
     }
 
-    // Displays a generic error popup for invalid trade attempts
-    public static void showTradeError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Trade Error");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    //______________________________TILE RENDERING_______________________________________
+
+    // Create a hexagon polygon based on a tile's vertices
+    public static Polygon createTilePolygon(Tile tile) {
+        Polygon polygon = new Polygon();
+        for (Vertex v : tile.getVertices()) {
+            polygon.getPoints().addAll(v.getX(), v.getY());
+        }
+        return polygon;
     }
 
-    public static void showPopup(String message) {
+    // Creates a background box behind a dice number, padding scaled by board size
+    public static Rectangle createBoxBehindDiceNumber(Text sample, double centerX, double centerY) {
+        double padding = 5.0 / boardRadius * 10;
+
+        double boxW = sample.getLayoutBounds().getWidth() + padding;
+        double boxH = sample.getLayoutBounds().getHeight() + padding;
+
+        Rectangle background = new Rectangle(
+                centerX - boxW / 2,
+                centerY - boxH / 2,
+                boxW,
+                boxH
+        );
+        background.setFill(Color.BEIGE);
+        background.setStroke(Color.BLACK);
+        background.setArcWidth(5);
+        background.setArcHeight(5);
+
+        return background;
+    }
+
+    // Draws Robber Circle
+    public static Circle drawRobberCircle(Point2D center) {
+        double radius = 40.0 / boardRadius;
+        double strokeWidth = 12.0 / boardRadius;
+        Circle circle = new Circle(center.getX(), center.getY(), radius);
+        circle.setFill(Color.TRANSPARENT);
+        circle.setStroke(Color.BLACK);
+        circle.setStrokeWidth(strokeWidth);
+        return circle;
+    }
+
+    //______________________________LOAD IMAGES______________________________
+
+    public static Image loadDiceImage(int number) {
+        String path = "/dice/dice" + number + ".png";
+        InputStream stream = CatanBoardGameView.class.getResourceAsStream(path);
+        if (stream == null) {
+            System.err.println("Could not load image: " + path);
+            return new Image("/Icons/error.png");
+        }
+        return new Image(stream);
+    }
+
+    //______________________________ERROR POPUPS ETC______________________________
+
+    // Display a red X error marker at a location, scaled by board radius
+    public static void showErrorCross(Group boardGroup, double x, double y) {
+        double size = 10.0 / boardRadius;
+
+        Line line1 = new Line(x - size, y - size, x + size, y + size);
+        Line line2 = new Line(x - size, y + size, x + size, y - size);
+
+        line1.setStroke(Color.RED);
+        line2.setStroke(Color.RED);
+        line1.setStrokeWidth(2);
+        line2.setStrokeWidth(2);
+
+        Group error = new Group(line1, line2);
+        boardGroup.getChildren().add(error);
+
+        PauseTransition delay = new PauseTransition(Duration.seconds(1));
+        delay.setOnFinished(e -> boardGroup.getChildren().remove(error));
+        delay.play();
+    }
+
+    // Block action until dice is rolled
+    public static void rollDiceBeforeActionPopup(String message) {
         Platform.runLater(() -> {
             Stage popup = new Stage();
             popup.initModality(Modality.APPLICATION_MODAL);
@@ -142,6 +177,7 @@ public class DrawOrDisplay {
             VBox box = new VBox(10);
             box.setPadding(new Insets(20));
             box.setAlignment(Pos.CENTER);
+
             Label label = new Label(message);
             Button closeButton = new Button("OK");
             closeButton.setOnAction(e -> popup.close());
@@ -153,52 +189,12 @@ public class DrawOrDisplay {
         });
     }
 
-
-    // Creates a hex tile polygon from the tile's vertices
-    public static Polygon createTilePolygon(Tile tile) {
-        Polygon polygon = new Polygon();
-        for (Vertex vertex : tile.getVertices()) {
-            polygon.getPoints().addAll(vertex.getX(), vertex.getY());
-        }
-        return polygon;
-    }
-
-    // Draw a player's road line
-    public static void drawPlayerRoad(Line visibleLine, Player currentPlayer) {
-        visibleLine.setStroke(currentPlayer.getColor());
-        visibleLine.setStrokeWidth(4);
-    }
-
-    // Used to show build errors (similar to showTemporaryDot but red)
-    public static void showBuildErrorDot(Group boardGroup, Point2D mid) {
-        showTemporaryDot(boardGroup, mid.getX(), mid.getY(), Color.RED);
-    }
-
-    // Show whether a vertex belongs to a player or is empty
-    public static void drawPlayerSettlement(Circle circle, Vertex vertex) {
-        if (vertex.getOwner() != null) {
-            circle.setFill(vertex.getOwner().getColor());
-            circle.setRadius(16.0 / boardRadius);
-        } else {
-            circle.setFill(Color.TRANSPARENT);
-            circle.setRadius(8.0 / boardRadius);
-        }
-    }
-
-    // Call this after AI places initial moves to reflect them visually
-    public static void drawAIMoves(Group boardGroup, Player ai) {
-        for (Vertex v : ai.getSettlements()) {
-            Circle circle = new Circle(v.getX(), v.getY(), 8);
-            DrawOrDisplay.drawPlayerSettlement(circle, v);
-            boardGroup.getChildren().add(circle);
-        }
-        for (Edge e : ai.getRoads()) {
-            Line line = new Line(
-                    e.getVertex1().getX(), e.getVertex1().getY(),
-                    e.getVertex2().getX(), e.getVertex2().getY()
-            );
-            DrawOrDisplay.drawPlayerRoad(line, ai);
-            boardGroup.getChildren().add(line);
-        }
+    // Trade fail popup with message
+    public static void showTradeError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Trade Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

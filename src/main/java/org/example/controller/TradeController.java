@@ -1,6 +1,5 @@
 package org.example.controller;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
 import org.example.catanboardgameapp.DrawOrDisplay;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
@@ -16,8 +15,8 @@ import java.util.Optional;
 public class TradeController {
     public static void tradeButton(Button tradeButton, Gameplay gameplay, BorderPane root) {
         tradeButton.setOnAction(e -> {
-            if (!gameplay.isInInitialPhase() && !gameplay.hasPlayerRolledThisTurn()) {
-                DrawOrDisplay.showPopup("You must roll the dice before Trading!");
+            if (!gameplay.isInInitialPhase() && !gameplay.hasRolledDice()) {
+                DrawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before Trading!");
                 return;
             }
             List<String> resourceOptions = new ArrayList<>();

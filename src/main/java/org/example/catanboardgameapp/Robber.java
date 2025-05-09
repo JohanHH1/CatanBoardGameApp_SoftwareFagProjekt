@@ -1,14 +1,12 @@
 package org.example.catanboardgameapp;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
@@ -26,81 +24,51 @@ public class Robber {
 
     //____________________FIELDS__________________________
 
-    public static Robber robberDeNiro;  //PUBLIC ROBBER FOR ALL OTHER CLASSES TO USE (only need ONE)
+    public static Robber robberDeNiro;  // Global robber reference
     private final Gameplay gameplay;
     private final Circle robberCircle;
     private Tile currentTile;
     private static boolean robberNeedsToMove = false;
 
-    //___________________________CONSTRUCTOR___________________________
+    //____________________CONSTRUCTOR__________________________
+
     public Robber(Tile startingTile, Gameplay gameplay, Group boardGroup) {
         this.currentTile = startingTile;
         this.gameplay = gameplay;
 
-        // Initialize robber circle
         Point2D center = startingTile.getCenter();
-        double radius = 50.0 / CatanBoardGameView.boardRadius;
-        Circle circle = new Circle(center.getX(), center.getY(), radius, Color.TRANSPARENT);
-        circle.setStroke(Color.BLACK);
-        circle.setStrokeWidth(5);
-        // add circle to starting board
+        Circle circle = DrawOrDisplay.drawRobberCircle(center); // Use central method
         this.robberCircle = circle;
         boardGroup.getChildren().add(circle);
     }
 
-    //___________________________FUNCTIONS___________________________
+    //____________________ROBBER PLACEMENT LOGIC__________________________
 
-    // MANGLER AT BLIVE KALDT / BRUGT
-    public void discardResourcesForPlayer(Player player, Map<String, Integer> discarded) {
-        discarded.forEach((res, amt) -> {
-            int current = player.getResources().getOrDefault(res, 0);
-            player.getResources().put(res, Math.max(0, current - amt));
-        });
-    }
-    // Move robber
-    public void moveTo(Tile newTile) {
-        this.currentTile = newTile;
-    }
-
-    // Highlights possible robber placement targets and handles stealing logic
     public static void showRobberTargets(Group boardGroup) {
-        boardGroup.getChildren().remove(robberDeNiro.robberCircle); // remove initial robber
-        List<Circle> robberTargetCircles = new ArrayList<>();
+        boardGroup.getChildren().remove(robberDeNiro.robberCircle); // remove old robber
+
+        List<Circle> highlightCircles = new ArrayList<>();
+
         for (Tile tile : Board.getTiles()) {
-            // Remove the previous robber circle if present
-            boardGroup.getChildren().remove(currentRobberCircle);
-            // Skip current tile where robber is already located
             if (tile == robberDeNiro.currentTile) continue;
 
             Point2D center = tile.getCenter();
-            double radius = 50.0 / boardRadius;
+            Circle highlight = DrawOrDisplay.drawRobberCircle(center);
+            highlight.setOnMouseClicked(e -> {
+                highlightCircles.forEach(boardGroup.getChildren()::remove);
+                highlightCircles.clear();
 
-            Circle circle = new Circle(center.getX(), center.getY(), radius, Color.TRANSPARENT);
-            circle.setStroke(Color.BLACK);
-            circle.setStrokeWidth(5);
+                Circle newRobber = DrawOrDisplay.drawRobberCircle(center);
+                boardGroup.getChildren().add(newRobber);
+                currentRobberCircle = newRobber;
 
-            circle.setOnMouseClicked(e -> {
-                // Clear previous highlights
-                for (Circle c : robberTargetCircles) boardGroup.getChildren().remove(c);
-                robberTargetCircles.clear();
-
-                // Mark the new robber position
-                Circle newRobberMarker = new Circle(center.getX(), center.getY(), radius, Color.TRANSPARENT);
-                newRobberMarker.setStroke(Color.BLACK);
-                newRobberMarker.setStrokeWidth(5);
-                boardGroup.getChildren().add(newRobberMarker);
-                currentRobberCircle = newRobberMarker;
-
-                // Move the robber
                 robberDeNiro.moveTo(tile);
                 robberHasMoved();
                 nextTurnButton.setVisible(true);
 
-                // Prompt for stealing from valid victims
                 List<Player> victims = showPotentialVictims(tile, robberDeNiro.gameplay.getCurrentPlayer());
-
                 if (victims.isEmpty()) {
-                    CatanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from");
+                    logToGameLog("Bad Robber placement! No players to steal from");
                     return;
                 }
 
@@ -109,44 +77,49 @@ public class Robber {
                 dialog.setHeaderText("Select a player with a city/settlement on this tile:");
                 dialog.setContentText("Player:");
 
-                Optional<Player> result = dialog.showAndWait();
-                result.ifPresent(victim -> {
+                dialog.showAndWait().ifPresent(victim -> {
                     boolean success = stealResourceFrom(victim);
                     if (!success) {
-                        CatanBoardGameView.logToGameLog("Failed to steal a resource from " + victim);
+                        logToGameLog("Failed to steal a resource from " + victim);
                     }
-
-                    // Refresh left player menu to show updated resources
                     VBox updatedMenu = createLeftMenu(robberDeNiro.gameplay);
                     ((BorderPane) boardGroup.getScene().getRoot()).setLeft(updatedMenu);
                 });
             });
 
-            boardGroup.getChildren().add(circle);
-            robberTargetCircles.add(circle);
+            boardGroup.getChildren().add(highlight);
+            highlightCircles.add(highlight);
         }
     }
 
-    // show list of players that can be stolen from
     private static List<Player> showPotentialVictims(Tile tile, Player currentPlayer) {
-        Set<Player> potentialVictims = new HashSet<>();
+        Set<Player> victims = new HashSet<>();
+        for (Vertex v : tile.getVertices()) {
+            Player owner = v.getOwner();
+            if (owner != null && owner != currentPlayer) victims.add(owner);
+        }
+        return new ArrayList<>(victims);
+    }
 
-        for (Vertex vertex : tile.getVertices()) {
-            Player owner = vertex.getOwner();
-            if (owner != null && owner != currentPlayer) {
-                potentialVictims.add(owner);
+    //____________________CARD DISCARD HANDLER__________________________
+
+    public void requireRobberMove() {
+        robberNeedsToMove = true;
+        for (Player p : gameplay.getPlayerList()) {
+            int total = p.getResources().values().stream().mapToInt(Integer::intValue).sum();
+            if (total > 7) {
+                Map<String, Integer> discarded = showDiscardDialog(p, gameplay);
+                if (discarded != null) discardResourcesForPlayer(p, discarded);
             }
         }
-        return new ArrayList<>(potentialVictims);
     }
 
-    // Prompts a player to discard half their resources when a 7 is rolled
     private static Map<String, Integer> showDiscardDialog(Player player, Gameplay gameplay) {
         Map<String, Integer> playerResources = new HashMap<>(player.getResources());
         int totalCards = playerResources.values().stream().mapToInt(Integer::intValue).sum();
-        int cardsToDiscard = totalCards / 2;
+        int toDiscard = totalCards / 2;
 
-        if (cardsToDiscard == 0) return null;
+        if (toDiscard == 0) return null;
 
         Stage dialogStage = new Stage();
         dialogStage.initModality(Modality.APPLICATION_MODAL);
@@ -157,10 +130,7 @@ public class Robber {
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(10));
-
-        ColumnConstraints labelCol = new ColumnConstraints();
-        labelCol.setMinWidth(100);
-        grid.getColumnConstraints().addAll(labelCol, new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints());
+        grid.getColumnConstraints().addAll(new ColumnConstraints(100), new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints());
 
         Map<String, Integer> discardSelection = new HashMap<>();
         Map<String, Text> counterTexts = new HashMap<>();
@@ -184,68 +154,63 @@ public class Robber {
 
             plus.setOnAction(e -> {
                 if (discardSelection.get(resource) < count &&
-                        gameplay.getTotalSelectedCards(discardSelection) < cardsToDiscard) {
+                        gameplay.getTotalSelectedCards(discardSelection) < toDiscard) {
                     discardSelection.put(resource, discardSelection.get(resource) + 1);
-                    counter.setText(String.valueOf(discardSelection.get(resource)));
-                    discardButton.setDisable(gameplay.getTotalSelectedCards(discardSelection) != cardsToDiscard);
+                    counter.setText(discardSelection.get(resource).toString());
+                    discardButton.setDisable(gameplay.getTotalSelectedCards(discardSelection) != toDiscard);
                 }
             });
 
             minus.setOnAction(e -> {
                 if (discardSelection.get(resource) > 0) {
                     discardSelection.put(resource, discardSelection.get(resource) - 1);
-                    counter.setText(String.valueOf(discardSelection.get(resource)));
-                    discardButton.setDisable(gameplay.getTotalSelectedCards(discardSelection) != cardsToDiscard);
+                    counter.setText(discardSelection.get(resource).toString());
+                    discardButton.setDisable(gameplay.getTotalSelectedCards(discardSelection) != toDiscard);
                 }
             });
 
-            grid.add(label, 0, row);
-            grid.add(minus, 1, row);
-            grid.add(counter, 2, row);
-            grid.add(plus, 3, row);
-            row++;
+            grid.addRow(row++, label, minus, counter, plus);
         }
 
-        Map<String, Integer>[] result = new Map[]{null}; // container for return value
+        final Map<String, Integer>[] result = new Map[]{null};
         discardButton.setOnAction(e -> {
             result[0] = discardSelection;
             dialogStage.close();
         });
 
         VBox container = new VBox(15,
-                new Text(player + " you must discard " + cardsToDiscard + " resource cards."),
+                new Text(player + " you must discard " + toDiscard + " resource cards."),
                 grid,
                 discardButton
         );
         container.setPadding(new Insets(15));
         container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
 
-        Scene scene = new Scene(container);
-        dialogStage.setScene(scene);
+        dialogStage.setScene(new Scene(container));
         dialogStage.showAndWait();
 
         return result[0];
     }
 
+    //____________________HELPERS__________________________
+
     public boolean isRobberMovementRequired() {
         return robberNeedsToMove;
     }
 
-    public void requireRobberMove() {
-        robberNeedsToMove = true;
-        for (Player player : gameplay.getPlayerList()) {
-            int totalCards = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
-            if (totalCards > 7) {
-                Map<String, Integer> discarded = showDiscardDialog(player, gameplay);
-                if (discarded != null) {
-                    discardResourcesForPlayer(player, discarded);
-                }
-            }
-        }
-    }
-
     public static void robberHasMoved() {
         robberNeedsToMove = false;
+    }
+
+    public void moveTo(Tile newTile) {
+        this.currentTile = newTile;
+    }
+
+    public void discardResourcesForPlayer(Player player, Map<String, Integer> discarded) {
+        discarded.forEach((res, amt) -> {
+            int current = player.getResources().getOrDefault(res, 0);
+            player.getResources().put(res, Math.max(0, current - amt));
+        });
     }
 
     public static boolean stealResourceFrom(Player victim) {
@@ -254,11 +219,15 @@ public class Robber {
             for (int i = 0; i < count; i++) pool.add(res);
         });
         if (pool.isEmpty()) return false;
+
         Collections.shuffle(pool);
         String stolen = pool.get(0);
         victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
-        robberDeNiro.gameplay.getCurrentPlayer().getResources().put(stolen, robberDeNiro.gameplay.getCurrentPlayer().getResources().getOrDefault(stolen, 0) + 1);
-        CatanBoardGameView.logToGameLog("Player " + robberDeNiro.gameplay.getCurrentPlayer().getPlayerId() + " stole 1 " + stolen + " from Player " + victim.getPlayerId());
+
+        Player thief = robberDeNiro.gameplay.getCurrentPlayer();
+        thief.getResources().put(stolen, thief.getResources().getOrDefault(stolen, 0) + 1);
+
+        logToGameLog("Player " + thief.getPlayerId() + " stole 1 " + stolen + " from Player " + victim.getPlayerId());
         return true;
     }
 }

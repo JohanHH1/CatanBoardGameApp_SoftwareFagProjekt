@@ -1,13 +1,11 @@
 package org.example.catanboardgameviews;
 
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
@@ -17,19 +15,11 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
-import javafx.scene.shape.Polygon;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import javafx.util.Duration;
-import javafx.scene.effect.DropShadow;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import org.example.catanboardgameapp.*;
@@ -51,7 +41,7 @@ public class CatanBoardGameView {
     private static Stage primaryStage;
     private static final TextArea gameLogArea = new TextArea();
 
-
+    
     // __________________________KINDA CONSTRUCTOR - Creating the Game Scene_________________________
     public static Scene createGameScene(Stage primaryStage, int radius, Gameplay gameplay) {
         ImageView diceImage1 = new ImageView();
@@ -82,7 +72,7 @@ public class CatanBoardGameView {
         // draw edges and vertices
         BuildController buildController = new BuildController(gameplay, boardGroup);
         DrawOrDisplay.drawEdges(board, boardGroup, buildController, radius, root);
-        DrawOrDisplay.displayVertices(board, boardGroup, buildController, radius, root);
+        DrawOrDisplay.initVerticeClickHandlers(board, boardGroup, buildController, radius, root);
 
         // Initialize the robber
         robberDeNiro = new Robber(desertTile, gameplay, boardGroup);
@@ -105,7 +95,7 @@ public class CatanBoardGameView {
         // Button Actions
         // Dice and next turn
         rollDiceButton.setOnAction(e -> {
-            rollDiceAndDistribute(gameplay, diceImage1, diceImage2, root, boardGroup, board);
+            gameplay.rollDiceAndDistribute(gameplay, diceImage1, diceImage2, root, boardGroup, board);
             gameplay.setHasRolledThisTurn(true);
             rollDiceButton.setDisable(true);
         });
@@ -319,8 +309,6 @@ public class CatanBoardGameView {
         }
     }
 
-
-
     // Builds the left player information menu
     public static VBox createLeftMenu(Gameplay gameplay) {
         VBox playerListVBox = new VBox(10);
@@ -369,7 +357,6 @@ public class CatanBoardGameView {
 
             playerListVBox.getChildren().add(playerBox);
         }
-
         ScrollPane scrollPane = new ScrollPane(playerListVBox);
         scrollPane.setFitToWidth(true);
         scrollPane.setPrefHeight(500); // or adjust as needed
@@ -378,30 +365,6 @@ public class CatanBoardGameView {
         VBox container = new VBox(scrollPane);
         container.setStyle("-fx-background-color: #e0e0e0; -fx-min-width: 200;");
         return container;
-    }
-
-    // Roll the dice and distribute resources
-    public static void rollDiceAndDistribute(Gameplay gameplay, ImageView dice1, ImageView dice2, BorderPane root, Group boardGroup, Board board) {
-        int result = gameplay.rollDiceAndDistributeResources();
-        int die1 = gameplay.getLastRolledDie1(); // You’ll need to expose this from Gameplay
-        int die2 = gameplay.getLastRolledDie2(); // Same here
-
-        // Load and display images
-        dice1.setImage(loadDiceImage(die1));
-        dice2.setImage(loadDiceImage(die2));
-        dice1.setFitWidth(40);
-        dice2.setFitWidth(40);
-        dice1.setFitHeight(40);
-        dice2.setFitHeight(40);
-
-        if (result == 7) {
-            nextTurnButton.setVisible(false);
-            Robber.showRobberTargets(boardGroup);
-        } else {
-            nextTurnButton.setVisible(true);
-        }
-        root.setLeft(createLeftMenu(gameplay));
-        rollDiceButton.setVisible(false);
     }
 
     // Centralize the Board, called via centerButton or keyPressed R/C
@@ -417,15 +380,6 @@ public class CatanBoardGameView {
     }
 
     //___________________________SHOW FUNCTIONS___________________________________
-    private static Image loadDiceImage(int number) {
-        String path = "/dice/dice" + number + ".png";
-        InputStream stream = CatanBoardGameView.class.getResourceAsStream(path);
-        if (stream == null) {
-            System.err.println(" Could not load image: " + path);
-            return new Image("/Icons/error.png");
-        }
-        return new Image(stream);
-    }
 
     private static void showBuildingCostsPopup() {
         Stage popup = new Stage();
@@ -458,18 +412,6 @@ public class CatanBoardGameView {
         rollDiceButton.setVisible(true);
     }
 
-
-
-
-    // Updated turn handler to visually display AI placement
-    public static void handleInitialAITurn(Gameplay gameplay, Group boardGroup) {
-        Player currentPlayer = gameplay.getCurrentPlayer();
-        if (gameplay.isInInitialPhase() && currentPlayer instanceof AIOpponent ai) {
-            ai.placeInitialSettlementAndRoad(gameplay, boardGroup);
-            DrawOrDisplay.drawAIMoves(boardGroup, ai);
-        }
-    }
-
     public static Group getBoardGroup() {
         return boardGroup;
     }
@@ -480,6 +422,7 @@ public class CatanBoardGameView {
     public static Stage getPrimaryStage() {
         return primaryStage;
     }
+
     public static void logToGameLog(String message) {
         Platform.runLater(() -> {
             gameLogArea.appendText(message + "\n");

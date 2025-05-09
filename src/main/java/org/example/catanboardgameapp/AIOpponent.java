@@ -37,59 +37,47 @@ public class AIOpponent extends Player {
     }
 
     public void placeInitialSettlementAndRoad(Gameplay gameplay, Group boardGroup) {
-        Vertex chosenSettlement = null;
+        List<Vertex> allVertices = new ArrayList<>(gameplay.getBoard().getVertices());
+        Collections.shuffle(allVertices); // randomize for EASY AI
 
-        // STEP 1: Choose settlement position
-        List<Vertex> options = gameplay.getBoard().getVertices().stream()
-                .filter(gameplay::isValidSettlementPlacement)
-                .collect(Collectors.toCollection(ArrayList::new));
+        for (Vertex v : allVertices) {
+            if (!gameplay.isValidSettlementPlacement(v)) continue;
 
-        if (strategyLevel == StrategyLevel.EASY) {
-            if (!options.isEmpty()) {
-                Collections.shuffle(options);
-                chosenSettlement = options.get(0);
-            }
-        } else {
-            int bestScore = Integer.MIN_VALUE;
-            for (Vertex v : options) {
-                int score = getSmartSettlementScore(v, gameplay);
-                if (score > bestScore) {
-                    bestScore = score;
-                    chosenSettlement = v;
-                }
-            }
-        }
+            if (gameplay.buildInitialSettlement(v)) {
+                // Draw settlement immediately
+                Circle circle = new Circle(v.getX(), v.getY(), 16.0 / CatanBoardGameView.boardRadius);
+                DrawOrDisplay.drawPlayerSettlement(circle, v);
+                boardGroup.getChildren().add(circle);
 
-        // STEP 2: Build + draw settlement and road
-        if (chosenSettlement != null && gameplay.buildInitialSettlement(chosenSettlement)) {
-            Vertex finalChosenSettlement = chosenSettlement;
-
-            Platform.runLater(() -> {
-                // Draw settlement
-                Circle settlementCircle = new Circle(finalChosenSettlement.getX(), finalChosenSettlement.getY(), 8);
-                DrawOrDisplay.drawPlayerSettlement(settlementCircle, finalChosenSettlement);
-                boardGroup.getChildren().add(settlementCircle);
-
-                // Draw road
+                // Try to place a connected road
                 for (Edge edge : Board.getEdges()) {
-                    if ((edge.getVertex1().equals(finalChosenSettlement) || edge.getVertex2().equals(finalChosenSettlement))
-                            && gameplay.isValidRoadPlacement(edge)) {
-
+                    if (edge.isConnectedTo(v) && gameplay.isValidRoadPlacement(edge)) {
                         if (gameplay.buildRoad(edge)) {
-                            Line roadLine = new Line(
+                            Line line = new Line(
                                     edge.getVertex1().getX(), edge.getVertex1().getY(),
                                     edge.getVertex2().getX(), edge.getVertex2().getY()
                             );
-                            DrawOrDisplay.drawPlayerRoad(roadLine, this);
-                            boardGroup.getChildren().add(roadLine);
-                            break;
+                            DrawOrDisplay.drawPlayerRoad(line, this);
+                            boardGroup.getChildren().add(line);
+
+                            // Advance turn if both built successfully
+                            if (!gameplay.isWaitingForInitialRoad()) {
+                                Platform.runLater(gameplay::nextPlayerTurn);
+                            }
+                            return;
                         }
                     }
                 }
-            });
 
-            CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built an INITIAL settlement and road.");
+                // Rollback if settlement placed but no valid road found
+                v.setOwner(null);
+                getSettlements().remove(v);
+                boardGroup.getChildren().remove(circle);
+            }
         }
+
+        // No valid move found
+        CatanBoardGameView.logToGameLog("AI " + getPlayerId() + " could not place initial settlement + road.");
     }
 
     // Pauses the AI move 3 to 10 seconds to simulate real player timing
@@ -131,7 +119,7 @@ public class AIOpponent extends Player {
             List<Vertex> settlements = getSettlements();
             if (!settlements.isEmpty()) {
                 gameplay.buildCity(settlements.get(random.nextInt(settlements.size())));
-                CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a city.");
+                CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " upgrade to a city!");
             }
         }
     }
@@ -182,7 +170,6 @@ public class AIOpponent extends Player {
         if (!validRoads.isEmpty()) {
             Collections.shuffle(validRoads);
             gameplay.buildRoad(validRoads.get(0));
-            CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a road.");
         }
     }
 

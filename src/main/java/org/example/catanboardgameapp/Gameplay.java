@@ -1,14 +1,17 @@
 package org.example.catanboardgameapp;
 
 import javafx.application.Platform;
+import javafx.scene.Group;
 import javafx.scene.control.Alert;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
 import java.util.*;
 
 import static org.example.catanboardgameapp.Robber.robberDeNiro;
+import static org.example.catanboardgameviews.CatanBoardGameView.*;
 
 public class Gameplay {
     private final List<Player> playerList = new ArrayList<>();
@@ -20,6 +23,8 @@ public class Gameplay {
     private int lastRolledDie1;
     private int lastRolledDie2;
     private boolean hasRolledThisTurn = false;
+    private boolean waitingForInitialRoad = false;
+    private Vertex lastInitialSettlement = null;
 
 
 
@@ -76,13 +81,15 @@ public class Gameplay {
     // -------------------- Turn Management --------------------
 
     public void nextPlayerTurn() {
+        System.out.println("NEXT PLAYER TURN!");
         hasRolledThisTurn = false;
-        // Handle AI initial placement (and visual drawing)
+
+        // -------------------- INITIAL PHASE HANDLING --------------------
         if (initialPhase && currentPlayer instanceof AIOpponent ai) {
             ai.placeInitialSettlementAndRoad(this, CatanBoardGameView.getBoardGroup());
 
-            // Immediately move to next player if AI placed both settlement and road
-            if (currentPlayer.getSettlements().size() == 2 && currentPlayer.getRoads().size() == 2) {
+            if (!waitingForInitialRoad && currentPlayer.getSettlements().size() > 0) {
+                // AI finished placing settlement and road — advance to next player
                 currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
 
                 if (forwardOrder && currentPlayerIndex >= playerList.size()) {
@@ -94,45 +101,48 @@ public class Gameplay {
                     forwardOrder = true;
                 }
 
+                waitingForInitialRoad = false;
+                lastInitialSettlement = null;
+
                 currentPlayer = playerList.get(currentPlayerIndex);
 
-                // Handle next AI if in initial phase
-                if (initialPhase && currentPlayer instanceof AIOpponent nextAi) {
-                    nextAi.placeInitialSettlementAndRoad(this, CatanBoardGameView.getBoardGroup());
+                if (initialPhase && currentPlayer instanceof AIOpponent nextAI) {
+                    nextAI.placeInitialSettlementAndRoad(this, CatanBoardGameView.getBoardGroup());
                 }
-
-                return;
             }
+            return; // prevent moving into regular phase logic early
         }
 
-        // Regular turn handling
+        // -------------------- PHASE TRANSITION --------------------
         if (initialPhase) {
-            if (forwardOrder) {
-                currentPlayerIndex++;
-                if (currentPlayerIndex >= playerList.size()) {
-                    currentPlayerIndex = playerList.size() - 1;
-                    forwardOrder = false;
-                }
-            } else {
-                currentPlayerIndex--;
-                if (currentPlayerIndex < 0) {
-                    currentPlayerIndex = 0;
-                    initialPhase = false;
-                    forwardOrder = true;
-                }
+            currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
+
+            if (forwardOrder && currentPlayerIndex >= playerList.size()) {
+                currentPlayerIndex = playerList.size() - 1;
+                forwardOrder = false;
+            } else if (!forwardOrder && currentPlayerIndex < 0) {
+                currentPlayerIndex = 0;
+                initialPhase = false;
+                forwardOrder = true;
             }
         } else {
             currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
         }
 
+        // Clear phase flags
+        waitingForInitialRoad = false;
+        lastInitialSettlement = null;
+
         currentPlayer = playerList.get(currentPlayerIndex);
 
+        // -------------------- DICE BUTTON & AI AUTOPLAY --------------------
         if (!initialPhase && currentPlayer instanceof AIOpponent ai) {
+            CatanBoardGameView.showDiceButton();
             new Thread(() -> ai.makeMoveAI(this)).start();
+        } else if (!initialPhase) {
+            CatanBoardGameView.showDiceButton();    // show dice button when its next players turn
         }
     }
-
-
 
 
     public String getCurrentPhaseName() {
@@ -193,13 +203,21 @@ public class Gameplay {
         if (vertex == null || !isValidSettlementPlacement(vertex)) return false;
         if (currentPlayer.getSettlements().contains(vertex)) return false;
 
+        // Block placement if already waiting for a road
+        if (initialPhase && waitingForInitialRoad) {
+            return false; // Must place road before placing another settlement
+        }
         // Add the settlement
         currentPlayer.getSettlements().add(vertex);
         vertex.setOwner(currentPlayer);
         vertex.makeSettlement();
         increasePlayerScore();
 
-        // Store this settlement as the "second" for AI/road connection logic
+        // Track this as the pending settlement for initial road
+        waitingForInitialRoad = true;
+        lastInitialSettlement = vertex;
+
+        // Store second settlement for validation logic
         if (currentPlayer.getSettlements().size() == 2) {
             currentPlayer.setSecondSettlement(vertex);
 
@@ -214,6 +232,48 @@ public class Gameplay {
 
         return true;
     }
+
+
+    public boolean buildRoad(Edge edge) {
+        // ------------------- INITIAL PHASE LOGIC -------------------
+        // Enforce settlement-before-road rule during initial phase
+        if (initialPhase && waitingForInitialRoad) {
+            // Only allow a road directly connected to the last placed settlement
+            if (!edge.isConnectedTo(lastInitialSettlement)) return false;
+            if (!isValidRoadPlacement(edge)) return false;
+            currentPlayer.getRoads().add(edge);
+            // Mark completion of this player's initial placement turn
+            waitingForInitialRoad = false;
+            lastInitialSettlement = null;
+            return true;
+        }
+        // During initial phase but NOT waiting for road — disallow building roads
+        if (initialPhase && !waitingForInitialRoad) {
+            return false;
+        }
+
+        // ------------------- REGULAR PHASE LOGIC -------------------
+        if (!isValidRoadPlacement(edge)) return false;
+
+        if (currentPlayer.getRoads().isEmpty()) {
+            currentPlayer.getRoads().add(edge);
+            return true;
+        }
+
+
+
+        // Standard resource-based road building
+        if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
+            removeResource("Brick", 1);
+            removeResource("Wood", 1);
+            currentPlayer.getRoads().add(edge);
+            return true;
+        }
+
+        return false;
+    }
+
+
 
     public boolean buildSettlement(Vertex vertex) {
         // Validate and check duplicates
@@ -242,8 +302,6 @@ public class Gameplay {
         return false;
     }
 
-
-
     public boolean buildCity(Vertex vertex) {
         if (isNotValidCityPlacement(vertex)) return false;
         if (canRemoveResource("Ore", 3) && canRemoveResource("Grain", 2)) {
@@ -260,34 +318,13 @@ public class Gameplay {
         return false;
     }
 
-    public boolean buildRoad(Edge edge) {
-        if (!isValidRoadPlacement(edge)) return false;
 
-        if (currentPlayer.getRoads().isEmpty()) {
-            currentPlayer.getRoads().add(edge);
-            return true;
-        }
-
-        if (currentPlayer.getRoads().size() == 1) {
-            Vertex second = currentPlayer.getSecondSettlement();
-            if (!edge.isConnectedTo(second)) return false;
-            currentPlayer.getRoads().add(edge);
-            if (currentPlayer.getPlayerId() == 1 && currentPlayer.getRoads().size() == 2) {
-                CatanBoardGameView.showDiceButton();
-            }
-            return true;
-        }
-
-        if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
-            removeResource("Brick", 1);
-            removeResource("Wood", 1);
-            currentPlayer.getRoads().add(edge);
-            return true;
-        }
-        return false;
-    }
 
     // -------------------- Validation --------------------
+    public boolean isInitialPlacementDone() {
+        int totalRoads = playerList.stream().mapToInt(p -> p.getRoads().size()).sum();
+        return totalRoads >= (playerList.size() * 2 - 1);
+    }
 
     public boolean isValidSettlementPlacement(Vertex vertex) {
         if (vertex.hasSettlement()) return false;
@@ -324,6 +361,29 @@ public class Gameplay {
     }
 
     // -------------------- Resource Distribution --------------------
+    // Roll the dice and distribute resources
+    public static void rollDiceAndDistribute(Gameplay gameplay, ImageView dice1, ImageView dice2, BorderPane root, Group boardGroup, Board board) {
+        int result = gameplay.rollDiceAndDistributeResources();
+        int die1 = gameplay.getLastRolledDie1(); // You’ll need to expose this from Gameplay
+        int die2 = gameplay.getLastRolledDie2(); // Same here
+
+        // Load and display images
+        dice1.setImage(DrawOrDisplay.loadDiceImage(die1));
+        dice2.setImage(DrawOrDisplay.loadDiceImage(die2));
+        dice1.setFitWidth(40);
+        dice2.setFitWidth(40);
+        dice1.setFitHeight(40);
+        dice2.setFitHeight(40);
+
+        if (result == 7) {
+            nextTurnButton.setVisible(false);
+            Robber.showRobberTargets(boardGroup);
+        } else {
+            nextTurnButton.setVisible(true);
+        }
+        root.setLeft(createLeftMenu(gameplay));
+        rollDiceButton.setVisible(false);
+    }
     public void distributeResource(int diceRoll) {
         if (diceRoll == 7) return;
         for (Tile tile : Board.getTiles()) {
@@ -410,11 +470,15 @@ public class Gameplay {
     public boolean isInInitialPhase() {
         return initialPhase;
     }
-    public boolean hasPlayerRolledThisTurn() {
+    public boolean hasRolledDice() {
         return hasRolledThisTurn;
     }
 
     public void setHasRolledThisTurn(boolean rolled) {
         this.hasRolledThisTurn = rolled;
+    }
+
+    public boolean isWaitingForInitialRoad() {
+        return waitingForInitialRoad;
     }
 }

@@ -82,7 +82,7 @@ public class MenuView {
         totalNote.setTextFill(Color.LIGHTGRAY);
 
         int[] humanPlayers = {3}, boardSizeVal = {3}, easyAI = {0}, mediumAI = {0}, hardAI = {0};
-        
+
         Font labelFont = Font.font("Arial", FontWeight.BOLD, 14);
         Color fontColor = Color.WHITE;
 
@@ -257,5 +257,4 @@ public class MenuView {
         ));
         return button;
     }
-
 }

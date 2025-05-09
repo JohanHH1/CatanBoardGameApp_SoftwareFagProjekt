@@ -12,8 +12,6 @@ public class CatanBoardGameApp extends Application {
         MenuView.showMainMenu(primaryStage);
     }
 
-
-
     public static void main(String[] args) {
         launch(args);
     }
