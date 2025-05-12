@@ -2,21 +2,22 @@ package org.example.controller;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
-import org.example.controller.GameController;
 import org.example.catanboardgameapp.DrawOrDisplay;
 import org.example.catanboardgameapp.Gameplay;
-
 import java.util.*;
 
 public class TradeController {
+
     private final GameController gameController;
     private final DrawOrDisplay drawOrDisplay;
 
+    //___________________________CONTROLLER__________________________________//
     public TradeController(GameController gameController) {
         this.gameController = gameController;
         this.drawOrDisplay = new DrawOrDisplay(gameController.getGameplay().getBoardRadius());
     }
 
+    //___________________________FUNCTIONS__________________________________//
     public void setupTradeButton(Button tradeButton) {
         tradeButton.setOnAction(e -> {
             Gameplay gameplay = gameController.getGameplay();

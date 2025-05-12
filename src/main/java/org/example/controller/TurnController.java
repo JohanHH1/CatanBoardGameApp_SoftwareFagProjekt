@@ -8,16 +8,19 @@ import org.example.catanboardgameapp.AIOpponent;
 import org.example.catanboardgameapp.Player;
 
 public class TurnController {
+
     private final GameController gameController;
     private final Button rollDiceButton;
     private final Button nextTurnButton;
 
+    //___________________________CONTROLLER__________________________________//
     public TurnController(GameController gameController, Button rollDiceButton, Button nextTurnButton) {
         this.gameController = gameController;
         this.rollDiceButton = rollDiceButton;
         this.nextTurnButton = nextTurnButton;
     }
 
+    //___________________________FUNCTIONS__________________________________//
     public void handleNextTurnButtonPressed(ActionEvent event) {
         var gameplay = gameController.getGameplay();
         var gameView = gameController.getGameView();

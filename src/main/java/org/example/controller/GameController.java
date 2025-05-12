@@ -7,13 +7,18 @@ import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.catanboardgameviews.MenuView;
 
 public class GameController {
+
     private final Stage primaryStage;
     private CatanBoardGameView gameView;
     private Gameplay gameplay;
+    private BuildController buildController;
 
+    //___________________________CONSTRUCTOR_________________________________//
     public GameController(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
+
+    //___________________________FUNCTIONS__________________________________//
 
     public void startGame(int playerCount, int boardSize, int easyAI, int medAI, int hardAI) {
         // Initialize core game logic and data
@@ -40,8 +45,6 @@ public class GameController {
         primaryStage.show();
     }
 
-
-
     public void returnToMenu(MenuView menuView) {
         if (gameView != null) {
             gameView.resetGameUIState();
@@ -49,12 +52,20 @@ public class GameController {
         menuView.showMainMenu();
     }
 
+
+    public void setBuildController(BuildController buildController) {
+        this.buildController = buildController;
+    }
+
     public Gameplay getGameplay() {
         return gameplay;
     }
 
-
     public CatanBoardGameView getGameView() {
         return gameView;
+    }
+
+    public BuildController getBuildController() {
+        return buildController;
     }
 }

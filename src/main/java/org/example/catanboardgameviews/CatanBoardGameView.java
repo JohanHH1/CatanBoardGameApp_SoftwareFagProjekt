@@ -30,7 +30,7 @@ import java.util.Optional;
 public class CatanBoardGameView {
 
     //---------------------------- Dimensions ----------------------------//
-    private final double GAME_WIDTH = 800;
+    private final double GAME_WIDTH = 850;
     private final double GAME_HEIGHT = 600;
     private final int boardRadius;
 
@@ -73,7 +73,7 @@ public class CatanBoardGameView {
         this.gameplay = gameplay;
         this.gameController = gameController;
         this.boardRadius = boardRadius;
-        
+
         // Layout root
         this.root = new BorderPane();
 
@@ -126,6 +126,7 @@ public class CatanBoardGameView {
         boardGroup.getChildren().add(0, tiles);
 
         BuildController buildController = new BuildController(gameController);
+        gameController.setBuildController(buildController);
         drawOrDisplay.initEdgesClickHandlers(board, boardGroup, buildController, boardRadius, root);
         drawOrDisplay.initVerticeClickHandlers(board, boardGroup, buildController, boardRadius, root);
 
@@ -187,6 +188,14 @@ public class CatanBoardGameView {
         Button showCostsButton = new Button("Show Recipes");
         Button tradeButton = new Button("Trade with Bank 4:1");
         Button exitButton = new Button("Exit");
+        ToggleButton toggleConfirmBtn = new ToggleButton("Confirm ON");
+        toggleConfirmBtn.setSelected(true);
+
+        toggleConfirmBtn.setOnAction(e -> {
+            boolean enabled = toggleConfirmBtn.isSelected();
+            toggleConfirmBtn.setText(enabled ? "Confirm ON" : "Confirm OFF");
+            gameController.getBuildController().toggleConfirmBeforeBuild();
+        });
 
         rollDiceButton.setOnAction(e -> {
             gameplay.rollDiceAndDistribute(gameplay, diceImage1, diceImage2, root, boardGroup, board);
@@ -212,9 +221,9 @@ public class CatanBoardGameView {
             }
         });
 
-        List<Button> allButtons = List.of(
+        List<ButtonBase> allButtons = List.of(
                 rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton,
-                tradeButton, showCostsButton, exitButton
+                tradeButton, showCostsButton, toggleConfirmBtn, exitButton
         );
 
         String style = "-fx-background-color: linear-gradient(to bottom, #f9f9f9, #e0e0e0); -fx-background-radius: 8;" +
@@ -240,7 +249,6 @@ public class CatanBoardGameView {
 
     public VBox createLeftMenu(Boolean hasBeenInitialized) {
         if (hasBeenInitialized && playerListVBox != null) {
-            // Only update existing entries without recreating the entire VBox
             playerListVBox.getChildren().clear();
 
             Text title = new Text("Player Stats");
@@ -253,12 +261,9 @@ public class CatanBoardGameView {
             for (Player player : gameplay.getPlayerList()) {
                 VBox playerBox = new VBox(5);
 
-                String displayName;
-                if (player instanceof AIOpponent ai) {
-                    displayName = "AIPlayer " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")";
-                } else {
-                    displayName = "Player " + player.getPlayerId();
-                }
+                String displayName = (player instanceof AIOpponent ai)
+                        ? "AIPlayer " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
+                        : "Player " + player.getPlayerId();
 
                 Text playerName = new Text(displayName);
                 playerName.setFont(Font.font("Arial", FontWeight.BOLD, nameFontSize));
@@ -271,12 +276,18 @@ public class CatanBoardGameView {
 
                 playerBox.getChildren().add(playerName);
 
+                int totalResources = 0;
                 for (String resourceName : player.getResources().keySet()) {
                     int count = player.getResources().get(resourceName);
+                    totalResources += count;
                     Text resourceText = new Text(resourceName + ": " + count);
                     resourceText.setFont(Font.font("Arial", infoFontSize));
                     playerBox.getChildren().add(resourceText);
                 }
+
+                Text totalText = new Text("Total resources: " + totalResources);
+                totalText.setFont(Font.font("Arial", infoFontSize));
+                playerBox.getChildren().add(totalText);
 
                 Text pointsText = new Text("Victory points: " + player.getPlayerScore());
                 pointsText.setFont(Font.font("Arial", infoFontSize));
@@ -285,10 +296,10 @@ public class CatanBoardGameView {
                 playerListVBox.getChildren().add(playerBox);
             }
 
-            return null; // we're only updating existing VBox
+            return null;
         }
 
-        // First-time creation
+        // First-time creation path
         playerListVBox = new VBox(10);
         playerListVBox.setPadding(new Insets(10));
 
@@ -302,12 +313,9 @@ public class CatanBoardGameView {
         for (Player player : gameplay.getPlayerList()) {
             VBox playerBox = new VBox(5);
 
-            String displayName;
-            if (player instanceof AIOpponent ai) {
-                displayName = "AIPlayer " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")";
-            } else {
-                displayName = "Player " + player.getPlayerId();
-            }
+            String displayName = (player instanceof AIOpponent ai)
+                    ? "AIPlayer " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
+                    : "Player " + player.getPlayerId();
 
             Text playerName = new Text(displayName);
             playerName.setFont(Font.font("Arial", FontWeight.BOLD, nameFontSize));
@@ -320,12 +328,18 @@ public class CatanBoardGameView {
 
             playerBox.getChildren().add(playerName);
 
+            int totalResources = 0;
             for (String resourceName : player.getResources().keySet()) {
                 int count = player.getResources().get(resourceName);
+                totalResources += count;
                 Text resourceText = new Text(resourceName + ": " + count);
                 resourceText.setFont(Font.font("Arial", infoFontSize));
                 playerBox.getChildren().add(resourceText);
             }
+
+            Text totalText = new Text("Total resources: " + totalResources);
+            totalText.setFont(Font.font("Arial", infoFontSize));
+            playerBox.getChildren().add(totalText);
 
             Text pointsText = new Text("Victory points: " + player.getPlayerScore());
             pointsText.setFont(Font.font("Arial", infoFontSize));
@@ -333,6 +347,7 @@ public class CatanBoardGameView {
 
             playerListVBox.getChildren().add(playerBox);
         }
+
         ScrollPane scrollPane = new ScrollPane(playerListVBox);
         scrollPane.setFitToWidth(true);
         scrollPane.setPrefHeight(500);
@@ -342,6 +357,7 @@ public class CatanBoardGameView {
         container.setStyle("-fx-background-color: #e0e0e0; -fx-min-width: 200;");
         return container;
     }
+
 
     //__________________________INPUT HANDLING_____________________________//
 
@@ -441,21 +457,28 @@ public class CatanBoardGameView {
         gameLogArea.clear();
         board.clearBoard();
     }
+
     public void refreshSidebar() {
         createLeftMenu(true);
     }
+
     public void logToGameLog(String message) {
         Platform.runLater(() -> {
             gameLogArea.appendText(message + "\n");
             gameLogArea.setScrollTop(Double.MAX_VALUE);
         });
     }
+
     public void showDiceButton() {
         rollDiceButton.setVisible(true);
     }
+
+    // hides the starting circles for settlement placements.
     public void hideAllVertexClickCircles() {
         for (Circle circle : drawOrDisplay.getRegisteredVertexClickable()) {
-            circle.setVisible(false);
+            circle.setOpacity(0); // makes it invisible
+            //circle.setOpacity(1); // makes it vivible again if needed
+
         }
     }
 
@@ -489,5 +512,13 @@ public class CatanBoardGameView {
     }
     public Stage getPrimaryStage() {
         return primaryStage;
+    }
+
+    public double getGAME_WIDTH() {
+        return GAME_WIDTH;
+    }
+
+    public double getGAME_HEIGHT() {
+        return GAME_HEIGHT;
     }
 }

@@ -335,15 +335,30 @@ public class Gameplay {
 
         if (currentPlayer.getPlayerScore() >= 10) {
             Platform.runLater(() -> {
+                // Build scoreboard message
+                StringBuilder scoreboard = new StringBuilder("Final Scores:\n\n");
+                playerList.stream()
+                        .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
+                        .forEach(player -> {
+                            String name = (player instanceof AIOpponent ai)
+                                    ? "AI Player " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
+                                    : "Player " + player.getPlayerId();
+                            scoreboard.append(String.format("%-25s : %d points%n", name, player.getPlayerScore()));
+                        });
+
+                // Show winner + scoreboard
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Game Over");
                 alert.setHeaderText("We have a winner!");
-                alert.setContentText("Player " + currentPlayer.getPlayerId() + " has won the game!");
+                alert.setContentText("Player " + currentPlayer.getPlayerId() + " has won the game!\n\n" + scoreboard);
+                alert.setResizable(true);
+                alert.getDialogPane().setPrefWidth(400);
                 alert.setOnHidden(e -> menuView.showMainMenu());
                 alert.show();
             });
         }
     }
+
 
     public void decreasePlayerScore() {
         currentPlayer.decreasePlayerScore();
@@ -371,7 +386,6 @@ public class Gameplay {
         } else {
             catanBoardGameView.getNextTurnButton().setVisible(false);
         }
-
         catanBoardGameView.refreshSidebar();
         catanBoardGameView.getRollDiceButton().setVisible(false);
     }

@@ -2,6 +2,8 @@ package org.example.controller;
 
 import javafx.event.EventHandler;
 import javafx.scene.Group;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
@@ -10,19 +12,21 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import org.example.catanboardgameapp.*;
 
+import java.util.Optional;
+
 public class BuildController {
+
     private final Group boardGroup;
     private final DrawOrDisplay drawOrDisplay;
-
     private final GameController gameController;
+    private boolean confirmBeforeBuild = true;
 
+    //___________________________CONTROLLER__________________________________//
     public BuildController(GameController gameController) {
         this.gameController = gameController;
         this.drawOrDisplay = new DrawOrDisplay(gameController.getGameplay().getBoardRadius());
         this.boardGroup = gameController.getGameView().getBoardGroup(); // or pass in if needed
-
     }
-
 
     //___________________________ ROAD PLACEMENT HANDLER ___________________________
 
@@ -37,21 +41,33 @@ public class BuildController {
 
             Player currentPlayer = gameController.getGameplay().getCurrentPlayer();
 
+            // Confirm action
+            if (isConfirmBeforeBuildEnabled()) {
+                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmAlert.setTitle("Confirm Build");
+                confirmAlert.setHeaderText("Build ROAD");
+                confirmAlert.setContentText("Are you sure you want to place a Road here?");
+                Optional<ButtonType> result = confirmAlert.showAndWait();
+
+                if (result.isEmpty() || result.get() != ButtonType.OK) {
+                    return; // Player cancelled
+                }
+            }
+
+
             if (gameController.getGameplay().buildRoad(edge)) {
-                // Visually draw the road
                 buildRoad(edge, currentPlayer);
 
-                // If still in initial phase, advance to next player only if all players still have ≤ 2 roads
                 boolean allStillInInitialPhase = gameController.getGameplay().getPlayerList().stream()
                         .allMatch(p -> p.getRoads().size() <= 2);
 
-                if (allStillInInitialPhase && gameController.getGameplay().isInInitialPhase() && gameController.getGameplay().isWaitingForInitialRoad()) {
-                    gameController.getGameplay().nextPlayerTurn();  // let AI or human take next initial turn
+                if (allStillInInitialPhase && gameController.getGameplay().isInInitialPhase()
+                        && gameController.getGameplay().isWaitingForInitialRoad()) {
+                    gameController.getGameplay().nextPlayerTurn();
                 }
 
                 gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
             } else {
-                // Road placement failed → show red X at midpoint of edge
                 double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
                 double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
                 drawOrDisplay.showErrorCross(boardGroup, midX, midY);
@@ -69,8 +85,21 @@ public class BuildController {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
                 return;
             }
-
             Player currentPlayer = gameController.getGameplay().getCurrentPlayer();
+
+            // Confirm action first
+            if (isConfirmBeforeBuildEnabled()) {
+                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmAlert.setTitle("Confirm Build");
+                confirmAlert.setHeaderText("Build Structure");
+                confirmAlert.setContentText("Are you sure you want to place a settlement or upgrade to a city?");
+                Optional<ButtonType> result = confirmAlert.showAndWait();
+
+                if (result.isEmpty() || result.get() != ButtonType.OK) {
+                    return; // Player cancelled
+                }
+            }
+
 
             boolean success;
 
@@ -87,8 +116,8 @@ public class BuildController {
                 gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
             }
 
-            // If it's not a settlement, try building a city
-            else if (gameController.getGameplay().buildCity(vertex)) {
+            // Attempt city placement if settlement failed
+            else if ( gameController.getGameplay().buildCity(vertex)) {
                 vertex.setOwner(currentPlayer);
                 gameController.getGameView().getSettlementLayer().getChildren().remove(visibleCircle);
                 Rectangle citySquare = new Rectangle(vertex.getX() - 6, vertex.getY() - 6, 12, 12);
@@ -98,12 +127,13 @@ public class BuildController {
                 gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
             }
 
-            // If neither succeeded, show red X
+            // Neither worked → show red error cross
             else {
                 drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
             }
         };
     }
+
     private void buildRoad(Edge edge, Player currentPlayer) {
         Line playerRoadLine = new Line(
                 edge.getVertex1().getX(), edge.getVertex1().getY(),
@@ -112,6 +142,13 @@ public class BuildController {
         drawOrDisplay.drawPlayerRoad(playerRoadLine, currentPlayer);
         gameController.getGameView().getRoadLayer().getChildren().add(playerRoadLine);
 
+    }
+    public void toggleConfirmBeforeBuild() {
+        confirmBeforeBuild = !confirmBeforeBuild;
+    }
+
+    public boolean isConfirmBeforeBuildEnabled() {
+        return confirmBeforeBuild;
     }
     public GameController getGameController() {
         return gameController;

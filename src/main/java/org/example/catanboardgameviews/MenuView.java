@@ -35,7 +35,7 @@ public class MenuView {
 
     public void showMainMenu() {
         VBox menuLayout = createMenuLayout();
-        Scene menuScene = new Scene(menuLayout, 800, 600);
+        Scene menuScene = new Scene(menuLayout, 850, 600);
         primaryStage.setScene(menuScene);
         primaryStage.setTitle("Catan Board Game");
         primaryStage.show();
@@ -208,7 +208,7 @@ public class MenuView {
         });
 
         optionsLayout.getChildren().addAll(optionsTitle, totalNote, grid, accept);
-        Scene scene = new Scene(optionsLayout, 800, 600);
+        Scene scene = new Scene(optionsLayout, 850, 600);
         primaryStage.setScene(scene);
     }
 
@@ -240,7 +240,7 @@ public class MenuView {
         backButton.setOnAction(e -> showMainMenu());
 
         creditsLayout.getChildren().addAll(title, name1, name2, name3, name4, backButton);
-        Scene creditsScene = new Scene(creditsLayout, 800, 600);
+        Scene creditsScene = new Scene(creditsLayout, 850, 600);
         primaryStage.setScene(creditsScene);
     }
 

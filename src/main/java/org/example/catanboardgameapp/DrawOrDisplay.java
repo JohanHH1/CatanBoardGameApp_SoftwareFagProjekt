@@ -119,7 +119,6 @@ public class DrawOrDisplay {
                 clickable.setFill(Color.TRANSPARENT);
                 clickable.setStroke(Color.TRANSPARENT);
             }
-
             edgeClickLayer.getChildren().add(clickable);
         }
     }
