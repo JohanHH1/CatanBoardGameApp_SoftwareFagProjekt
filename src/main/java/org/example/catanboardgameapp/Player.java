@@ -6,13 +6,13 @@ import java.util.ArrayList;
 import javafx.scene.paint.Color;
 
 public class Player {
-    private int playerId;
-    private Color color;
-    private HashMap<String, Integer> resources;
-    private List<Vertex> settlements;
-    private List<Edge> roads;
+    private final int playerId;
+    private final Color color;
+    private final HashMap<String, Integer> resources;
+    private final List<Vertex> settlements;
+    private final List<Edge> roads;
     private int playerScore;
-    private List<Vertex> cities;
+    private final List<Vertex> cities;
     private Vertex secondSettlement; // Used to validate the second free road connection
 
     //_____________________________Constructor_____________________________//

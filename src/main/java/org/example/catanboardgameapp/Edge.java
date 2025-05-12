@@ -8,12 +8,10 @@ public class Edge {
     private final Vertex vertex2;
     private final List<Tile> adjacentTiles = new ArrayList<>();
 
-    //___________________CONSTRUCTOR______________________
-
+    //___________________CONSTRUCTOR______________________//
     public Edge(Vertex vertex1, Vertex vertex2) {
         this.vertex1 = vertex1;
         this.vertex2 = vertex2;
-
         // Automatically mark the vertices as neighbors
         vertex1.addNeighbor(vertex2);
         vertex2.addNeighbor(vertex1);
@@ -55,7 +53,7 @@ public class Edge {
         return adjacentTiles;
     }
 
-    //_______________________OVERRIDE____________________
+    //_______________________OVERRIDE____________________//
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

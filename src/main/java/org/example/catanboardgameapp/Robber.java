@@ -7,7 +7,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
@@ -18,60 +17,65 @@ import org.example.catanboardgameviews.CatanBoardGameView;
 
 import java.util.*;
 
-import static org.example.catanboardgameviews.CatanBoardGameView.*;
-
 public class Robber {
 
     //____________________FIELDS__________________________
 
-    public static Robber robberDeNiro;  // Global robber reference
     private final Gameplay gameplay;
-    private final Circle robberCircle;
     private Tile currentTile;
-    private static boolean robberNeedsToMove = false;
+    private boolean robberNeedsToMove = false;
+    private final DrawOrDisplay drawOrDisplay;
+    private final CatanBoardGameView catanBoardGameView;
+    private final Board board;
+    private Circle robberCircle;
+
 
     //____________________CONSTRUCTOR__________________________
 
-    public Robber(Tile startingTile, Gameplay gameplay, Group boardGroup) {
+    public Robber(Tile startingTile, Gameplay gameplay, CatanBoardGameView catanBoardGameView, Group boardGroup) {
         this.currentTile = startingTile;
         this.gameplay = gameplay;
-
+        this.drawOrDisplay = new DrawOrDisplay(gameplay.getBoardRadius());
+        this.catanBoardGameView = catanBoardGameView;
+        this.board = gameplay.getBoard();
         Point2D center = startingTile.getCenter();
-        Circle circle = DrawOrDisplay.drawRobberCircle(center); // Use central method
-        this.robberCircle = circle;
-        boardGroup.getChildren().add(circle);
+        this.robberCircle = drawOrDisplay.drawRobberCircle(center);
+        boardGroup.getChildren().add(this.robberCircle);
+
     }
 
     //____________________ROBBER PLACEMENT LOGIC__________________________
 
-    public static void showRobberTargets(Group boardGroup) {
-        boardGroup.getChildren().remove(robberDeNiro.robberCircle); // remove old robber
+    public void showRobberTargets(Group boardGroup) {
+        boardGroup.getChildren().remove(this.robberCircle); // remove old robber
 
         List<Circle> highlightCircles = new ArrayList<>();
 
-        for (Tile tile : Board.getTiles()) {
-            if (tile == robberDeNiro.currentTile) continue;
+        for (Tile tile : board.getTiles()) {
+            if (tile == this.currentTile) continue;
 
             Point2D center = tile.getCenter();
-            Circle highlight = DrawOrDisplay.drawRobberCircle(center);
+            Circle highlight = drawOrDisplay.drawRobberCircle(center);
             highlight.setOnMouseClicked(e -> {
                 highlightCircles.forEach(boardGroup.getChildren()::remove);
                 highlightCircles.clear();
 
-                Circle newRobber = DrawOrDisplay.drawRobberCircle(center);
+                Circle newRobber = drawOrDisplay.drawRobberCircle(center);
                 boardGroup.getChildren().add(newRobber);
-                currentRobberCircle = newRobber;
+                this.robberCircle = newRobber;
 
-                robberDeNiro.moveTo(tile);
+                this.moveTo(tile);
                 robberHasMoved();
-                nextTurnButton.setVisible(true);
 
-                List<Player> victims = showPotentialVictims(tile, robberDeNiro.gameplay.getCurrentPlayer());
+                // Proceed with potential steal
+                List<Player> victims = showPotentialVictims(tile, this.gameplay.getCurrentPlayer());
                 if (victims.isEmpty()) {
-                    logToGameLog("Bad Robber placement! No players to steal from");
+                    catanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from.");
+                    catanBoardGameView.getNextTurnButton().setDisable(false); // ✅ allow turn end now
                     return;
                 }
 
+                // Ask user to steal from a victim
                 ChoiceDialog<Player> dialog = new ChoiceDialog<>(victims.get(0), victims);
                 dialog.setTitle("Choose a player to steal from");
                 dialog.setHeaderText("Select a player with a city/settlement on this tile:");
@@ -80,10 +84,10 @@ public class Robber {
                 dialog.showAndWait().ifPresent(victim -> {
                     boolean success = stealResourceFrom(victim);
                     if (!success) {
-                        logToGameLog("Failed to steal a resource from " + victim);
+                        catanBoardGameView.logToGameLog("Failed to steal a resource from " + victim);
                     }
-                    VBox updatedMenu = createLeftMenu(robberDeNiro.gameplay);
-                    ((BorderPane) boardGroup.getScene().getRoot()).setLeft(updatedMenu);
+                    catanBoardGameView.refreshSidebar();
+                    catanBoardGameView.getNextTurnButton().setDisable(false); // ✅ only now allow it
                 });
             });
 
@@ -92,7 +96,7 @@ public class Robber {
         }
     }
 
-    private static List<Player> showPotentialVictims(Tile tile, Player currentPlayer) {
+    private List<Player> showPotentialVictims(Tile tile, Player currentPlayer) {
         Set<Player> victims = new HashSet<>();
         for (Vertex v : tile.getVertices()) {
             Player owner = v.getOwner();
@@ -114,7 +118,7 @@ public class Robber {
         }
     }
 
-    private static Map<String, Integer> showDiscardDialog(Player player, Gameplay gameplay) {
+    private Map<String, Integer> showDiscardDialog(Player player, Gameplay gameplay) {
         Map<String, Integer> playerResources = new HashMap<>(player.getResources());
         int totalCards = playerResources.values().stream().mapToInt(Integer::intValue).sum();
         int toDiscard = totalCards / 2;
@@ -198,7 +202,7 @@ public class Robber {
         return robberNeedsToMove;
     }
 
-    public static void robberHasMoved() {
+    public void robberHasMoved() {
         robberNeedsToMove = false;
     }
 
@@ -213,7 +217,7 @@ public class Robber {
         });
     }
 
-    public static boolean stealResourceFrom(Player victim) {
+    public boolean stealResourceFrom(Player victim) {
         List<String> pool = new ArrayList<>();
         victim.getResources().forEach((res, count) -> {
             for (int i = 0; i < count; i++) pool.add(res);
@@ -224,10 +228,10 @@ public class Robber {
         String stolen = pool.get(0);
         victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
 
-        Player thief = robberDeNiro.gameplay.getCurrentPlayer();
+        Player thief = this.gameplay.getCurrentPlayer();
         thief.getResources().put(stolen, thief.getResources().getOrDefault(stolen, 0) + 1);
 
-        logToGameLog("Player " + thief.getPlayerId() + " stole 1 " + stolen + " from Player " + victim.getPlayerId());
+        catanBoardGameView.logToGameLog("Player " + thief.getPlayerId() + " stole 1 " + stolen + " from Player " + victim.getPlayerId());
         return true;
     }
 }

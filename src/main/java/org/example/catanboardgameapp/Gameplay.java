@@ -6,62 +6,67 @@ import javafx.scene.control.Alert;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 import org.example.catanboardgameviews.CatanBoardGameView;
-
 import java.util.*;
-
-import static org.example.catanboardgameapp.Robber.robberDeNiro;
-import static org.example.catanboardgameviews.CatanBoardGameView.*;
+import org.example.catanboardgameviews.MenuView;
 
 public class Gameplay {
+
+    //__________________________CONFIG & VIEWS_____________________________//
+    private final int boardRadius;
+    private final DrawOrDisplay drawOrDisplay;
+    private CatanBoardGameView catanBoardGameView;
+    private MenuView menuView;
+
+    //__________________________PLAYER STATE_____________________________//
     private final List<Player> playerList = new ArrayList<>();
     private int currentPlayerIndex;
     private Player currentPlayer;
+
+    //__________________________TURN & PHASE CONTROL_____________________________//
     private boolean initialPhase = true;
     private boolean forwardOrder = true;
-    private Board board;
-    private int lastRolledDie1;
-    private int lastRolledDie2;
     private boolean hasRolledThisTurn = false;
     private boolean waitingForInitialRoad = false;
+
+    //__________________________BOARD & GAME DATA_____________________________//
+    private Board board;
     private Vertex lastInitialSettlement = null;
 
+    //__________________________DICE ROLL TRACKING_____________________________//
+    private int lastRolledDie1;
+    private int lastRolledDie2;
 
 
-    // -------------------- Initialization --------------------
-
-    public void setBoard(Board board) {
-        this.board = board;
+    //__________________________CONSTRUCTOR_____________________________//
+    public Gameplay(Stage primaryStage, int boardRadius) {
+        this.drawOrDisplay = new DrawOrDisplay(boardRadius);
+        this.boardRadius = boardRadius;
     }
 
-    public Board getBoard() {
-        return board;
-    }
+    //________________________INITIALIZE_______________________________//
 
+    // Initialize players and any chosen AI players
     public void initializeAllPlayers(int humanCount, int aiEasy, int aiMedium, int aiHard) {
         playerList.clear();
         List<Color> colors = new ArrayList<>(List.of(
-                Color.RED, Color.GREEN, Color.BLUE, Color.DARKORANGE, Color.PURPLE, Color.YELLOW
+                Color.RED, Color.BLUE, Color.GREEN, Color.DARKORANGE, Color.PURPLE, Color.YELLOW
         ));
 
         int idCounter = 1;
 
-        // Add human players
         for (int i = 0; i < humanCount && !colors.isEmpty(); i++) {
             playerList.add(new Player(idCounter++, colors.remove(0)));
         }
-
-        // Add AIs by difficulty
         for (int i = 0; i < aiEasy && !colors.isEmpty(); i++) {
-            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.EASY));
+            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.EASY, this));
         }
-
         for (int i = 0; i < aiMedium && !colors.isEmpty(); i++) {
-            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.MEDIUM));
+            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.MEDIUM, this));
         }
-
         for (int i = 0; i < aiHard && !colors.isEmpty(); i++) {
-            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.HARD));
+            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.HARD, this));
         }
 
         if (!playerList.isEmpty()) {
@@ -70,26 +75,16 @@ public class Gameplay {
         }
     }
 
-
-
-    public void reset() {
-        playerList.clear();
-        currentPlayerIndex = 0;
-        currentPlayer = null;
-    }
-
-    // -------------------- Turn Management --------------------
+    //____________________________TURN MANAGEMENT______________________________//
 
     public void nextPlayerTurn() {
-        System.out.println("NEXT PLAYER TURN!");
         hasRolledThisTurn = false;
 
-        // -------------------- INITIAL PHASE HANDLING --------------------
+        // ---------------- INITIAL PHASE (Setup Turns) ----------------
         if (initialPhase && currentPlayer instanceof AIOpponent ai) {
-            ai.placeInitialSettlementAndRoad(this, CatanBoardGameView.getBoardGroup());
+            ai.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
 
-            if (!waitingForInitialRoad && currentPlayer.getSettlements().size() > 0) {
-                // AI finished placing settlement and road — advance to next player
+            if (!waitingForInitialRoad && !currentPlayer.getSettlements().isEmpty()) {
                 currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
 
                 if (forwardOrder && currentPlayerIndex >= playerList.size()) {
@@ -103,17 +98,16 @@ public class Gameplay {
 
                 waitingForInitialRoad = false;
                 lastInitialSettlement = null;
-
                 currentPlayer = playerList.get(currentPlayerIndex);
 
                 if (initialPhase && currentPlayer instanceof AIOpponent nextAI) {
-                    nextAI.placeInitialSettlementAndRoad(this, CatanBoardGameView.getBoardGroup());
+                    nextAI.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
                 }
             }
-            return; // prevent moving into regular phase logic early
+            return;
         }
 
-        // -------------------- PHASE TRANSITION --------------------
+        // ---------------- PHASE TRANSITION ----------------
         if (initialPhase) {
             currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
 
@@ -128,49 +122,42 @@ public class Gameplay {
         } else {
             currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
         }
-
-        // Clear phase flags
         waitingForInitialRoad = false;
         lastInitialSettlement = null;
-
         currentPlayer = playerList.get(currentPlayerIndex);
 
-        // -------------------- DICE BUTTON & AI AUTOPLAY --------------------
+        // fix this for AI...
         if (!initialPhase && currentPlayer instanceof AIOpponent ai) {
-            CatanBoardGameView.showDiceButton();
+            catanBoardGameView.showDiceButton();
             new Thread(() -> ai.makeMoveAI(this)).start();
         } else if (!initialPhase) {
-            CatanBoardGameView.showDiceButton();    // show dice button when its next players turn
+            catanBoardGameView.showDiceButton();
+            catanBoardGameView.hideAllVertexClickCircles();
         }
     }
 
-
-    public String getCurrentPhaseName() {
-        return initialPhase ? "INITIAL PHASE" : "REGULAR PHASE";
-    }
-
-    // -------------------- Dice --------------------
+    //_____________________________DICE________________________________//
 
     public int rollDice() {
         Random rand = new Random();
         lastRolledDie1 = rand.nextInt(6) + 1;
         lastRolledDie2 = rand.nextInt(6) + 1;
         int roll = lastRolledDie1 + lastRolledDie2;
-        CatanBoardGameView.logToGameLog("Dice rolled: " + lastRolledDie1 + " + " + lastRolledDie2 + " = " + roll);
+        catanBoardGameView.logToGameLog("Dice rolled: " + lastRolledDie1 + " + " + lastRolledDie2 + " = " + roll);
         return roll;
     }
 
     public int rollDiceAndDistributeResources() {
         int roll = rollDice();
         if (roll == 7) {
-            robberDeNiro.requireRobberMove();
+            catanBoardGameView.getRobber().requireRobberMove();
         } else {
             distributeResource(roll);
         }
         return roll;
     }
 
-    // -------------------- Resource add/remove / Trading --------------------
+    //_____________________________RESOURCES & TRADING_____________________________//
 
     public boolean canRemoveResource(String resource, int amount) {
         return currentPlayer.getResources().getOrDefault(resource, 0) >= amount;
@@ -192,36 +179,27 @@ public class Gameplay {
         if (!canRemoveResource(give, 4)) return false;
         removeResource(give, 4);
         addResource(receive, 1);
-        CatanBoardGameView.logToGameLog("Traded 4 " + give + " for 1 " + receive);
+        catanBoardGameView.logToGameLog("Traded 4 " + give + " for 1 " + receive);
         return true;
     }
 
-    // -------------------- Building --------------------
+    //_____________________________BUILDING FUNCTIONS____________________________//
 
     public boolean buildInitialSettlement(Vertex vertex) {
-        // Prevent invalid or duplicate placement
         if (vertex == null || !isValidSettlementPlacement(vertex)) return false;
         if (currentPlayer.getSettlements().contains(vertex)) return false;
+        if (initialPhase && waitingForInitialRoad) return false;
 
-        // Block placement if already waiting for a road
-        if (initialPhase && waitingForInitialRoad) {
-            return false; // Must place road before placing another settlement
-        }
-        // Add the settlement
         currentPlayer.getSettlements().add(vertex);
         vertex.setOwner(currentPlayer);
         vertex.makeSettlement();
         increasePlayerScore();
 
-        // Track this as the pending settlement for initial road
         waitingForInitialRoad = true;
         lastInitialSettlement = vertex;
 
-        // Store second settlement for validation logic
         if (currentPlayer.getSettlements().size() == 2) {
             currentPlayer.setSecondSettlement(vertex);
-
-            // Grant starting resources from adjacent tiles (excluding desert)
             for (Tile tile : vertex.getAdjacentTiles()) {
                 String type = tile.getResourcetype().getName();
                 if (!type.equals("Desert")) {
@@ -229,30 +207,21 @@ public class Gameplay {
                 }
             }
         }
-
         return true;
     }
 
-
     public boolean buildRoad(Edge edge) {
-        // ------------------- INITIAL PHASE LOGIC -------------------
-        // Enforce settlement-before-road rule during initial phase
         if (initialPhase && waitingForInitialRoad) {
-            // Only allow a road directly connected to the last placed settlement
             if (!edge.isConnectedTo(lastInitialSettlement)) return false;
             if (!isValidRoadPlacement(edge)) return false;
             currentPlayer.getRoads().add(edge);
-            // Mark completion of this player's initial placement turn
             waitingForInitialRoad = false;
             lastInitialSettlement = null;
             return true;
         }
-        // During initial phase but NOT waiting for road — disallow building roads
-        if (initialPhase && !waitingForInitialRoad) {
-            return false;
-        }
 
-        // ------------------- REGULAR PHASE LOGIC -------------------
+        if (initialPhase) return false;
+
         if (!isValidRoadPlacement(edge)) return false;
 
         if (currentPlayer.getRoads().isEmpty()) {
@@ -260,9 +229,6 @@ public class Gameplay {
             return true;
         }
 
-
-
-        // Standard resource-based road building
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
             removeResource("Brick", 1);
             removeResource("Wood", 1);
@@ -273,14 +239,10 @@ public class Gameplay {
         return false;
     }
 
-
-
     public boolean buildSettlement(Vertex vertex) {
-        // Validate and check duplicates
         if (vertex == null || !isValidSettlementPlacement(vertex)) return false;
         if (currentPlayer.getSettlements().contains(vertex)) return false;
 
-        // Check and pay resources
         if (canRemoveResource("Brick", 1) &&
                 canRemoveResource("Wood", 1) &&
                 canRemoveResource("Grain", 1) &&
@@ -291,7 +253,6 @@ public class Gameplay {
             removeResource("Grain", 1);
             removeResource("Wool", 1);
 
-            // Place settlement
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             vertex.makeSettlement();
@@ -304,6 +265,7 @@ public class Gameplay {
 
     public boolean buildCity(Vertex vertex) {
         if (isNotValidCityPlacement(vertex)) return false;
+
         if (canRemoveResource("Ore", 3) && canRemoveResource("Grain", 2)) {
             removeResource("Ore", 3);
             removeResource("Grain", 2);
@@ -315,12 +277,12 @@ public class Gameplay {
             System.out.println(currentPlayer.getPlayerScore());
             return true;
         }
+
         return false;
     }
 
+    //______________________BOOLEANS___________________________//
 
-
-    // -------------------- Validation --------------------
     public boolean isInitialPlacementDone() {
         int totalRoads = playerList.stream().mapToInt(p -> p.getRoads().size()).sum();
         return totalRoads >= (playerList.size() * 2 - 1);
@@ -342,6 +304,7 @@ public class Gameplay {
         for (Player player : playerList) {
             if (player.getRoads().contains(edge)) return false;
         }
+
         for (Player player : playerList) {
             if (player != currentPlayer) {
                 if (player.getSettlements().contains(edge.getVertex1()) &&
@@ -354,48 +317,76 @@ public class Gameplay {
                 }
             }
         }
+
         boolean connectsToSettlement = currentPlayer.getSettlements().contains(edge.getVertex1()) ||
                 currentPlayer.getSettlements().contains(edge.getVertex2());
-        boolean connectsToRoad = currentPlayer.getRoads().stream().anyMatch(r -> r.isConnectedTo(edge.getVertex1()) || r.isConnectedTo(edge.getVertex2()));
+
+        boolean connectsToRoad = currentPlayer.getRoads().stream().anyMatch(r ->
+                r.isConnectedTo(edge.getVertex1()) || r.isConnectedTo(edge.getVertex2()));
+
         return connectsToSettlement || connectsToRoad;
     }
 
-    // -------------------- Resource Distribution --------------------
-    // Roll the dice and distribute resources
-    public static void rollDiceAndDistribute(Gameplay gameplay, ImageView dice1, ImageView dice2, BorderPane root, Group boardGroup, Board board) {
-        int result = gameplay.rollDiceAndDistributeResources();
-        int die1 = gameplay.getLastRolledDie1(); // You’ll need to expose this from Gameplay
-        int die2 = gameplay.getLastRolledDie2(); // Same here
 
-        // Load and display images
-        dice1.setImage(DrawOrDisplay.loadDiceImage(die1));
-        dice2.setImage(DrawOrDisplay.loadDiceImage(die2));
+    //___________________________SCORE MANAGEMENT_____________________________//
+
+    public void increasePlayerScore() {
+        currentPlayer.increasePlayerScore();
+
+        if (currentPlayer.getPlayerScore() >= 10) {
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Game Over");
+                alert.setHeaderText("We have a winner!");
+                alert.setContentText("Player " + currentPlayer.getPlayerId() + " has won the game!");
+                alert.setOnHidden(e -> menuView.showMainMenu());
+                alert.show();
+            });
+        }
+    }
+
+    public void decreasePlayerScore() {
+        currentPlayer.decreasePlayerScore();
+        currentPlayer.decreasePlayerScore();
+    }
+
+    //___________________________HELPER FUNCTIONS_____________________________//
+
+    public void rollDiceAndDistribute(Gameplay gameplay, ImageView dice1, ImageView dice2, BorderPane root, Group boardGroup, Board board) {
+        int result = gameplay.rollDiceAndDistributeResources();
+        int die1 = gameplay.getLastRolledDie1();
+        int die2 = gameplay.getLastRolledDie2();
+
+        dice1.setImage(drawOrDisplay.loadDiceImage(die1));
+        dice2.setImage(drawOrDisplay.loadDiceImage(die2));
         dice1.setFitWidth(40);
         dice2.setFitWidth(40);
         dice1.setFitHeight(40);
         dice2.setFitHeight(40);
 
         if (result == 7) {
-            nextTurnButton.setVisible(false);
-            Robber.showRobberTargets(boardGroup);
+            catanBoardGameView.getNextTurnButton().setVisible(false);
+            catanBoardGameView.getNextTurnButton().setDisable(true);
+            catanBoardGameView.getRobber().showRobberTargets(boardGroup);
         } else {
-            nextTurnButton.setVisible(true);
+            catanBoardGameView.getNextTurnButton().setVisible(false);
         }
-        root.setLeft(createLeftMenu(gameplay));
-        rollDiceButton.setVisible(false);
+
+        catanBoardGameView.refreshSidebar();
+        catanBoardGameView.getRollDiceButton().setVisible(false);
     }
+
     public void distributeResource(int diceRoll) {
         if (diceRoll == 7) return;
-        for (Tile tile : Board.getTiles()) {
+        for (Tile tile : board.getTiles()) {
             if (tile.getTileDiceNumber() == diceRoll) {
                 for (Vertex vertex : tile.getVertices()) {
                     Player owner = vertex.getOwner();
                     if (owner != null) {
                         String res = tile.getResourcetype().getName();
                         int current = owner.getResources().getOrDefault(res, 0);
-                        // GIVE 100 RESOURCES SO PLAYER CAN WIN THE GAME FOR TESTING (CHANGE TO 1 FOR ACTUAL GAME)
                         owner.getResources().put(res, current + (vertex.getTypeOf().equals("City") ? 2 : 1));
-                        CatanBoardGameView.logToGameLog("Player " + owner.getPlayerId() + " gets " + res);
+                        catanBoardGameView.logToGameLog("Player " + owner.getPlayerId() + " gets " + res);
                     }
                 }
             }
@@ -408,7 +399,7 @@ public class Gameplay {
 
     public int getSettlementDiceValue(Vertex v) {
         int total = 0;
-        for (Tile tile : Board.getTiles()) {
+        for (Tile tile : board.getTiles()) {
             if (tile.getVertices().contains(v)) {
                 total += getDiceProbabilityValue(tile.getTileDiceNumber());
             }
@@ -427,29 +418,25 @@ public class Gameplay {
         };
     }
 
-    // -------------------- Score Management --------------------
+    //__________________________SETTERS________________________//
 
-    public void increasePlayerScore() {
-        currentPlayer.increasePlayerScore();
-
-        if (currentPlayer.getPlayerScore() >= 10) {
-            Platform.runLater(() -> {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Game Over");
-                alert.setHeaderText("We have a winner!");
-                alert.setContentText("Player " + currentPlayer.getPlayerId() + " has won the game!");
-                alert.setOnHidden(e -> CatanBoardGameView.returnToMainMenu());
-                alert.show();
-            });
-        }
+    public void setBoard(Board board) {
+        this.board = board;
     }
 
-
-    public void decreasePlayerScore() {
-        currentPlayer.decreasePlayerScore();
+    public void setCatanBoardGameView(CatanBoardGameView view) {
+        this.catanBoardGameView = view;
     }
 
-    // -------------------- Getters --------------------
+    public void setMenuView(MenuView menuView) {
+        this.menuView = menuView;
+    }
+
+    public void setHasRolledThisTurn(boolean b) {
+        hasRolledThisTurn = b;
+    }
+
+//__________________________GETTERS________________________//
 
     public Player getCurrentPlayer() {
         return currentPlayer;
@@ -470,15 +457,32 @@ public class Gameplay {
     public boolean isInInitialPhase() {
         return initialPhase;
     }
-    public boolean hasRolledDice() {
-        return hasRolledThisTurn;
-    }
 
-    public void setHasRolledThisTurn(boolean rolled) {
-        this.hasRolledThisTurn = rolled;
+    public boolean hasRolledDice() {
+        return !hasRolledThisTurn;
     }
 
     public boolean isWaitingForInitialRoad() {
-        return waitingForInitialRoad;
+        return !waitingForInitialRoad;
+    }
+
+    public DrawOrDisplay getDrawOrDisplay() {
+        return drawOrDisplay;
+    }
+
+    public MenuView getMenuView() {
+        return menuView;
+    }
+
+    public int getBoardRadius() {
+        return boardRadius;
+    }
+
+    public Board getBoard() {
+        return board;
+    }
+
+    public CatanBoardGameView getCatanBoardGameView() {
+        return catanBoardGameView;
     }
 }

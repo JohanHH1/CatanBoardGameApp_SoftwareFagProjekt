@@ -1,17 +1,26 @@
 package org.example.catanboardgameapp;
 
 import javafx.geometry.Point2D;
+import javafx.scene.Group;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
+
 import java.util.*;
 
 public class Board {
     // Initialize and create lists of tile, vertex, and edge classes
-    private static final List<Tile> tiles = new ArrayList<>();
+    private final List<Tile> tiles = new ArrayList<>();
     private final List<Vertex> vertices = new ArrayList<>();
-    private static final List<Edge> edges = new ArrayList<>();
+    private final List<Edge> edges = new ArrayList<>();
     private final Map<Point2D, Vertex> vertexMap = new HashMap<>(); // For unifying shared Vertex objects
     private final Map<String, Edge> edgeMap = new HashMap<>();      // For unifying shared Edge objects
 
-    private static final String[] TERRAIN_TYPES = {
+    private  final String[] TERRAIN_TYPES = {
             "Grain", "Grain", "Grain", "Grain", "Wood", "Wood", "Wood", "Wood",
             "Wool", "Wool", "Wool", "Wool", "Brick", "Brick", "Brick",
             "Ore", "Ore", "Ore"
@@ -31,21 +40,23 @@ public class Board {
     // Board size parameters
     private final int radius;      // e.g., 2 for standard 19-hex
     private final double hexSize;  // distance from hex center to a corner
-    private final double offsetX;  // horizontal offset for centering
-    private final double offsetY;  // vertical offset for centering
-    private final int boardsize;
+    private final double GAME_WIDTH;
+    private final double GAME_HEIGHT;
+    private final int boardSize;
+    private final DrawOrDisplay drawOrDisplay;
 
-    //___________________________CONSTRUCTOR___________________________
-    public Board(int radius, double screenWidth, double screenHeight) {
+    //___________________________CONSTRUCTOR___________________________//
+    public Board(int radius, double GAME_WIDTH, double GAME_HEIGHT) {
         this.radius = radius;
-        this.hexSize = calculateHexSize(radius, screenWidth, screenHeight);
-        this.offsetX = screenWidth / 2;
-        this.offsetY = screenHeight / 2;
-        this.boardsize = radius + 1;
+        this.hexSize = calculateHexSize(radius, GAME_WIDTH, GAME_HEIGHT);
+        this.GAME_WIDTH = GAME_WIDTH;
+        this.GAME_HEIGHT = GAME_HEIGHT;
+        this.boardSize = radius + 1;
         initializeBoard();
+        this.drawOrDisplay = new DrawOrDisplay(radius);
     }
 
-    //___________________________FUNCTIONS___________________________
+    //___________________________FUNCTIONS___________________________//
 
     private double calculateHexSize(int radius, double screenWidth, double screenHeight) {
         double maxCols = 2 * radius + 1.5;
@@ -54,7 +65,8 @@ public class Board {
         double maxHexHeight = screenHeight / maxRows;
         return Math.round(Math.min(maxHexWidth / Math.sqrt(3), maxHexHeight / 1.5));
     }
-    public static void clearBoard() {
+
+    public void clearBoard() {
         tiles.clear();
         edges.clear();
     }
@@ -63,8 +75,8 @@ public class Board {
         tiles.clear();
         List<Tile> allTiles = new ArrayList<>();
 
-        int tileCountMultiplier = ((3 * boardsize * boardsize - (3 * boardsize) + 1)) / 18;
-        String[] desertArray = (boardsize % 3 == 2) ?
+        int tileCountMultiplier = ((3 * boardSize * boardSize - (3 * boardSize) + 1)) / 18;
+        String[] desertArray = (boardSize % 3 == 2) ?
                 new String[]{"Desert", "Desert", "Desert", "Desert", "Desert", "Desert", "Desert"} :
                 new String[]{"Desert"};
 
@@ -81,16 +93,16 @@ public class Board {
         List<String> shuffledTerrains = new ArrayList<>(Arrays.asList(terrainPool));
         Collections.shuffle(shuffledTerrains);
 
-        if (boardsize != 3) Collections.shuffle(numberTokens);
+        if (boardSize != 3) Collections.shuffle(numberTokens);
 
         for (int q = -radius; q <= radius; q++) {
             for (int r = -radius; r <= radius; r++) {
                 if (Math.abs(q + r) <= radius) {
                     String type = shuffledTerrains.remove(0);
                     int num = type.equals("Desert") ? 7 : numberTokens.remove(0);
-                    Resource.ResourceType resType = Resource.ResourceType.fromString(type);
+                    Resource.ResourceType resType = Resource.ResourceType.BRICK.fromString(type);
                     Point2D center = axialToPixel(q, r);
-                    Tile tile = new Tile(q, r, resType, num, center);
+                    Tile tile = new Tile(q, r, resType, num, center, radius);
                     allTiles.add(tile);
                 }
             }
@@ -132,7 +144,49 @@ public class Board {
         edges.addAll(edgeMap.values());
     }
 
+    // Draws all the hex tiles and overlays them with icons and dice numbers
+    public Group createBoardTiles(Board board, int radius) {
+        Group boardGroup = new Group();
+
+        for (Tile tile : getTiles()) {
+            Polygon hexShape = drawOrDisplay.createTilePolygon(tile);
+            hexShape.setFill(tile.getTileColor(tile.getResourcetype()));
+            hexShape.setStroke(Color.BLACK);
+
+            Point2D center = tile.getCenter();
+            double centerX = center.getX();
+            double centerY = center.getY();
+
+            // Tile base
+            boardGroup.getChildren().add(hexShape);
+
+            // Resource icon
+            boardGroup.getChildren().add(tile.getResourceIcon(tile.getResourcetype(), centerX, centerY, board.getHexSize()));
+
+            // Dice number
+            if (tile.getTileDiceNumber() != 7) {
+                Text numberText = new Text(centerX, centerY, String.valueOf(tile.getTileDiceNumber()));
+                numberText.setFont(Font.font("Arial", FontWeight.BOLD, 40.0 / radius));
+                numberText.setTextAlignment(TextAlignment.CENTER);
+                numberText.setFill((tile.getTileDiceNumber() == 6 || tile.getTileDiceNumber() == 8) ? Color.RED : Color.DARKGREEN);
+
+                Text sample = new Text("12");
+                sample.setFont(Font.font("Arial", FontWeight.BOLD, 40.0 / radius));
+                Rectangle background = drawOrDisplay.createBoxBehindDiceNumber(sample, centerX, centerY);
+
+                // Center align text
+                numberText.setX(centerX - numberText.getLayoutBounds().getWidth() / 2);
+                numberText.setY(centerY + numberText.getLayoutBounds().getHeight() / 4);
+
+                boardGroup.getChildren().addAll(background, numberText);
+            }
+        }
+        return boardGroup;
+    }
+
     private Point2D axialToPixel(int q, int r) {
+        double offsetX = GAME_WIDTH / 2;
+        double offsetY = GAME_HEIGHT / 2;
         double x = hexSize * (Math.sqrt(3) * q + Math.sqrt(3) / 2 * r) + offsetX;
         double y = hexSize * (3.0 / 2.0) * r + offsetY;
         return new Point2D(x, y);
@@ -149,7 +203,7 @@ public class Board {
 
     //___________________________GETTERS___________________________
 
-    public static List<Tile> getTiles() {
+    public List<Tile> getTiles() {
         return tiles;
     }
 
@@ -157,15 +211,11 @@ public class Board {
         return vertices;
     }
 
-    public static List<Edge> getEdges() {
+    public List<Edge> getEdges() {
         return edges;
     }
 
     public double getHexSize() {
         return hexSize;
-    }
-
-    public int getRadius() {
-        return radius;
     }
 }

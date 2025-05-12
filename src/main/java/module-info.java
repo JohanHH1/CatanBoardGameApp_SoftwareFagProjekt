@@ -10,4 +10,6 @@ module org.example.catanboardgameapp {
     exports org.example.catanboardgameapp;
     exports org.example.catanboardgameviews;
     opens org.example.catanboardgameviews to javafx.fxml;
+    exports org.example.controller; // ✅ Add this line to fix the error
+
 }

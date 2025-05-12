@@ -28,58 +28,15 @@ public class Tile {
     private List<Edge> edges;
     private static final Map<Resource.ResourceType, Image> imageCache = new HashMap<>();
 
-
     //___________________CONSTRUCTOR______________________
 
-    public Tile(int q, int r, Resource.ResourceType resourcetype, int tileDiceNumber, Point2D center) {
+    public Tile(int q, int r, Resource.ResourceType resourcetype, int tileDiceNumber, Point2D center, int boardRadius) {
         this.q = q;
         this.r = r;
         this.resourcetype = resourcetype;
         this.tileDiceNumber = tileDiceNumber;
         this.center = center;
-    }
-
-    //__________________________ACTION FUNCTIONS______________________________
-
-    // Draws all the hex tiles and overlays them with icons and dice numbers
-    public static Group createBoardTiles(Board board, int radius) {
-        Group boardGroup = new Group();
-
-        for (Tile tile : Board.getTiles()) {
-            Polygon hexShape = DrawOrDisplay.createTilePolygon(tile);
-            hexShape.setFill(tile.getTileColor(tile.getResourcetype()));
-            hexShape.setStroke(Color.BLACK);
-
-            Point2D center = tile.getCenter();
-            double centerX = center.getX();
-            double centerY = center.getY();
-
-            // Tile base
-            boardGroup.getChildren().add(hexShape);
-
-            // Resource icon
-            boardGroup.getChildren().add(tile.getResourceIcon(tile.getResourcetype(), centerX, centerY, board.getHexSize()));
-
-            // Dice number
-            if (tile.getTileDiceNumber() != 7) {
-                Text numberText = new Text(centerX, centerY, String.valueOf(tile.getTileDiceNumber()));
-                numberText.setFont(Font.font("Arial", FontWeight.BOLD, 40.0 / radius));
-                numberText.setTextAlignment(TextAlignment.CENTER);
-                numberText.setFill((tile.getTileDiceNumber() == 6 || tile.getTileDiceNumber() == 8) ? Color.RED : Color.DARKGREEN);
-
-                Text sample = new Text("12");
-                sample.setFont(Font.font("Arial", FontWeight.BOLD, 40.0 / radius));
-                Rectangle background = DrawOrDisplay.createBoxBehindDiceNumber(sample, centerX, centerY);
-
-                // Center align text
-                numberText.setX(centerX - numberText.getLayoutBounds().getWidth() / 2);
-                numberText.setY(centerY + numberText.getLayoutBounds().getHeight() / 4);
-
-                boardGroup.getChildren().addAll(background, numberText);
-            }
-        }
-
-        return boardGroup;
+        DrawOrDisplay drawOrDisplay = new DrawOrDisplay(boardRadius);
     }
 
     //_____________________________SETTERS___________________________________
@@ -108,10 +65,8 @@ public class Tile {
 
     // Loads the correct resource icon for a tile
     public ImageView getResourceIcon(Resource.ResourceType type, double x, double y, double hexSize) {
-        // Check cache first (this way program dont load same image 100 times for giant board and crashes the game)
-        Image image = imageCache.get(type);
-        if (image == null) {
-            String filename = switch (type) {
+        Image image = imageCache.computeIfAbsent(type, t -> {
+            String filename = switch (t) {
                 case BRICK -> "/Icons/brick.png";
                 case WOOD -> "/Icons/wood.png";
                 case ORE -> "/Icons/ore.png";
@@ -122,12 +77,10 @@ public class Tile {
             InputStream stream = CatanBoardGameView.class.getResourceAsStream(filename);
             if (stream == null) {
                 System.err.println("Image not found: " + filename);
-                image = new Image("/Icons/error.png"); // fallback
-            } else {
-                image = new Image(stream);
+                return new Image("/Icons/error.png"); // fallback
             }
-            imageCache.put(type, image); // cache it
-        }
+            return new Image(stream);
+        });
 
         ImageView imageView = new ImageView(image);
         double imageWidth = Math.sqrt(3) * hexSize;
@@ -142,7 +95,6 @@ public class Tile {
 
         return imageView;
     }
-
 
     public List<Vertex> getVertices() {
         return vertices;

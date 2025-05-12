@@ -23,21 +23,30 @@ import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.controller.BuildController;
 
 import java.io.InputStream;
-
-import static org.example.catanboardgameviews.CatanBoardGameView.boardRadius;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DrawOrDisplay {
+    private final int boardRadius;
+    private final List<Circle> vertexClickables = new ArrayList<>();
 
-    //______________________________SETTLEMENTS & ROADS_________________________________
+
+    //___________________________CONSTRUCTOR___________________________//
+    public DrawOrDisplay(int boardRadius) {
+        this.boardRadius = boardRadius;
+    }
+
+
+    //______________________________SETTLEMENTS & ROADS_________________//
 
     // Draw a player's road with visual thickness tuned to avoid overpowering board
-    public static void drawPlayerRoad(Line line, Player player) {
+    public void drawPlayerRoad(Line line, Player player) {
         line.setStroke(player.getColor());
         line.setStrokeWidth(1.5 * (10.0 / boardRadius)); // thinner than before
     }
 
     // Draw a player's settlement or city with tuned radius
-    public static void drawPlayerSettlement(Circle circle, Vertex vertex) {
+    public void drawPlayerSettlement(Circle circle, Vertex vertex) {
         if (vertex.getOwner() != null) {
             circle.setFill(vertex.getOwner().getColor());
             circle.setRadius(20.0 / boardRadius); // slightly larger
@@ -49,51 +58,76 @@ public class DrawOrDisplay {
 
     //______________________________EDGES & VERTICES_____________________________________
 
-    // Draws board edges and clickable hitboxes — now with refined sizing
-    public static void drawEdges(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
-        for (Edge edge : Board.getEdges()) {
+    // Draws board edges and clickable hitboxes
+    public void initEdgesClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
+        Group edgeBaseLayer = controller.getGameController().getGameView().getEdgeBaseLayer();
+        Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
+
+        for (Edge edge : board.getEdges()) {
             Line visible = new Line(
                     edge.getVertex1().getX(), edge.getVertex1().getY(),
                     edge.getVertex2().getX(), edge.getVertex2().getY()
             );
             visible.setStroke(Color.WHITE);
-            visible.setStrokeWidth(0.8 * (10.0 / boardRadius)); // thinner base line
+            visible.setStrokeWidth(0.8 * (10.0 / boardRadius));
 
             Line clickable = new Line(
                     edge.getVertex1().getX(), edge.getVertex1().getY(),
                     edge.getVertex2().getX(), edge.getVertex2().getY()
             );
-            clickable.setStrokeWidth(4.0 * (10.0 / boardRadius)); // tighter hitbox
+            clickable.setStrokeWidth(1.2 * (10.0 / boardRadius));
+
             clickable.setOpacity(0);
+            clickable.setPickOnBounds(false);
+            clickable.setMouseTransparent(false);
             clickable.setOnMouseClicked(controller.createRoadClickHandler(edge, visible, root));
 
-            boardGroup.getChildren().addAll(visible, clickable);
+            edgeBaseLayer.getChildren().add(visible);
+            edgeClickLayer.getChildren().add(clickable);
         }
     }
 
     // Enlarged clickable vertex area for easier settlement placement
-    public static void initVerticeClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
+    public void initVerticeClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
+        Group settlementLayer = controller.getGameController().getGameView().getSettlementLayer();
+        Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
+
+        boolean DEBUG_VISUALIZE_CLICKS = true; // Turn off when fixed
+
         for (Vertex vertex : board.getVertices()) {
             double visibleRadius = 10.0 / boardRadius;
-            double clickableRadius = 10.0 / boardRadius; // increased for UX
+            double clickableRadius = 20.0 / boardRadius;
 
+            // Visible circle — shown only when needed
             Circle visible = new Circle(vertex.getX(), vertex.getY(), visibleRadius);
             visible.setFill(Color.TRANSPARENT);
-            boardGroup.getChildren().add(visible);
+            visible.setStroke(Color.TRANSPARENT);
+            settlementLayer.getChildren().add(visible);
 
+            // Clickable hitbox
             Circle clickable = new Circle(vertex.getX(), vertex.getY(), clickableRadius);
-            clickable.setFill(Color.TRANSPARENT);
-            clickable.setStroke(Color.TRANSPARENT);
+            clickable.setPickOnBounds(true);
             clickable.setOnMouseClicked(controller.createSettlementClickHandler(visible, vertex, root));
+            clickable.setMouseTransparent(false);
+            vertexClickables.add(clickable);
 
-            boardGroup.getChildren().add(clickable);
+            if (DEBUG_VISUALIZE_CLICKS) {
+                clickable.setFill(Color.rgb(0, 255, 0, 0.2));  // Green transparent for debug
+                clickable.setStroke(Color.BLACK);
+                clickable.setStrokeWidth(0.3);
+            } else {
+                clickable.setFill(Color.TRANSPARENT);
+                clickable.setStroke(Color.TRANSPARENT);
+            }
+
+            edgeClickLayer.getChildren().add(clickable);
         }
     }
 
     //______________________________TILE RENDERING_______________________________________
 
     // Create a hexagon polygon based on a tile's vertices
-    public static Polygon createTilePolygon(Tile tile) {
+    public Polygon createTilePolygon(Tile tile) {
         Polygon polygon = new Polygon();
         for (Vertex v : tile.getVertices()) {
             polygon.getPoints().addAll(v.getX(), v.getY());
@@ -102,7 +136,7 @@ public class DrawOrDisplay {
     }
 
     // Creates a background box behind a dice number, padding scaled by board size
-    public static Rectangle createBoxBehindDiceNumber(Text sample, double centerX, double centerY) {
+    public Rectangle createBoxBehindDiceNumber(Text sample, double centerX, double centerY) {
         double padding = 5.0 / boardRadius * 10;
 
         double boxW = sample.getLayoutBounds().getWidth() + padding;
@@ -123,7 +157,7 @@ public class DrawOrDisplay {
     }
 
     // Draws Robber Circle
-    public static Circle drawRobberCircle(Point2D center) {
+    public Circle drawRobberCircle(Point2D center) {
         double radius = 40.0 / boardRadius;
         double strokeWidth = 12.0 / boardRadius;
         Circle circle = new Circle(center.getX(), center.getY(), radius);
@@ -135,7 +169,7 @@ public class DrawOrDisplay {
 
     //______________________________LOAD IMAGES______________________________
 
-    public static Image loadDiceImage(int number) {
+    public Image loadDiceImage(int number) {
         String path = "/dice/dice" + number + ".png";
         InputStream stream = CatanBoardGameView.class.getResourceAsStream(path);
         if (stream == null) {
@@ -148,7 +182,7 @@ public class DrawOrDisplay {
     //______________________________ERROR POPUPS ETC______________________________
 
     // Display a red X error marker at a location, scaled by board radius
-    public static void showErrorCross(Group boardGroup, double x, double y) {
+    public void showErrorCross(Group boardGroup, double x, double y) {
         double size = 10.0 / boardRadius;
 
         Line line1 = new Line(x - size, y - size, x + size, y + size);
@@ -168,7 +202,7 @@ public class DrawOrDisplay {
     }
 
     // Block action until dice is rolled
-    public static void rollDiceBeforeActionPopup(String message) {
+    public void rollDiceBeforeActionPopup(String message) {
         Platform.runLater(() -> {
             Stage popup = new Stage();
             popup.initModality(Modality.APPLICATION_MODAL);
@@ -190,11 +224,17 @@ public class DrawOrDisplay {
     }
 
     // Trade fail popup with message
-    public static void showTradeError(String message) {
+    public void showTradeError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Trade Error");
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    //_____________________________GETTERS__________________________//
+
+    public List<Circle> getRegisteredVertexClickable() {
+        return vertexClickables;
     }
 }

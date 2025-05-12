@@ -12,7 +12,7 @@ public class Resource {
 
         private final String name;
 
-        // CONSTRUCTOR
+        //_______________CONSTRUCTOR________________//
         ResourceType(String name) {
             this.name = name;
         }
@@ -22,7 +22,7 @@ public class Resource {
         }
 
         // Method to convert a string to a ResourceType
-        public static ResourceType fromString(String name) {
+        public ResourceType fromString(String name) {
             for (ResourceType type : ResourceType.values()) {
                 if (type.name.equalsIgnoreCase(name)) {
                     return type;
@@ -32,4 +32,3 @@ public class Resource {
         }
     }
 }
-

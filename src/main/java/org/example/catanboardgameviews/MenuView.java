@@ -4,35 +4,44 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import org.example.catanboardgameapp.AIOpponent;
+
 import org.example.catanboardgameapp.Gameplay;
+import org.example.controller.GameController;
 
 import java.util.List;
 
 public class MenuView {
 
-    private static int playerCount = 3;
-    private static int boardSize = 3;
-    private static int AIOpponentsCountEASY = 0;
-    private static int AIOpponentsCountMEDIUM = 0;
-    private static int AIOpponentsCountHARD = 0;
+    private int playerCount = 3;
+    private int boardSize = 3;
+    private int AIOpponentsCountEASY = 0;
+    private int AIOpponentsCountMEDIUM = 0;
+    private int AIOpponentsCountHARD = 0;
 
-    private static void startGame(Stage primaryStage) {
-        Gameplay gameplay = new Gameplay();
-        gameplay.reset();
-        gameplay.initializeAllPlayers(playerCount, AIOpponentsCountEASY, AIOpponentsCountMEDIUM, AIOpponentsCountHARD);
-        Scene gameScene = CatanBoardGameView.createGameScene(primaryStage, boardSize - 1, gameplay);
-        primaryStage.setScene(gameScene);
+    private final GameController gameController;
+    private Gameplay gameplay;
+    private final Stage primaryStage;
+
+    public MenuView(Stage primaryStage, GameController gameController) {
+        this.primaryStage = primaryStage;
+        this.gameController = gameController;
     }
 
-    public static void showMainMenu(Stage primaryStage) {
+    public void showMainMenu() {
+        VBox menuLayout = createMenuLayout();
+        Scene menuScene = new Scene(menuLayout, 800, 600);
+        primaryStage.setScene(menuScene);
+        primaryStage.setTitle("Catan Board Game");
+        primaryStage.show();
+    }
+
+    private VBox createMenuLayout() {
         VBox menuLayout = new VBox(25);
         menuLayout.setAlignment(Pos.CENTER);
         menuLayout.setStyle(
@@ -51,20 +60,23 @@ public class MenuView {
         Button creditsButton = createMenuButton("Credits", 220, 60);
         Button quitButton = createMenuButton("Quit Game", 220, 60);
 
-        playButton.setOnAction(e -> startGame(primaryStage));
+        playButton.setOnAction(e -> startGame());
         optionsButton.setOnAction(e -> showOptionsMenu(primaryStage));
         creditsButton.setOnAction(e -> showCreditsScreen(primaryStage));
         quitButton.setOnAction(e -> primaryStage.close());
 
         menuLayout.getChildren().addAll(titleLabel, playButton, optionsButton, creditsButton, quitButton);
-        Scene menuScene = new Scene(menuLayout, 800, 600);
-        primaryStage.setScene(menuScene);
-        primaryStage.setTitle("Catan Board Game");
-        primaryStage.show();
+        return menuLayout;
     }
 
-    public static void showOptionsMenu(Stage primaryStage) {
-        CatanBoardGameView.resetGameUIState();
+    private void startGame() {
+        gameController.startGame(playerCount, boardSize, AIOpponentsCountEASY, AIOpponentsCountMEDIUM, AIOpponentsCountHARD);
+    }
+
+    public void showOptionsMenu(Stage primaryStage) {
+        if (gameplay != null && gameplay.getCatanBoardGameView() != null) {
+            gameplay.getCatanBoardGameView().resetGameUIState();
+        }
 
         VBox optionsLayout = new VBox(20);
         optionsLayout.setAlignment(Pos.CENTER);
@@ -187,12 +199,12 @@ public class MenuView {
                 System.out.println("Total players must be between 2 and 6.");
                 return;
             }
-            MenuView.playerCount = humanPlayers[0];
-            MenuView.boardSize = boardSizeVal[0];
-            MenuView.AIOpponentsCountEASY = easyAI[0];
-            MenuView.AIOpponentsCountMEDIUM = mediumAI[0];
-            MenuView.AIOpponentsCountHARD = hardAI[0];
-            MenuView.showMainMenu(primaryStage);
+            playerCount = humanPlayers[0];
+            boardSize = boardSizeVal[0];
+            AIOpponentsCountEASY = easyAI[0];
+            AIOpponentsCountMEDIUM = mediumAI[0];
+            AIOpponentsCountHARD = hardAI[0];
+            showMainMenu();
         });
 
         optionsLayout.getChildren().addAll(optionsTitle, totalNote, grid, accept);
@@ -200,10 +212,7 @@ public class MenuView {
         primaryStage.setScene(scene);
     }
 
-
-
-
-    public static void showCreditsScreen(Stage primaryStage) {
+    public void showCreditsScreen(Stage primaryStage) {
         VBox creditsLayout = new VBox(15);
         creditsLayout.setAlignment(Pos.CENTER);
         creditsLayout.setStyle(
@@ -228,14 +237,14 @@ public class MenuView {
         }
 
         Button backButton = createMenuButton("Back", 180, 50);
-        backButton.setOnAction(e -> showMainMenu(primaryStage));
+        backButton.setOnAction(e -> showMainMenu());
 
         creditsLayout.getChildren().addAll(title, name1, name2, name3, name4, backButton);
         Scene creditsScene = new Scene(creditsLayout, 800, 600);
         primaryStage.setScene(creditsScene);
     }
 
-    private static Button createMenuButton(String text, int width, int height) {
+    private Button createMenuButton(String text, int width, int height) {
         Button button = new Button(text);
         button.setPrefSize(width, height);
         button.setFont(new Font("Arial", 20));

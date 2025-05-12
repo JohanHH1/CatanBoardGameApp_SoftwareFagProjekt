@@ -2,28 +2,35 @@ package org.example.catanboardgameapp;
 
 import javafx.application.Platform;
 import javafx.scene.Group;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import org.example.catanboardgameviews.CatanBoardGameView;
-
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 public class AIOpponent extends Player {
-
-    public enum StrategyLevel { EASY, MEDIUM, HARD }
+    //___________________________FIELDS___________________________//
+    public enum StrategyLevel {
+        EASY, MEDIUM, HARD
+    }
     private final StrategyLevel strategyLevel;
     private final Random random = new Random();
 
-    public AIOpponent(int playerId, Color color, StrategyLevel level) {
+    private final DrawOrDisplay drawOrDisplay;
+    private final Board board;
+    private final CatanBoardGameView catanBoardGameView;
+
+    //___________________________CONSTRUCTOR___________________________//
+    public AIOpponent(int playerId, Color color, StrategyLevel level, Gameplay gameplay) {
         super(playerId, color);
         this.strategyLevel = level;
+        this.drawOrDisplay = new DrawOrDisplay(gameplay.getBoardRadius());
+        this.board = gameplay.getBoard();
+        this.catanBoardGameView = gameplay.getCatanBoardGameView();
     }
 
+    //___________________________FUNCTIONS___________________________//
     // Main method to make AI move depending on difficulty level
     public void makeMoveAI(Gameplay gameplay) {
         // TURN ON WHEN TESTING
@@ -45,23 +52,23 @@ public class AIOpponent extends Player {
 
             if (gameplay.buildInitialSettlement(v)) {
                 // Draw settlement immediately
-                Circle circle = new Circle(v.getX(), v.getY(), 16.0 / CatanBoardGameView.boardRadius);
-                DrawOrDisplay.drawPlayerSettlement(circle, v);
+                Circle circle = new Circle(v.getX(), v.getY(), 16.0 / gameplay.getBoardRadius());
+                drawOrDisplay.drawPlayerSettlement(circle, v);
                 boardGroup.getChildren().add(circle);
 
                 // Try to place a connected road
-                for (Edge edge : Board.getEdges()) {
+                for (Edge edge : board.getEdges()) {
                     if (edge.isConnectedTo(v) && gameplay.isValidRoadPlacement(edge)) {
                         if (gameplay.buildRoad(edge)) {
                             Line line = new Line(
                                     edge.getVertex1().getX(), edge.getVertex1().getY(),
                                     edge.getVertex2().getX(), edge.getVertex2().getY()
                             );
-                            DrawOrDisplay.drawPlayerRoad(line, this);
+                            drawOrDisplay.drawPlayerRoad(line, this);
                             boardGroup.getChildren().add(line);
 
                             // Advance turn if both built successfully
-                            if (!gameplay.isWaitingForInitialRoad()) {
+                            if (gameplay.isWaitingForInitialRoad()) {
                                 Platform.runLater(gameplay::nextPlayerTurn);
                             }
                             return;
@@ -77,7 +84,7 @@ public class AIOpponent extends Player {
         }
 
         // No valid move found
-        CatanBoardGameView.logToGameLog("AI " + getPlayerId() + " could not place initial settlement + road.");
+        catanBoardGameView.logToGameLog("AI " + getPlayerId() + " could not place initial settlement + road.");
     }
 
     // Pauses the AI move 3 to 10 seconds to simulate real player timing
@@ -119,7 +126,7 @@ public class AIOpponent extends Player {
             List<Vertex> settlements = getSettlements();
             if (!settlements.isEmpty()) {
                 gameplay.buildCity(settlements.get(random.nextInt(settlements.size())));
-                CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " upgrade to a city!");
+                catanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " upgrade to a city!");
             }
         }
     }
@@ -133,7 +140,7 @@ public class AIOpponent extends Player {
         if (!validSpots.isEmpty()) {
             Collections.shuffle(validSpots);
             gameplay.buildSettlement(validSpots.get(0));
-            CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a settlement.");
+            catanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a settlement.");
         }
     }
 
@@ -155,7 +162,7 @@ public class AIOpponent extends Player {
         }
 
         if (bestSpot != null) gameplay.buildSettlement(bestSpot);
-        CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a settlement.");
+        catanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a settlement.");
     }
 
     // Tries to build a road randomly on a valid edge
@@ -163,7 +170,7 @@ public class AIOpponent extends Player {
         if (!hasResources("Brick", 1) || !hasResources("Wood", 1)) return;
 
         List<Edge> validRoads = new ArrayList<>();
-        for (Edge edge : Board.getEdges()) {
+        for (Edge edge : board.getEdges()) {
             if (gameplay.isValidRoadPlacement(edge)) validRoads.add(edge);
         }
 
@@ -183,7 +190,7 @@ public class AIOpponent extends Player {
                 for (String give : allTypes) {
                     if (!give.equals(need) && resources.getOrDefault(give, 0) >= 4) {
                         gameplay.tradeWithBank(give, need); //
-                        CatanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " traded with the bank.");
+                        catanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " traded with the bank.");
                         return;
                     }
                 }
@@ -191,18 +198,35 @@ public class AIOpponent extends Player {
         }
     }
 
-    // Finds valid settlement positions connected to current roads
-    private List<Vertex> getValidSettlementSpots(Gameplay gameplay) {
-        Set<Vertex> validSpots = new HashSet<>();
-        for (Edge road : getRoads()) {
-            Vertex v1 = road.getVertex1();
-            Vertex v2 = road.getVertex2();
-            if (gameplay.isValidSettlementPlacement(v1)) validSpots.add(v1);
-            if (gameplay.isValidSettlementPlacement(v2)) validSpots.add(v2);
+    // Counts how many missing resource types the vertex would help cover
+    private int countMissingResourcesCovered(Vertex vertex, Gameplay gameplay) {
+        Set<String> ownedTypes = new HashSet<>();
+        for (Vertex settlement : getSettlements()) {
+            for (Tile tile : board.getTiles()) {
+                if (tile.getVertices().contains(settlement)) {
+                    ownedTypes.add(tile.getResourcetype().toString());
+                }
+            }
         }
-        return new ArrayList<>(validSpots);
+
+        Set<String> newTypes = new HashSet<>();
+        for (Tile tile : board.getTiles()) {
+            if (tile.getVertices().contains(vertex)) {
+                newTypes.add(tile.getResourcetype().toString());
+            }
+        }
+
+        int missingCovered = 0;
+        for (String type : newTypes) {
+            if (!ownedTypes.contains(type)) {
+                missingCovered++;
+            }
+        }
+
+        return missingCovered;
     }
 
+    //___________________________BOOLEANS___________________________//
 
     // Helper method to check if AI has enough resources of a given type
     private boolean hasResources(String type, int amount) {
@@ -219,26 +243,6 @@ public class AIOpponent extends Player {
         return false;
     }
 
-    // Calculates how many different resource types a vertex touches
-    private int getResourceDiversityScore(Vertex vertex, Gameplay gameplay) {
-        Set<String> resourceTypes = new HashSet<>();
-        for (Tile tile : Board.getTiles()) {
-            if (tile.getVertices().contains(vertex)) {
-                resourceTypes.add(tile.getResourcetype().toString());
-            }
-        }
-        return resourceTypes.size();
-    }
-
-    // Returns top N settlement spots sorted by dice value score
-    private List<Vertex> getTopNSettlementSpots(Gameplay gameplay, int n) {
-        List<Vertex> validSpots = getValidSettlementSpots(gameplay);
-        validSpots.sort((v1, v2) -> Integer.compare(
-                gameplay.getSettlementDiceValue(v2),
-                gameplay.getSettlementDiceValue(v1)));
-        return validSpots.subList(0, Math.min(n, validSpots.size()));
-    }
-
     // Checks if AI can afford a structure by resource type and amount
     private boolean canAfford(Map<String, Integer> cost) {
         for (Map.Entry<String, Integer> entry : cost.entrySet()) {
@@ -247,6 +251,43 @@ public class AIOpponent extends Player {
             }
         }
         return true;
+    }
+
+    //___________________________SETTERS___________________________//
+
+
+    //___________________________GETTERS___________________________//
+
+    // Finds valid settlement positions connected to current roads
+    private List<Vertex> getValidSettlementSpots(Gameplay gameplay) {
+        Set<Vertex> validSpots = new HashSet<>();
+        for (Edge road : getRoads()) {
+            Vertex v1 = road.getVertex1();
+            Vertex v2 = road.getVertex2();
+            if (gameplay.isValidSettlementPlacement(v1)) validSpots.add(v1);
+            if (gameplay.isValidSettlementPlacement(v2)) validSpots.add(v2);
+        }
+        return new ArrayList<>(validSpots);
+    }
+
+    // Calculates how many different resource types a vertex touches
+    private int getResourceDiversityScore(Vertex vertex, Gameplay gameplay) {
+        Set<String> resourceTypes = new HashSet<>();
+        for (Tile tile : board.getTiles()) {
+            if (tile.getVertices().contains(vertex)) {
+                resourceTypes.add(tile.getResourcetype().toString());
+            }
+        }
+        return resourceTypes.size();
+    }
+
+    // Returns top N settlement spots sorted by dice value score (MIGHT NEED THIS)
+    private List<Vertex> getTopNSettlementSpots(Gameplay gameplay, int n) {
+        List<Vertex> validSpots = getValidSettlementSpots(gameplay);
+        validSpots.sort((v1, v2) -> Integer.compare(
+                gameplay.getSettlementDiceValue(v2),
+                gameplay.getSettlementDiceValue(v1)));
+        return validSpots.subList(0, Math.min(n, validSpots.size()));
     }
 
     // Calculates a combined settlement score based on dice value and resource diversity, adjusted for AI's current resource gaps
@@ -263,36 +304,7 @@ public class AIOpponent extends Player {
         return score;
     }
 
-    // Counts how many missing resource types the vertex would help cover
-    private int countMissingResourcesCovered(Vertex vertex, Gameplay gameplay) {
-        Set<String> ownedTypes = new HashSet<>();
-        for (Vertex settlement : getSettlements()) {
-            for (Tile tile : Board.getTiles()) {
-                if (tile.getVertices().contains(settlement)) {
-                    ownedTypes.add(tile.getResourcetype().toString());
-                }
-            }
-        }
-
-        Set<String> newTypes = new HashSet<>();
-        for (Tile tile : Board.getTiles()) {
-            if (tile.getVertices().contains(vertex)) {
-                newTypes.add(tile.getResourcetype().toString());
-            }
-        }
-
-        int missingCovered = 0;
-        for (String type : newTypes) {
-            if (!ownedTypes.contains(type)) {
-                missingCovered++;
-            }
-        }
-
-        return missingCovered;
-    }
-
     public StrategyLevel getStrategyLevel() {
         return strategyLevel;
     }
-
 }

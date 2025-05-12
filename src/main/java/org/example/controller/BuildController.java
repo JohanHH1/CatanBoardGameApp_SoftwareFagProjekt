@@ -1,7 +1,6 @@
 package org.example.controller;
 
 import javafx.event.EventHandler;
-import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -10,18 +9,20 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import org.example.catanboardgameapp.*;
-import org.example.catanboardgameviews.CatanBoardGameView;
-
-import static org.example.catanboardgameviews.CatanBoardGameView.createLeftMenu;
 
 public class BuildController {
-    private final Gameplay gameplay;
     private final Group boardGroup;
+    private final DrawOrDisplay drawOrDisplay;
 
-    public BuildController(Gameplay gameplay, Group boardGroup) {
-        this.gameplay = gameplay;
-        this.boardGroup = boardGroup;
+    private final GameController gameController;
+
+    public BuildController(GameController gameController) {
+        this.gameController = gameController;
+        this.drawOrDisplay = new DrawOrDisplay(gameController.getGameplay().getBoardRadius());
+        this.boardGroup = gameController.getGameView().getBoardGroup(); // or pass in if needed
+
     }
+
 
     //___________________________ ROAD PLACEMENT HANDLER ___________________________
 
@@ -29,31 +30,31 @@ public class BuildController {
     public EventHandler<MouseEvent> createRoadClickHandler(Edge edge, Line visibleLine, BorderPane root) {
         return event -> {
             // Enforce dice roll in main phase
-            if (!gameplay.isInInitialPhase() && !gameplay.hasRolledDice()) {
-                DrawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
+            if (!gameController.getGameplay().isInInitialPhase() && gameController.getGameplay().hasRolledDice()) {
+                drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
                 return;
             }
 
-            Player currentPlayer = gameplay.getCurrentPlayer();
+            Player currentPlayer = gameController.getGameplay().getCurrentPlayer();
 
-            if (gameplay.buildRoad(edge)) {
+            if (gameController.getGameplay().buildRoad(edge)) {
                 // Visually draw the road
-                DrawOrDisplay.drawPlayerRoad(visibleLine, currentPlayer);
+                buildRoad(edge, currentPlayer);
 
                 // If still in initial phase, advance to next player only if all players still have ≤ 2 roads
-                boolean allStillInInitialPhase = gameplay.getPlayerList().stream()
+                boolean allStillInInitialPhase = gameController.getGameplay().getPlayerList().stream()
                         .allMatch(p -> p.getRoads().size() <= 2);
 
-                if (allStillInInitialPhase && gameplay.isInInitialPhase() && !gameplay.isWaitingForInitialRoad()) {
-                    gameplay.nextPlayerTurn();  // let AI or human take next initial turn
+                if (allStillInInitialPhase && gameController.getGameplay().isInInitialPhase() && gameController.getGameplay().isWaitingForInitialRoad()) {
+                    gameController.getGameplay().nextPlayerTurn();  // let AI or human take next initial turn
                 }
 
-                root.setLeft(createLeftMenu(gameplay));
+                gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
             } else {
                 // Road placement failed → show red X at midpoint of edge
                 double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
                 double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
-                DrawOrDisplay.showErrorCross(boardGroup, midX, midY);
+                drawOrDisplay.showErrorCross(boardGroup, midX, midY);
             }
         };
     }
@@ -64,45 +65,56 @@ public class BuildController {
     public EventHandler<MouseEvent> createSettlementClickHandler(Circle visibleCircle, Vertex vertex, BorderPane root) {
         return event -> {
             // Enforce dice roll in main phase
-            if (!gameplay.isInInitialPhase() && !gameplay.hasRolledDice()) {
-                DrawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
+            if (!gameController.getGameplay().isInInitialPhase() && gameController.getGameplay().hasRolledDice()) {
+                drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
                 return;
             }
 
-            Player currentPlayer = gameplay.getCurrentPlayer();
+            Player currentPlayer = gameController.getGameplay().getCurrentPlayer();
 
             boolean success;
 
-            if (gameplay.isInInitialPhase()) {
-                success = gameplay.buildInitialSettlement(vertex);
+            if (gameController.getGameplay().isInInitialPhase()) {
+                success = gameController.getGameplay().buildInitialSettlement(vertex);
             } else {
-                success = gameplay.buildSettlement(vertex);
+                success = gameController.getGameplay().buildSettlement(vertex);
             }
 
             if (success) {
                 vertex.setOwner(currentPlayer);
-                DrawOrDisplay.drawPlayerSettlement(visibleCircle, vertex);
-                CatanBoardGameView.logToGameLog("Settlement built by player " + currentPlayer.getPlayerId());
-                root.setLeft(createLeftMenu(gameplay));
+                drawOrDisplay.drawPlayerSettlement(visibleCircle, vertex);
+                gameController.getGameView().logToGameLog("Settlement built by player " + currentPlayer.getPlayerId());
+                gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
             }
 
             // If it's not a settlement, try building a city
-            else if (gameplay.buildCity(vertex)) {
+            else if (gameController.getGameplay().buildCity(vertex)) {
                 vertex.setOwner(currentPlayer);
-                boardGroup.getChildren().remove(visibleCircle);  // replace circle with city
-
+                gameController.getGameView().getSettlementLayer().getChildren().remove(visibleCircle);
                 Rectangle citySquare = new Rectangle(vertex.getX() - 6, vertex.getY() - 6, 12, 12);
                 citySquare.setFill(currentPlayer.getColor());
                 citySquare.setStroke(Color.BLACK);
-                boardGroup.getChildren().add(citySquare);
-
-                root.setLeft(createLeftMenu(gameplay));
+                gameController.getGameView().getSettlementLayer().getChildren().add(citySquare);
+                gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
             }
 
             // If neither succeeded, show red X
             else {
-                DrawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
+                drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
             }
         };
     }
+    private void buildRoad(Edge edge, Player currentPlayer) {
+        Line playerRoadLine = new Line(
+                edge.getVertex1().getX(), edge.getVertex1().getY(),
+                edge.getVertex2().getX(), edge.getVertex2().getY()
+        );
+        drawOrDisplay.drawPlayerRoad(playerRoadLine, currentPlayer);
+        gameController.getGameView().getRoadLayer().getChildren().add(playerRoadLine);
+
+    }
+    public GameController getGameController() {
+        return gameController;
+    }
+
 }
