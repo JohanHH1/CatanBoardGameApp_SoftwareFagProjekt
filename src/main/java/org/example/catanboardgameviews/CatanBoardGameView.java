@@ -1,5 +1,8 @@
 package org.example.catanboardgameviews;
 
+import javafx.animation.ScaleTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -17,6 +20,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.example.catanboardgameapp.*;
 import org.example.controller.BuildController;
 import org.example.controller.GameController;
@@ -532,12 +536,26 @@ public class CatanBoardGameView {
     public void centerBoard(Group boardGroup, double screenWidth, double screenHeight) {
         Tile centerTile = board.getTiles().get((board.getTiles().size() - 1) / 2);
         Point2D centerPoint = centerTile.getCenter();
-        double centerX = (screenWidth - 200) / 2 - centerPoint.getX();
-        double centerY = (screenHeight - 130) / 2 - centerPoint.getY();
-        boardGroup.setTranslateX(centerX);
-        boardGroup.setTranslateY(centerY);
-        boardGroup.setScaleX(1.0);
-        boardGroup.setScaleY(1.0);
+
+        // Calculate target translation
+        double targetX = (screenWidth - 200) / 2 - centerPoint.getX();
+        double targetY = (screenHeight - 130) / 2 - centerPoint.getY();
+
+        // Translate to center
+        TranslateTransition move = new TranslateTransition(Duration.millis(600), boardGroup);
+        move.setToX(targetX);
+        move.setToY(targetY);
+
+        // Zoom back in after moving
+        ScaleTransition zoomIn = new ScaleTransition(Duration.millis(250), boardGroup);
+        zoomIn.setToX(1.0);
+        zoomIn.setToY(1.0);
+
+        // Play sequence: zoom out → move → zoom in
+        SequentialTransition sequence = new SequentialTransition(move, zoomIn);
+        sequence.play();
+
+        // Other layout settings
         scrollPane.setPrefHeight(120);
         if (splitPane != null) splitPane.setDividerPositions(0.85);
     }
