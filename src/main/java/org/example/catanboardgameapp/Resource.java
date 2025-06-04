@@ -9,11 +9,10 @@ public class Resource {
         GRAIN("Grain"),
         WOOL("Wool"),
         DESERT("Desert"),
-        NONE  ("None");     // ← new: water / harbour ring
+        SEA("Sea");
 
         private final String name;
 
-        //_______________CONSTRUCTOR________________//
         ResourceType(String name) {
             this.name = name;
         }
@@ -22,8 +21,8 @@ public class Resource {
             return name;
         }
 
-        // Method to convert a string to a ResourceType
-        public ResourceType fromString(String name) {
+        // Static method for safe access
+        public static ResourceType fromString(String name) {
             for (ResourceType type : ResourceType.values()) {
                 if (type.name.equalsIgnoreCase(name)) {
                     return type;
@@ -32,4 +31,5 @@ public class Resource {
             throw new IllegalArgumentException("Invalid resource type: " + name);
         }
     }
+
 }

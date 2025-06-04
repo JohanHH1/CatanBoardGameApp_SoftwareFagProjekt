@@ -55,6 +55,7 @@ public class Board {
         this.GAME_HEIGHT = GAME_HEIGHT;
         this.boardSize = radius + 1;
         initializeBoard();
+        assignHarbors();
         this.drawOrDisplay = new DrawOrDisplay(radius);
     }
 
@@ -75,9 +76,16 @@ public class Board {
 
     private void initializeBoard() {
         tiles.clear();
+        edges.clear();
+        vertices.clear();
+        vertexMap.clear();
+        edgeMap.clear();
+
         List<Tile> allTiles = new ArrayList<>();
 
         int tileCountMultiplier = ((3 * boardSize * boardSize - (3 * boardSize) + 1)) / 18;
+
+        // Desert count depends on board size
         String[] desertArray = (boardSize % 3 == 2) ?
                 new String[]{"Desert", "Desert", "Desert", "Desert", "Desert", "Desert", "Desert"} :
                 new String[]{"Desert"};
@@ -86,6 +94,7 @@ public class Board {
         int fullSize = TERRAIN_TYPES.length * tileCountMultiplier + desertArray.length;
         String[] terrainPool = new String[fullSize];
 
+        // Fill terrain pool and number tokens
         for (int i = 0; i < tileCountMultiplier; i++) {
             System.arraycopy(TERRAIN_TYPES, 0, terrainPool, i * TERRAIN_TYPES.length, TERRAIN_TYPES.length);
             numberTokens.addAll(originalNumberTokensAll.get((int) (Math.random() * originalNumberTokensAll.size())));
@@ -94,20 +103,46 @@ public class Board {
 
         List<String> shuffledTerrains = new ArrayList<>(Arrays.asList(terrainPool));
         Collections.shuffle(shuffledTerrains);
-
         if (boardSize != 3) Collections.shuffle(numberTokens);
 
-    /* ---------- helpers ---------------------------------------------------- */
+        Set<String> landCoords = new HashSet<>();
 
-    private void makeTile(int q, int r, String terrain, int token, boolean sea) {
-        Resource.ResourceType res = sea ? Resource.ResourceType.NONE
-                : Resource.ResourceType.BRICK.fromString(terrain);
-        Point2D center  = axialToPixel(q, r);
-        Tile tile       = new Tile(q, r, res, token, center, radius);
-        tile.setSea(sea);
-        tiles.add(tile);
-    }
+        // === Create core land/desert tiles === //
+        int terrainIndex = 0;
+        for (int q = -radius; q <= radius; q++) {
+            int r1 = Math.max(-radius, -q - radius);
+            int r2 = Math.min(radius, -q + radius);
+            for (int r = r1; r <= r2; r++) {
+                String terrainStr = shuffledTerrains.get(terrainIndex++);
+                Resource.ResourceType resourceType = Resource.ResourceType.fromString(terrainStr);
+                int diceNumber = resourceType == Resource.ResourceType.DESERT ? 7 : numberTokens.remove(0);
+                Point2D center = axialToPixel(q, r);
 
+                Tile tile = new Tile(q, r, resourceType, diceNumber, center, radius);
+                tile.setSea(false);
+                allTiles.add(tile);
+                landCoords.add(q + "," + r); // track for later sea tile exclusion
+            }
+        }
+
+        // === Create surrounding sea tiles === //
+        int seaRingRadius = radius + 1;
+        for (int q = -seaRingRadius; q <= seaRingRadius; q++) {
+            int r1 = Math.max(-seaRingRadius, -q - seaRingRadius);
+            int r2 = Math.min(seaRingRadius, -q + seaRingRadius);
+            for (int r = r1; r <= r2; r++) {
+                String coordKey = q + "," + r;
+                if (landCoords.contains(coordKey)) continue; // skip existing land
+
+                Resource.ResourceType seaType = Resource.ResourceType.SEA;
+                Point2D center = axialToPixel(q, r);
+                Tile seaTile = new Tile(q, r, seaType, 0, center, radius);
+                seaTile.setSea(true);
+                allTiles.add(seaTile);
+            }
+        }
+
+        // === Link tiles to shared vertices and edges === //
         for (Tile tile : allTiles) {
             Point2D center = axialToPixel(tile.getQ(), tile.getR());
             Vertex[] corners = new Vertex[6];
@@ -139,10 +174,40 @@ public class Board {
             tile.setEdges(tileEdges);
         }
 
+        // Finalize board model
         tiles.addAll(allTiles);
         vertices.addAll(vertexMap.values());
         edges.addAll(edgeMap.values());
     }
+
+    private void assignHarbors() {
+        List<Harbor.HarborType> harborTypes = new ArrayList<>(List.of(
+                Harbor.HarborType.BRICK, Harbor.HarborType.WOOL, Harbor.HarborType.ORE,
+                Harbor.HarborType.GRAIN, Harbor.HarborType.WOOD,
+                Harbor.HarborType.GENERIC, Harbor.HarborType.GENERIC,
+                Harbor.HarborType.GENERIC, Harbor.HarborType.GENERIC
+        ));
+        Collections.shuffle(harborTypes);
+
+        List<Edge> candidateEdges = edges.stream()
+                .filter(edge -> {
+                    List<Tile> adj = edge.getAdjacentTiles();
+                    return adj.size() == 2 &&
+                            ((adj.get(0).isSea() && !adj.get(1).isSea()) ||
+                                    (!adj.get(0).isSea() && adj.get(1).isSea()));
+                })
+                .collect(Collectors.toList());
+
+        // Randomly pick and assign harbors
+        for (int i = 0; i < Math.min(candidateEdges.size(), harborTypes.size()); i++) {
+            Edge edge = candidateEdges.get(i);
+            Harbor.HarborType type = harborTypes.get(i);
+            Harbor harbor = new Harbor(type, edge);
+            edge.setHarbor(harbor); // You’ll need to add a `setHarbor()` method
+        }
+    }
+
+
 
     // Draws all the hex tiles and overlays them with icons and dice numbers
     public Group createBoardTiles(Board board, int radius) {
@@ -160,29 +225,37 @@ public class Board {
             // Tile base
             boardGroup.getChildren().add(hexShape);
 
-            // Resource icon
-            boardGroup.getChildren().add(tile.getResourceIcon(tile.getResourcetype(), centerX, centerY, board.getHexSize()));
+            // Resource icon (Make sure it's not null first)
+            ImageView icon = tile.getResourceIcon(tile.getResourcetype(), centerX, centerY, board.getHexSize());
+            if (icon != null) {
+                boardGroup.getChildren().add(icon);
+            }
 
-            // Dice number
-            if (tile.getTileDiceNumber() != 7) {
+            // Dice number (skip sea tiles)
+            if (!tile.isSea() && tile.getTileDiceNumber() != 7) {
                 Text numberText = new Text(centerX, centerY, String.valueOf(tile.getTileDiceNumber()));
                 numberText.setFont(Font.font("Arial", FontWeight.BOLD, 40.0 / radius));
                 numberText.setTextAlignment(TextAlignment.CENTER);
-                numberText.setFill((tile.getTileDiceNumber() == 6 || tile.getTileDiceNumber() == 8) ? Color.RED : Color.DARKGREEN);
+                numberText.setFill((tile.getTileDiceNumber() == 6 || tile.getTileDiceNumber() == 8)
+                        ? Color.RED : Color.DARKGREEN);
 
                 Text sample = new Text("12");
                 sample.setFont(Font.font("Arial", FontWeight.BOLD, 40.0 / radius));
                 Rectangle background = drawOrDisplay.createBoxBehindDiceNumber(sample, centerX, centerY);
 
-                // Center align text
                 numberText.setX(centerX - numberText.getLayoutBounds().getWidth() / 2);
                 numberText.setY(centerY + numberText.getLayoutBounds().getHeight() / 4);
 
                 boardGroup.getChildren().addAll(background, numberText);
             }
         }
+
+        // Draw harbors on board (on correct boardGroup)
+        drawOrDisplay.drawHarbors(board, boardGroup);
+
         return boardGroup;
     }
+
 
     private Point2D axialToPixel(int q, int r) {
         double offsetX = GAME_WIDTH / 2;

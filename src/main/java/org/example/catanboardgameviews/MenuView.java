@@ -35,7 +35,7 @@ public class MenuView {
 
     public void showMainMenu() {
         VBox menuLayout = createMenuLayout();
-        Scene menuScene = new Scene(menuLayout, 850, 600);
+        Scene menuScene = new Scene(menuLayout, 1050, 700);
         primaryStage.setScene(menuScene);
         primaryStage.setTitle("Catan Board Game");
         primaryStage.show();

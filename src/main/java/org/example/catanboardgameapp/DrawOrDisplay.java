@@ -15,6 +15,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -64,6 +66,7 @@ public class DrawOrDisplay {
         Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
 
         for (Edge edge : board.getEdges()) {
+            if (edge.isSeaOnly()) continue; // Skip sea-only edges
             Line visible = new Line(
                     edge.getVertex1().getX(), edge.getVertex1().getY(),
                     edge.getVertex2().getX(), edge.getVertex2().getY()
@@ -95,6 +98,7 @@ public class DrawOrDisplay {
         boolean DEBUG_VISUALIZE_CLICKS = true; // Turn off when fixed
 
         for (Vertex vertex : board.getVertices()) {
+            if (vertex.isSeaOnly()) continue; // Skip sea-only vertices
             double visibleRadius = 10.0 / boardRadius;
             double clickableRadius = 20.0 / boardRadius;
 
@@ -165,6 +169,37 @@ public class DrawOrDisplay {
         circle.setStrokeWidth(strokeWidth);
         return circle;
     }
+
+    public void drawHarbors(Board board, Group boardGroup) {
+        for (Edge edge : board.getEdges()) {
+            Harbor harbor = edge.getHarbor();
+            if (harbor != null) {
+                Point2D v1 = new Point2D(edge.getVertex1().getX(), edge.getVertex1().getY());
+                Point2D v2 = new Point2D(edge.getVertex2().getX(), edge.getVertex2().getY());
+                Point2D mid = v1.midpoint(v2);
+
+                // Visual marker
+                Circle circle = new Circle(mid.getX(), mid.getY(), 12.0 / boardRadius);
+                circle.setFill(Color.PURPLE);
+                circle.setStroke(Color.BLACK);
+
+                // Optional label (abbreviated harbor type)
+                String label = harbor.getType().specific != null
+                        ? harbor.getType().specific.getName().substring(0, 1)
+                        : "3:1";
+
+                Text text = new Text(mid.getX(), mid.getY(), label);
+                text.setFont(Font.font("Arial", FontWeight.BOLD, 10));
+                text.setFill(Color.WHITE);
+                text.setStroke(Color.BLACK);
+                text.setX(text.getX() - text.getLayoutBounds().getWidth() / 2);
+                text.setY(text.getY() + text.getLayoutBounds().getHeight() / 2);
+
+                boardGroup.getChildren().addAll(circle, text);
+            }
+        }
+    }
+
 
     //______________________________LOAD IMAGES______________________________
 

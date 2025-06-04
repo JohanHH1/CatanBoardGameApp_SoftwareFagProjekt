@@ -7,6 +7,8 @@ public class Edge {
     private final Vertex vertex1;
     private final Vertex vertex2;
     private final List<Tile> adjacentTiles = new ArrayList<>();
+    private Harbor harbor;
+
 
     //___________________CONSTRUCTOR______________________//
     public Edge(Vertex vertex1, Vertex vertex2) {
@@ -38,14 +40,15 @@ public class Edge {
         return vertex.equals(vertex1) || vertex.equals(vertex2);
     }
 
+    public boolean isSeaOnly() {
+        return adjacentTiles.stream().allMatch(Tile::isSea);
+    }
+
+
     //___________________GETTERS_________________________
 
     public Vertex getVertex1() { return vertex1; }
     public Vertex getVertex2() { return vertex2; }
-
-    // aliases required by new code ------------------------------------
-    public Vertex getV1() { return vertex1; }
-    public Vertex getV2() { return vertex2; }
 
     public List<Tile> getAdjacentTiles() { return adjacentTiles; }
 
@@ -63,4 +66,15 @@ public class Edge {
     public int hashCode() {
         return vertex1.hashCode() + vertex2.hashCode();
     }
+
+
+
+    public void setHarbor(Harbor harbor) {
+        this.harbor = harbor;
+    }
+
+    public Harbor getHarbor() {
+        return harbor;
+    }
+
 }

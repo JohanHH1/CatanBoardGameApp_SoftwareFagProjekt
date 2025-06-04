@@ -58,17 +58,15 @@ public class Tile {
             case GRAIN  -> Color.GOLD;
             case WOOL   -> Color.YELLOWGREEN;
             case DESERT -> Color.BEIGE;
-            case NONE   -> Color.CORNFLOWERBLUE;  // water ring
+            case SEA   -> Color.CORNFLOWERBLUE;
         };
     }
 
     // Loads the correct resource icon for a tile
     public ImageView getResourceIcon(Resource.ResourceType type,
                                      double x, double y, double hexSize) {
-
-        if (type == Resource.ResourceType.NONE) {          // sea: no icon
-            return null;
-        }
+        // Don't return icon for SEA tiles
+        if (type == Resource.ResourceType.SEA) return null;
 
         Image image = imageCache.computeIfAbsent(type, t -> {
             String filename = switch (t) {
@@ -78,7 +76,7 @@ public class Tile {
                 case GRAIN  -> "/Icons/grain.png";
                 case WOOL   -> "/Icons/wool.png";
                 case DESERT -> "/Icons/desert.png";
-                default     -> "/Icons/error.png";
+                default     -> "/Icons/error.png"; // fallback for safety
             };
             InputStream stream = CatanBoardGameView.class.getResourceAsStream(filename);
             return stream == null ? new Image("/Icons/error.png") : new Image(stream);
@@ -86,9 +84,13 @@ public class Tile {
 
         ImageView iv = new ImageView(image);
         double w = Math.sqrt(3) * hexSize, h = 2 * hexSize;
-        iv.setFitWidth(w);  iv.setFitHeight(h);
-        iv.setPreserveRatio(false);  iv.setSmooth(true);
-        iv.setX(Math.round(x - w / 2));  iv.setY(Math.round(y - h / 2));
+        iv.setFitWidth(w);
+        iv.setFitHeight(h);
+        iv.setPreserveRatio(false);
+        iv.setSmooth(true);
+        iv.setX(Math.round(x - w / 2));
+        iv.setY(Math.round(y - h / 2));
         return iv;
     }
+
 }

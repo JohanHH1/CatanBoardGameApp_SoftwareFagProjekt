@@ -32,6 +32,6 @@ public class Harbor {
 
     /** A player can use the harbor if they own a settlement/city on either vertex. */
     public boolean usableBy(Player player) {
-        return edge.getV1().getOwner() == player || edge.getV2().getOwner() == player;
+        return edge.getVertex1().getOwner() == player || edge.getVertex2().getOwner() == player;
     }
 }

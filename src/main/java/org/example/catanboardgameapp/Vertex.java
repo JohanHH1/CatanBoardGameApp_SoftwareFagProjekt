@@ -22,6 +22,10 @@ public class Vertex {
 
     //___________________FUNCTIONS_________________________
 
+    public boolean isSeaOnly() {
+        return adjacentTiles.stream().allMatch(Tile::isSea);
+    }
+
     // Add a neighboring vertex
     public void addNeighbor(Vertex neighbor) {
         if (!neighbors.contains(neighbor)) {

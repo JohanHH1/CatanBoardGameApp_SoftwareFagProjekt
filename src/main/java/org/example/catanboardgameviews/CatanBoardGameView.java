@@ -34,8 +34,8 @@ import java.util.Optional;
 public class CatanBoardGameView {
 
     //---------------------------- Dimensions ----------------------------//
-    private final double GAME_WIDTH = 850;
-    private final double GAME_HEIGHT = 600;
+    private final double GAME_WIDTH = 1050;
+    private final double GAME_HEIGHT = 700;
     private final int boardRadius;
 
     //---------------------------- Game Components ----------------------------//
@@ -561,31 +561,36 @@ public class CatanBoardGameView {
     }
 
     public void centerBoard(Group boardGroup, double screenWidth, double screenHeight) {
-        Tile centerTile = board.getTiles().get((board.getTiles().size() - 1) / 2);
-        Point2D centerPoint = centerTile.getCenter();
+        // === Compute average center of all tiles ===
+        List<Tile> allTiles = board.getTiles();
+        double avgX = allTiles.stream().mapToDouble(t -> t.getCenter().getX()).average().orElse(0);
+        double avgY = allTiles.stream().mapToDouble(t -> t.getCenter().getY()).average().orElse(0);
+        Point2D centerPoint = new Point2D(avgX, avgY);
 
-        // Calculate target translation
-        double targetX = (screenWidth - 200) / 2 - centerPoint.getX();
-        double targetY = (screenHeight - 130) / 2 - centerPoint.getY();
+        // === Calculate translation target to move board to center of window ===
+        double targetX = (screenWidth / 2) - centerPoint.getX();
+        double targetY = (screenHeight / 2) - centerPoint.getY();
 
-        // Translate to center
+        // === Translate the boardGroup ===
         TranslateTransition move = new TranslateTransition(Duration.millis(600), boardGroup);
         move.setToX(targetX);
         move.setToY(targetY);
 
-        // Zoom back in after moving
+        // Optional: smooth zoom effect
         ScaleTransition zoomIn = new ScaleTransition(Duration.millis(250), boardGroup);
         zoomIn.setToX(1.0);
         zoomIn.setToY(1.0);
 
-        // Play sequence: zoom out → move → zoom in
+        // Sequentially move and zoom
         SequentialTransition sequence = new SequentialTransition(move, zoomIn);
         sequence.play();
 
-        // Other layout settings
+        // Optional UI adjustments
         scrollPane.setPrefHeight(120);
         if (splitPane != null) splitPane.setDividerPositions(0.85);
     }
+
+
 
     private void showBuildingCostsPopup() {
         Stage popup = new Stage();
