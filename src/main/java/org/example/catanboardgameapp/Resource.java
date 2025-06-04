@@ -8,7 +8,8 @@ public class Resource {
         ORE("Ore"),
         GRAIN("Grain"),
         WOOL("Wool"),
-        DESERT("Desert");
+        DESERT("Desert"),
+        NONE  ("None");     // ← new: water / harbour ring
 
         private final String name;
 

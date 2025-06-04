@@ -38,20 +38,16 @@ public class Edge {
         return vertex.equals(vertex1) || vertex.equals(vertex2);
     }
 
-
     //___________________GETTERS_________________________
 
-    public Vertex getVertex1() {
-        return vertex1;
-    }
+    public Vertex getVertex1() { return vertex1; }
+    public Vertex getVertex2() { return vertex2; }
 
-    public Vertex getVertex2() {
-        return vertex2;
-    }
+    // aliases required by new code ------------------------------------
+    public Vertex getV1() { return vertex1; }
+    public Vertex getV2() { return vertex2; }
 
-    public List<Tile> getAdjacentTiles() {
-        return adjacentTiles;
-    }
+    public List<Tile> getAdjacentTiles() { return adjacentTiles; }
 
     //_______________________OVERRIDE____________________//
     @Override
@@ -67,5 +63,4 @@ public class Edge {
     public int hashCode() {
         return vertex1.hashCode() + vertex2.hashCode();
     }
-
 }
