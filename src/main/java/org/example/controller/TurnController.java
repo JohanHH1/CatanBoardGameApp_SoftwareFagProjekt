@@ -54,6 +54,7 @@ public class TurnController {
             rollDiceButton.setDisable(false);
             rollDiceButton.setVisible(true);
             nextTurnButton.setVisible(false);
+
         }
     }
 }
