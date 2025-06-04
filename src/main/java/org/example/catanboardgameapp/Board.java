@@ -100,7 +100,7 @@ public class Board {
                 if (Math.abs(q + r) <= radius) {
                     String type = shuffledTerrains.remove(0);
                     int num = type.equals("Desert") ? 7 : numberTokens.remove(0);
-                    Resource.ResourceType resType = Resource.ResourceType.BRICK.fromString(type);
+                    Resource.ResourceType resType = Resource.ResourceType.BRICK.fromString(type); // hvad forgår der her???? hvorfor BRICK??
                     Point2D center = axialToPixel(q, r);
                     Tile tile = new Tile(q, r, resType, num, center, radius);
                     allTiles.add(tile);
