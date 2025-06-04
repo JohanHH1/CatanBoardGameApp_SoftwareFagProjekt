@@ -39,7 +39,7 @@ public class TurnController {
 
             PauseTransition pause = new PauseTransition(Duration.seconds(1));
             pause.setOnFinished(e -> {
-                int result = gameplay.rollDiceAndDistributeResources();
+                int result = gameplay.rollDice();
 
                 if (result != 7) {
                     ((AIOpponent) currentPlayer).makeMoveAI(gameplay);

@@ -144,17 +144,16 @@ public class Gameplay {
         lastRolledDie2 = rand.nextInt(6) + 1;
         int roll = lastRolledDie1 + lastRolledDie2;
         catanBoardGameView.logToGameLog("Dice rolled: " + lastRolledDie1 + " + " + lastRolledDie2 + " = " + roll);
-        return roll;
-    }
-
-    public int rollDiceAndDistributeResources() {
-        int roll = rollDice();
         if (roll == 7) {
             catanBoardGameView.getRobber().requireRobberMove();
         } else {
             distributeResource(roll);
         }
+        updateValidBuildHighlights();
         return roll;
+    }
+
+    private void updateValidBuildHighlights() {
     }
 
     //_____________________________RESOURCES & TRADING_____________________________//
@@ -368,7 +367,7 @@ public class Gameplay {
     //___________________________HELPER FUNCTIONS_____________________________//
 
     public void rollDiceAndDistribute(Gameplay gameplay, ImageView dice1, ImageView dice2, BorderPane root, Group boardGroup, Board board) {
-        int result = gameplay.rollDiceAndDistributeResources();
+        int result = gameplay.rollDice();
         int die1 = gameplay.getLastRolledDie1();
         int die2 = gameplay.getLastRolledDie2();
 
