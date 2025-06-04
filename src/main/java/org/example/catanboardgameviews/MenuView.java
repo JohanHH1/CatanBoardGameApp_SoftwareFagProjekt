@@ -76,6 +76,7 @@ public class MenuView {
     }
 
     private void startGame() {
+        System.out.println("GAME IS STARTING");
         gameController.startGame(playerCount, boardSize, AIOpponentsCountEASY, AIOpponentsCountMEDIUM, AIOpponentsCountHARD);
     }
 

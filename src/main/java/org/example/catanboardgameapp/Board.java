@@ -2,6 +2,7 @@ package org.example.catanboardgameapp;
 
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
+import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
@@ -11,6 +12,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Board {
     // Initialize and create lists of tile, vertex, and edge classes
@@ -95,18 +97,16 @@ public class Board {
 
         if (boardSize != 3) Collections.shuffle(numberTokens);
 
-        for (int q = -radius; q <= radius; q++) {
-            for (int r = -radius; r <= radius; r++) {
-                if (Math.abs(q + r) <= radius) {
-                    String type = shuffledTerrains.remove(0);
-                    int num = type.equals("Desert") ? 7 : numberTokens.remove(0);
-                    Resource.ResourceType resType = Resource.ResourceType.BRICK.fromString(type); // hvad forgår der her???? hvorfor BRICK??
-                    Point2D center = axialToPixel(q, r);
-                    Tile tile = new Tile(q, r, resType, num, center, radius);
-                    allTiles.add(tile);
-                }
-            }
-        }
+    /* ---------- helpers ---------------------------------------------------- */
+
+    private void makeTile(int q, int r, String terrain, int token, boolean sea) {
+        Resource.ResourceType res = sea ? Resource.ResourceType.NONE
+                : Resource.ResourceType.BRICK.fromString(terrain);
+        Point2D center  = axialToPixel(q, r);
+        Tile tile       = new Tile(q, r, res, token, center, radius);
+        tile.setSea(sea);
+        tiles.add(tile);
+    }
 
         for (Tile tile : allTiles) {
             Point2D center = axialToPixel(tile.getQ(), tile.getR());
