@@ -48,18 +48,21 @@ public class GameController {
 
     public void returnToMenu(MenuView menuView) {
         if (gameView != null) {
-            gameView.resetGameUIState();
+            //gameView.resetGameUIState();
         }
         menuView.showMainMenu();
     }
-    public void resumeGame() {
-        if (gameplay == null) return;
 
-        CatanBoardGameView view = new CatanBoardGameView(primaryStage, gameplay, this, gameplay.getBoardRadius());
-        gameplay.setCatanBoardGameView(view);
-        view.buildGameUI();
-        primaryStage.setScene(view.getScene());
+    public void resumeGame() {
+        if (gameplay == null || gameView == null) return;
+
+        // Reconnect view and logic
+        gameplay.setCatanBoardGameView(gameView);
+
+        // Restore scene
+        primaryStage.setScene(gameView.getScene());
     }
+
 
 
 

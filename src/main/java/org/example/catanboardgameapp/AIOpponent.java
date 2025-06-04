@@ -54,7 +54,7 @@ public class AIOpponent extends Player {
             if (result == BuildResult.SUCCESS) {
                 // Draw settlement immediately
                 Circle circle = new Circle(v.getX(), v.getY(), 16.0 / gameplay.getBoardRadius());
-                drawOrDisplay.drawPlayerSettlement(circle, v);
+                drawOrDisplay.drawPlayerSettlement(circle, v, boardGroup);
                 boardGroup.getChildren().add(circle);
 
                 // Try to place a connected road
@@ -66,7 +66,7 @@ public class AIOpponent extends Player {
                                     edge.getVertex1().getX(), edge.getVertex1().getY(),
                                     edge.getVertex2().getX(), edge.getVertex2().getY()
                             );
-                            drawOrDisplay.drawPlayerRoad(line, this);
+                            drawOrDisplay.drawPlayerRoad(line, this, boardGroup);
                             boardGroup.getChildren().add(line);
 
                             // Advance turn if both built successfully

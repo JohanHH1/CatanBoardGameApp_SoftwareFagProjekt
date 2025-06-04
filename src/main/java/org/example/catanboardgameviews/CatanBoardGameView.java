@@ -561,34 +561,49 @@ public class CatanBoardGameView {
     }
 
     public void centerBoard(Group boardGroup, double screenWidth, double screenHeight) {
-        // === Compute average center of all tiles ===
-        List<Tile> allTiles = board.getTiles();
-        double avgX = allTiles.stream().mapToDouble(t -> t.getCenter().getX()).average().orElse(0);
-        double avgY = allTiles.stream().mapToDouble(t -> t.getCenter().getY()).average().orElse(0);
-        Point2D centerPoint = new Point2D(avgX, avgY);
+        // Compute bounds of all tile centers
+        double minX = Double.MAX_VALUE, maxX = Double.MIN_VALUE;
+        double minY = Double.MAX_VALUE, maxY = Double.MIN_VALUE;
 
-        // === Calculate translation target to move board to center of window ===
-        double targetX = (screenWidth / 2) - centerPoint.getX();
-        double targetY = (screenHeight / 2) - centerPoint.getY();
+        for (Tile tile : board.getTiles()) {
+            Point2D c = tile.getCenter();
+            minX = Math.min(minX, c.getX());
+            maxX = Math.max(maxX, c.getX());
+            minY = Math.min(minY, c.getY());
+            maxY = Math.max(maxY, c.getY());
+        }
 
-        // === Translate the boardGroup ===
-        TranslateTransition move = new TranslateTransition(Duration.millis(600), boardGroup);
-        move.setToX(targetX);
-        move.setToY(targetY);
+        double boardCenterX = (minX + maxX) / 2;
+        double boardCenterY = (minY + maxY) / 2;
 
-        // Optional: smooth zoom effect
-        ScaleTransition zoomIn = new ScaleTransition(Duration.millis(250), boardGroup);
-        zoomIn.setToX(1.0);
-        zoomIn.setToY(1.0);
+        // Adjusted screen center excluding VBox (200px) and some bottom area (150px)
+        double usableWidth = screenWidth - 200;
+        double usableHeight = screenHeight - 150;
+        double screenCenterX = usableWidth / 2;
+        double screenCenterY = usableHeight / 2;
 
-        // Sequentially move and zoom
-        SequentialTransition sequence = new SequentialTransition(move, zoomIn);
+        double targetTranslateX = screenCenterX - boardCenterX;
+        double targetTranslateY = screenCenterY - boardCenterY;
+
+        // Animate translation
+        TranslateTransition move = new TranslateTransition(Duration.millis(500), boardGroup);
+        move.setToX(targetTranslateX);
+        move.setToY(targetTranslateY);
+
+        // Animate scaling
+        ScaleTransition zoom = new ScaleTransition(Duration.millis(500), boardGroup);
+        zoom.setToX(0.75);
+        zoom.setToY(0.75);
+
+        SequentialTransition sequence = new SequentialTransition(zoom, move);
         sequence.play();
 
         // Optional UI adjustments
         scrollPane.setPrefHeight(120);
         if (splitPane != null) splitPane.setDividerPositions(0.85);
     }
+
+
 
 
 

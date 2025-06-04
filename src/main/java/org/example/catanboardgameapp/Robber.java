@@ -39,9 +39,7 @@ public class Robber {
         this.catanBoardGameView = catanBoardGameView;
         this.board = gameplay.getBoard();
         Point2D center = startingTile.getCenter();
-        this.robberCircle = drawOrDisplay.drawRobberCircle(center);
-        boardGroup.getChildren().add(this.robberCircle);
-
+        this.robberCircle = drawOrDisplay.drawRobberCircle(center, boardGroup);
     }
 
     //____________________ROBBER PLACEMENT LOGIC__________________________
@@ -53,17 +51,15 @@ public class Robber {
 
         for (Tile tile : board.getTiles()) {
             if (tile == this.currentTile) continue;
+            if (tile.isSea()) continue;
 
             Point2D center = tile.getCenter();
-            Circle highlight = drawOrDisplay.drawRobberCircle(center);
+            Circle highlight = drawOrDisplay.drawRobberCircle(center, boardGroup); // already added inside
+
             highlight.setOnMouseClicked(e -> {
                 highlightCircles.forEach(boardGroup.getChildren()::remove);
                 highlightCircles.clear();
-
-                Circle newRobber = drawOrDisplay.drawRobberCircle(center);
-                boardGroup.getChildren().add(newRobber);
-                this.robberCircle = newRobber;
-
+                this.robberCircle = drawOrDisplay.drawRobberCircle(center, boardGroup);
                 this.moveTo(tile);
                 robberHasMoved();
 
@@ -71,7 +67,7 @@ public class Robber {
                 List<Player> victims = showPotentialVictims(tile, this.gameplay.getCurrentPlayer());
                 if (victims.isEmpty()) {
                     catanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from.");
-                    catanBoardGameView.getNextTurnButton().setDisable(false); // ✅ allow turn end now
+                    catanBoardGameView.getNextTurnButton().setDisable(false);
                     return;
                 }
 
@@ -87,14 +83,14 @@ public class Robber {
                         catanBoardGameView.logToGameLog("Failed to steal a resource from " + victim);
                     }
                     catanBoardGameView.refreshSidebar();
-                    catanBoardGameView.getNextTurnButton().setDisable(false); // ✅ only now allow it
+                    catanBoardGameView.getNextTurnButton().setDisable(false);
                 });
             });
 
-            boardGroup.getChildren().add(highlight);
-            highlightCircles.add(highlight);
+            highlightCircles.add(highlight); // now safe to track
         }
     }
+
 
     private List<Player> showPotentialVictims(Tile tile, Player currentPlayer) {
         Set<Player> victims = new HashSet<>();

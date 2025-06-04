@@ -1,3 +1,4 @@
+// FILE: DrawOrDisplay.java
 package org.example.catanboardgameapp;
 
 import javafx.animation.PauseTransition;
@@ -33,83 +34,68 @@ public class DrawOrDisplay {
     private final int boardRadius;
     private final List<Circle> vertexClickables = new ArrayList<>();
 
-
-    //___________________________CONSTRUCTOR___________________________//
     public DrawOrDisplay(int boardRadius) {
         this.boardRadius = boardRadius;
     }
 
-
-    //______________________________SETTLEMENTS & ROADS_________________//
-
-    // Draw a player's road with visual thickness tuned to avoid overpowering board
-    public void drawPlayerRoad(Line line, Player player) {
+    public void drawPlayerRoad(Line line, Player player, Group boardGroup) {
         line.setStroke(player.getColor());
-        line.setStrokeWidth(1.5 * (10.0 / boardRadius)); // thinner than before
+        line.setStrokeWidth(1.5 * (10.0 / boardRadius));
+        boardGroup.getChildren().add(line);
     }
 
-    // Draw a player's settlement or city with tuned radius
-    public void drawPlayerSettlement(Circle circle, Vertex vertex) {
+    public void drawPlayerSettlement(Circle circle, Vertex vertex, Group boardGroup) {
         if (vertex.getOwner() != null) {
             circle.setFill(vertex.getOwner().getColor());
-            circle.setRadius(20.0 / boardRadius); // slightly larger
+            circle.setRadius(20.0 / boardRadius);
         } else {
             circle.setFill(Color.TRANSPARENT);
             circle.setRadius(10.0 / boardRadius);
         }
+        boardGroup.getChildren().add(circle);
     }
 
-    //______________________________EDGES & VERTICES_____________________________________
-
-    // Draws board edges and clickable hitboxes
     public void initEdgesClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
         Group edgeBaseLayer = controller.getGameController().getGameView().getEdgeBaseLayer();
         Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
 
         for (Edge edge : board.getEdges()) {
-            if (edge.isSeaOnly()) continue; // Skip sea-only edges
-            Line visible = new Line(
-                    edge.getVertex1().getX(), edge.getVertex1().getY(),
-                    edge.getVertex2().getX(), edge.getVertex2().getY()
-            );
+            if (edge.isSeaOnly()) continue;
+
+            Line visible = new Line(edge.getVertex1().getX(), edge.getVertex1().getY(),
+                    edge.getVertex2().getX(), edge.getVertex2().getY());
             visible.setStroke(Color.WHITE);
             visible.setStrokeWidth(0.8 * (10.0 / boardRadius));
+            edgeBaseLayer.getChildren().add(visible);
 
-            Line clickable = new Line(
-                    edge.getVertex1().getX(), edge.getVertex1().getY(),
-                    edge.getVertex2().getX(), edge.getVertex2().getY()
-            );
+            Line clickable = new Line(edge.getVertex1().getX(), edge.getVertex1().getY(),
+                    edge.getVertex2().getX(), edge.getVertex2().getY());
             clickable.setStrokeWidth(1.2 * (10.0 / boardRadius));
-
             clickable.setOpacity(0);
             clickable.setPickOnBounds(false);
             clickable.setMouseTransparent(false);
             clickable.setOnMouseClicked(controller.createRoadClickHandler(edge, visible, root));
-
-            edgeBaseLayer.getChildren().add(visible);
             edgeClickLayer.getChildren().add(clickable);
         }
     }
 
-    // Enlarged clickable vertex area for easier settlement placement
     public void initVerticeClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
         Group settlementLayer = controller.getGameController().getGameView().getSettlementLayer();
         Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
 
-        boolean DEBUG_VISUALIZE_CLICKS = true; // Turn off when fixed
+        boolean DEBUG_VISUALIZE_CLICKS = true;
 
         for (Vertex vertex : board.getVertices()) {
-            if (vertex.isSeaOnly()) continue; // Skip sea-only vertices
+            if (vertex.isSeaOnly()) continue;
+
             double visibleRadius = 10.0 / boardRadius;
             double clickableRadius = 20.0 / boardRadius;
 
-            // Visible circle — shown only when needed
             Circle visible = new Circle(vertex.getX(), vertex.getY(), visibleRadius);
             visible.setFill(Color.TRANSPARENT);
             visible.setStroke(Color.TRANSPARENT);
             settlementLayer.getChildren().add(visible);
 
-            // Clickable hitbox
             Circle clickable = new Circle(vertex.getX(), vertex.getY(), clickableRadius);
             clickable.setPickOnBounds(true);
             clickable.setOnMouseClicked(controller.createSettlementClickHandler(visible, vertex, root));
@@ -117,7 +103,7 @@ public class DrawOrDisplay {
             vertexClickables.add(clickable);
 
             if (DEBUG_VISUALIZE_CLICKS) {
-                clickable.setFill(Color.rgb(0, 255, 0, 0.2));  // Green transparent for debug
+                clickable.setFill(Color.rgb(0, 255, 0, 0.2));
                 clickable.setStroke(Color.BLACK);
                 clickable.setStrokeWidth(0.3);
             } else {
@@ -128,9 +114,6 @@ public class DrawOrDisplay {
         }
     }
 
-    //______________________________TILE RENDERING_______________________________________
-
-    // Create a hexagon polygon based on a tile's vertices
     public Polygon createTilePolygon(Tile tile) {
         Polygon polygon = new Polygon();
         for (Vertex v : tile.getVertices()) {
@@ -139,35 +122,26 @@ public class DrawOrDisplay {
         return polygon;
     }
 
-    // Creates a background box behind a dice number, padding scaled by board size
     public Rectangle createBoxBehindDiceNumber(Text sample, double centerX, double centerY) {
         double padding = 5.0 / boardRadius * 10;
-
         double boxW = sample.getLayoutBounds().getWidth() + padding;
         double boxH = sample.getLayoutBounds().getHeight() + padding;
-
-        Rectangle background = new Rectangle(
-                centerX - boxW / 2,
-                centerY - boxH / 2,
-                boxW,
-                boxH
-        );
+        Rectangle background = new Rectangle(centerX - boxW / 2, centerY - boxH / 2, boxW, boxH);
         background.setFill(Color.BEIGE);
         background.setStroke(Color.BLACK);
         background.setArcWidth(5);
         background.setArcHeight(5);
-
         return background;
     }
 
-    // Draws Robber Circle
-    public Circle drawRobberCircle(Point2D center) {
+    public Circle drawRobberCircle(Point2D center, Group boardGroup) {
         double radius = 40.0 / boardRadius;
         double strokeWidth = 12.0 / boardRadius;
         Circle circle = new Circle(center.getX(), center.getY(), radius);
         circle.setFill(Color.TRANSPARENT);
         circle.setStroke(Color.BLACK);
         circle.setStrokeWidth(strokeWidth);
+        boardGroup.getChildren().add(circle);
         return circle;
     }
 
@@ -185,7 +159,6 @@ public class DrawOrDisplay {
             double centerX = center.getX();
             double centerY = center.getY();
 
-            // Harbor text label
             String text = (harbor.getType().specific == null)
                     ? "3:1"
                     : "2:1\n" + harbor.getType().specific.getName().toUpperCase();
@@ -194,17 +167,14 @@ public class DrawOrDisplay {
             label.setFont(Font.font("Arial", FontWeight.BOLD, 30.0 / boardRadius));
             label.setTextAlignment(TextAlignment.CENTER);
 
-            // Background box matching dice layout
             Text sample = new Text("2:1\nWOOL");
             sample.setFont(label.getFont());
             Rectangle box = createBoxBehindDiceNumber(sample, centerX, centerY);
 
-            // Center label
             label.setX(centerX - label.getLayoutBounds().getWidth() / 2);
             label.setY(centerY + label.getLayoutBounds().getHeight() / 3);
 
-            // === Dock lines ===
-            double dockWidth = 8.0 / boardRadius;  // Thicker docks
+            double dockWidth = 8.0 / boardRadius;
             Line dock1 = new Line(v1.getX(), v1.getY(), centerX, centerY);
             Line dock2 = new Line(v2.getX(), v2.getY(), centerX, centerY);
             dock1.setStroke(Color.BLACK);
@@ -212,14 +182,9 @@ public class DrawOrDisplay {
             dock1.setStrokeWidth(dockWidth);
             dock2.setStrokeWidth(dockWidth);
 
-            // Add in correct order
             boardGroup.getChildren().addAll(dock1, dock2, box, label);
         }
     }
-
-
-
-    //______________________________LOAD IMAGES______________________________
 
     public Image loadDiceImage(int number) {
         String path = "/dice/dice" + number + ".png";
@@ -231,9 +196,6 @@ public class DrawOrDisplay {
         return new Image(stream);
     }
 
-    //______________________________ERROR POPUPS ETC______________________________
-
-    // Display a red X error marker at a location, scaled by board radius
     public void showErrorCross(Group boardGroup, double x, double y) {
         double size = 10.0 / boardRadius;
 

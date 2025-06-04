@@ -55,11 +55,11 @@ public class MenuView {
         titleLabel.setTextFill(Color.LIGHTGRAY);
         titleLabel.setEffect(new DropShadow());
 
-        Button playButton = createMenuButton("Play", 220, 60);
+        Button playButton = createMenuButton("Start New Game", 220, 60);
         Button optionsButton = createMenuButton("Options", 220, 60);
         Button creditsButton = createMenuButton("Credits", 220, 60);
         Button quitButton = createMenuButton("Quit Game", 220, 60);
-        Button resumeButton = createMenuButton("Resume Game", 220, 60);
+        Button resumeButton = createMenuButton("Resume current Game", 220, 60);
 
 
         playButton.setOnAction(e -> startGame());
@@ -82,7 +82,7 @@ public class MenuView {
 
     public void showOptionsMenu(Stage primaryStage) {
         if (gameplay != null && gameplay.getCatanBoardGameView() != null) {
-            gameplay.getCatanBoardGameView().resetGameUIState();
+            //gameplay.getCatanBoardGameView().resetGameUIState();
         }
 
         VBox optionsLayout = new VBox(20);
