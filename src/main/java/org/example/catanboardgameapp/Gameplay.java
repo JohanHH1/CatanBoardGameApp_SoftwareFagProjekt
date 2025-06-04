@@ -184,10 +184,10 @@ public class Gameplay {
 
     //_____________________________BUILDING FUNCTIONS____________________________//
 
-    public boolean buildInitialSettlement(Vertex vertex) {
-        if (vertex == null || !isValidSettlementPlacement(vertex)) return false;
-        if (currentPlayer.getSettlements().contains(vertex)) return false;
-        if (initialPhase && waitingForInitialRoad) return false;
+    public BuildResult buildInitialSettlement(Vertex vertex) {
+        if (vertex == null || !isValidSettlementPlacement(vertex)) return BuildResult.INVALID_VERTEX;
+        if (currentPlayer.getSettlements().contains(vertex)) return BuildResult.INVALID_VERTEX;
+        if (initialPhase && waitingForInitialRoad) return BuildResult.INVALID_VERTEX;
 
         currentPlayer.getSettlements().add(vertex);
         vertex.setOwner(currentPlayer);
@@ -206,41 +206,47 @@ public class Gameplay {
                 }
             }
         }
-        return true;
+        return BuildResult.SUCCESS;
     }
 
-    public boolean buildRoad(Edge edge) {
+    public BuildResult buildRoad(Edge edge) {
         if (initialPhase && waitingForInitialRoad) {
-            if (!edge.isConnectedTo(lastInitialSettlement)) return false;
-            if (!isValidRoadPlacement(edge)) return false;
+            if (!edge.isConnectedTo(lastInitialSettlement)) return BuildResult.NOT_CONNECTED;
+            if (!isValidRoadPlacement(edge)) return BuildResult.INVALID_EDGE;
             currentPlayer.getRoads().add(edge);
             waitingForInitialRoad = false;
             lastInitialSettlement = null;
-            return true;
+            return BuildResult.SUCCESS;
         }
 
-        if (initialPhase) return false;
+        if (initialPhase) return BuildResult.INVALID_EDGE;
 
-        if (!isValidRoadPlacement(edge)) return false;
+        if (!isValidRoadPlacement(edge)) return BuildResult.INVALID_EDGE;
 
-        if (currentPlayer.getRoads().isEmpty()) {
+/*        if (currentPlayer.getRoads().isEmpty()) {
             currentPlayer.getRoads().add(edge);
             return true;
+        }*/
+        if(currentPlayer.getRoads().size() >= 14) {
+            return BuildResult.TOO_MANY_ROADS;
         }
 
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
             removeResource("Brick", 1);
             removeResource("Wood", 1);
             currentPlayer.getRoads().add(edge);
-            return true;
+            return BuildResult.SUCCESS;
         }
 
-        return false;
+        return BuildResult.INSUFFICIENT_RESOURCES;
     }
 
-    public boolean buildSettlement(Vertex vertex) {
-        if (vertex == null || !isValidSettlementPlacement(vertex)) return false;
-        if (currentPlayer.getSettlements().contains(vertex)) return false;
+    public BuildResult buildSettlement(Vertex vertex) {
+        if (vertex == null || !isValidSettlementPlacement(vertex)) return BuildResult.INVALID_VERTEX;
+        if (currentPlayer.getSettlements().contains(vertex)) return BuildResult.INVALID_VERTEX;
+        if (currentPlayer.getSettlements().size() > 4) {
+            return BuildResult.TOO_MANY_SETTLEMENTS;
+        }
 
         if (canRemoveResource("Brick", 1) &&
                 canRemoveResource("Wood", 1) &&
@@ -256,14 +262,17 @@ public class Gameplay {
             vertex.setOwner(currentPlayer);
             vertex.makeSettlement();
             increasePlayerScore();
-            return true;
+            return BuildResult.SUCCESS;
         }
 
-        return false;
+        return BuildResult.INSUFFICIENT_RESOURCES;
     }
 
-    public boolean buildCity(Vertex vertex) {
-        if (isNotValidCityPlacement(vertex)) return false;
+    public BuildResult buildCity(Vertex vertex) {
+        if (isNotValidCityPlacement(vertex)) return BuildResult.INVALID_VERTEX;
+        if (currentPlayer.getCities().size() > 3) {
+            return BuildResult.TOO_MANY_CITIES;
+        }
 
         if (canRemoveResource("Ore", 3) && canRemoveResource("Grain", 2)) {
             removeResource("Ore", 3);
@@ -274,10 +283,10 @@ public class Gameplay {
             increasePlayerScore();
             vertex.makeCity();
             System.out.println(currentPlayer.getPlayerScore());
-            return true;
+            return BuildResult.UPGRADED_TO_CITY;
         }
 
-        return false;
+        return BuildResult.INSUFFICIENT_RESOURCES;
     }
 
     //______________________BOOLEANS___________________________//

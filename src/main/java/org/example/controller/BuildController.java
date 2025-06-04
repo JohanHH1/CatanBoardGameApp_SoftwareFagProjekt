@@ -54,23 +54,29 @@ public class BuildController {
                 }
             }
 
+            BuildResult result = gameController.getGameplay().buildRoad(edge);
+            switch (result) {
+                case SUCCESS -> {
+                    buildRoad(edge, currentPlayer);
 
-            if (gameController.getGameplay().buildRoad(edge)) {
-                buildRoad(edge, currentPlayer);
+                    boolean allStillInInitialPhase = gameController.getGameplay().getPlayerList().stream()
+                            .allMatch(p -> p.getRoads().size() <= 2);
 
-                boolean allStillInInitialPhase = gameController.getGameplay().getPlayerList().stream()
-                        .allMatch(p -> p.getRoads().size() <= 2);
+                    if (allStillInInitialPhase && gameController.getGameplay().isInInitialPhase()
+                            && gameController.getGameplay().isWaitingForInitialRoad()) {
+                        gameController.getGameplay().nextPlayerTurn();
+                    }
 
-                if (allStillInInitialPhase && gameController.getGameplay().isInInitialPhase()
-                        && gameController.getGameplay().isWaitingForInitialRoad()) {
-                    gameController.getGameplay().nextPlayerTurn();
+                    gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                 }
 
-                gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
-            } else {
-                double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
-                double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
-                drawOrDisplay.showErrorCross(boardGroup, midX, midY);
+                case TOO_MANY_ROADS -> drawOrDisplay.showMaxRoadsReachedPopup();
+
+                case NOT_CONNECTED, INVALID_EDGE, INSUFFICIENT_RESOURCES -> {
+                    double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
+                    double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
+                    drawOrDisplay.showErrorCross(boardGroup, midX, midY);
+            }
             }
         };
     }
@@ -101,35 +107,48 @@ public class BuildController {
             }
 
 
-            boolean success;
+            BuildResult result;
 
             if (gameController.getGameplay().isInInitialPhase()) {
-                success = gameController.getGameplay().buildInitialSettlement(vertex);
+                result = gameController.getGameplay().buildInitialSettlement(vertex);
             } else {
-                success = gameController.getGameplay().buildSettlement(vertex);
+                result = gameController.getGameplay().buildSettlement(vertex);
             }
+            switch (result) {
+                case SUCCESS -> {
+                    vertex.setOwner(currentPlayer);
+                    drawOrDisplay.drawPlayerSettlement(visibleCircle, vertex);
+                    gameController.getGameView().logToGameLog("Settlement built by player " + currentPlayer.getPlayerId());
+                    gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
+                }
+                case INSUFFICIENT_RESOURCES, INVALID_VERTEX -> {
+                    // Try to build city if settlement failed
+                    BuildResult cityResult = gameController.getGameplay().buildCity(vertex);
+                    if (cityResult == BuildResult.TOO_MANY_CITIES) {
+                            drawOrDisplay.showMaxCitiesReachedPopup();
+                            drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
 
-            if (success) {
-                vertex.setOwner(currentPlayer);
-                drawOrDisplay.drawPlayerSettlement(visibleCircle, vertex);
-                gameController.getGameView().logToGameLog("Settlement built by player " + currentPlayer.getPlayerId());
-                gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
-            }
+                    }
+                    if (cityResult == BuildResult.UPGRADED_TO_CITY) {
+                        vertex.setOwner(currentPlayer);
+                        gameController.getGameView().getSettlementLayer().getChildren().remove(visibleCircle);
+                        Rectangle citySquare = new Rectangle(vertex.getX() - 6, vertex.getY() - 6, 12, 12);
+                        citySquare.setFill(currentPlayer.getColor());
+                        citySquare.setStroke(Color.BLACK);
+                        gameController.getGameView().getSettlementLayer().getChildren().add(citySquare);
+                        gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
+                        gameController.getGameView().logToGameLog("City built by player " + currentPlayer.getPlayerId());
 
-            // Attempt city placement if settlement failed
-            else if ( gameController.getGameplay().buildCity(vertex)) {
-                vertex.setOwner(currentPlayer);
-                gameController.getGameView().getSettlementLayer().getChildren().remove(visibleCircle);
-                Rectangle citySquare = new Rectangle(vertex.getX() - 6, vertex.getY() - 6, 12, 12);
-                citySquare.setFill(currentPlayer.getColor());
-                citySquare.setStroke(Color.BLACK);
-                gameController.getGameView().getSettlementLayer().getChildren().add(citySquare);
-                gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
-            }
+                    } else {
+                        // Neither worked
+                        drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
 
-            // Neither worked → show red error cross
-            else {
-                drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
+                    }
+                }
+                case TOO_MANY_SETTLEMENTS -> {
+                    drawOrDisplay.showMaxSettlementsReachedPopup();
+                }
+                default -> drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
             }
         };
     }

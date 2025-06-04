@@ -50,7 +50,8 @@ public class AIOpponent extends Player {
         for (Vertex v : allVertices) {
             if (!gameplay.isValidSettlementPlacement(v)) continue;
 
-            if (gameplay.buildInitialSettlement(v)) {
+            BuildResult result = gameplay.buildInitialSettlement(v);
+            if (result == BuildResult.SUCCESS) {
                 // Draw settlement immediately
                 Circle circle = new Circle(v.getX(), v.getY(), 16.0 / gameplay.getBoardRadius());
                 drawOrDisplay.drawPlayerSettlement(circle, v);
@@ -59,7 +60,8 @@ public class AIOpponent extends Player {
                 // Try to place a connected road
                 for (Edge edge : board.getEdges()) {
                     if (edge.isConnectedTo(v) && gameplay.isValidRoadPlacement(edge)) {
-                        if (gameplay.buildRoad(edge)) {
+                        BuildResult roadResult = gameplay.buildRoad(edge);
+                        if (roadResult == BuildResult.SUCCESS) {
                             Line line = new Line(
                                     edge.getVertex1().getX(), edge.getVertex1().getY(),
                                     edge.getVertex2().getX(), edge.getVertex2().getY()
@@ -125,8 +127,10 @@ public class AIOpponent extends Player {
         if (hasResources("Ore", 3) && hasResources("Grain", 2)) {
             List<Vertex> settlements = getSettlements();
             if (!settlements.isEmpty()) {
-                gameplay.buildCity(settlements.get(random.nextInt(settlements.size())));
-                catanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " upgrade to a city!");
+                BuildResult result = gameplay.buildCity(settlements.get(random.nextInt(settlements.size())));
+                if (result == BuildResult.UPGRADED_TO_CITY) {
+                    catanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " upgrade to a city!");
+                }
             }
         }
     }
@@ -139,8 +143,10 @@ public class AIOpponent extends Player {
         List<Vertex> validSpots = getValidSettlementSpots(gameplay);
         if (!validSpots.isEmpty()) {
             Collections.shuffle(validSpots);
-            gameplay.buildSettlement(validSpots.get(0));
-            catanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a settlement.");
+            BuildResult result = gameplay.buildSettlement(validSpots.get(0));
+            if (result == BuildResult.SUCCESS) {
+                catanBoardGameView.logToGameLog("AI Player " + getPlayerId() + " built a settlement.");
+            }
         }
     }
 

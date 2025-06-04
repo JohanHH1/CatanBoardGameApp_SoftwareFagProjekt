@@ -231,6 +231,43 @@ public class DrawOrDisplay {
         alert.showAndWait();
     }
 
+    // Build road fail too many roads
+    public void showMaxRoadsReachedPopup() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Max Roads Reached");
+            alert.setHeaderText("You already built 15 roads");
+            alert.setContentText("You cannot build more than 15 roads in the game.");
+            alert.showAndWait();
+        });
+    }
+
+    // Build settlement fail too many settlements
+    public void showMaxSettlementsReachedPopup() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Max Settlements Reached");
+            alert.setHeaderText("You already built 5 settlements");
+            alert.setContentText("You cannot build more than 5 settlements in the game.");
+            alert.showAndWait();
+        });
+    }
+
+    // Upgrade city fail too many cities
+    public void showMaxCitiesReachedPopup() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Max Cities Reached");
+            alert.setHeaderText("You already built 4 cities");
+            alert.setContentText("You cannot build more than 4 roads in the game.");
+            alert.showAndWait();
+        });
+    }
+
+
+
+
+
     //_____________________________GETTERS__________________________//
 
     public List<Circle> getRegisteredVertexClickable() {
