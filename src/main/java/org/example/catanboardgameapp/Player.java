@@ -9,6 +9,7 @@ public class Player {
     private final int playerId;
     private final Color color;
     private final HashMap<String, Integer> resources;
+    private final HashMap<String, Integer> developmentCards;
     private final List<Vertex> settlements;
     private final List<Edge> roads;
     private int playerScore;
@@ -23,6 +24,7 @@ public class Player {
 
         // Initializing game logic and arrays
         this.resources = new HashMap<>();
+        this.developmentCards = new HashMap<>();
         this.settlements = new ArrayList<>();
         this.roads = new ArrayList<>();
         this.cities = new ArrayList<>();
@@ -34,6 +36,11 @@ public class Player {
         resources.put("Ore", 0);
         resources.put("Grain", 0);
         resources.put("Wool", 0);
+
+        // initialize development cards to 0
+        developmentCards.put("Monopoly",0);
+        developmentCards.put("Knight",0);
+
     }
 
     //_____________________________Functions_____________________________//
@@ -85,6 +92,10 @@ public class Player {
 
     public Vertex getSecondSettlement() {
         return secondSettlement;
+    }
+
+    public HashMap<String, Integer> getDevelopmentCards() {
+        return developmentCards;
     }
 
     //_________________________toString method_________________________________

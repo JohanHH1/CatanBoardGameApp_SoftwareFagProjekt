@@ -33,7 +33,8 @@ public class Gameplay {
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
-
+    private final String[] developmentCardsTypes = {"Monopoly","Monopoly", "Knight","Knight","Knight"};
+    private List<String> shuffledDevelopmentCards;
     //__________________________DICE ROLL TRACKING_____________________________//
     private int lastRolledDie1;
     private int lastRolledDie2;
@@ -47,6 +48,11 @@ public class Gameplay {
 
     //________________________INITIALIZE_______________________________//
 
+    public void initializeDevelopmentCards(){
+        List<String> shuffledDevCards = new ArrayList<>(Arrays.asList(developmentCardsTypes));
+        Collections.shuffle(shuffledDevCards);
+        this.shuffledDevelopmentCards = shuffledDevCards;
+    }
     // Initialize players and any chosen AI players
     public void initializeAllPlayers(int humanCount, int aiEasy, int aiMedium, int aiHard) {
         playerList.clear();
@@ -106,7 +112,7 @@ public class Gameplay {
             }
             return;
         }
-
+        
         // ---------------- PHASE TRANSITION ----------------
         if (initialPhase) {
             currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
@@ -180,6 +186,21 @@ public class Gameplay {
         addResource(receive, 1);
         catanBoardGameView.logToGameLog("Traded 4 " + give + " for 1 " + receive);
         return true;
+    }
+    
+    public void buyDevelopmentCard() {
+        if (canRemoveResource("Wool", 1) && canRemoveResource("Ore", 1) && canRemoveResource("Grain", 1)) {
+            removeResource("Wool", 1);
+            removeResource("Ore", 1);
+            removeResource("Grain", 1);
+            String cardType = shuffledDevelopmentCards.remove(0);
+            currentPlayer.getDevelopmentCards().put(cardType, 1);
+            //System.out.println(cardType);
+            catanBoardGameView.logToGameLog(currentPlayer.toString() +" bought a development card");
+            //System.out.println(currentPlayer.getDevelopmentCards().toString());
+            catanBoardGameView.refreshSidebar();
+
+        }
     }
 
     //_____________________________BUILDING FUNCTIONS____________________________//

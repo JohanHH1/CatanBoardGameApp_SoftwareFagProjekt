@@ -39,6 +39,7 @@ public class GameController {
 
         // Build the full game User Interface
         gameView.buildGameUI();
+        gameplay.initializeDevelopmentCards();
 
         // Show the game
         primaryStage.setScene(gameView.getScene());

@@ -90,6 +90,7 @@ public class CatanBoardGameView {
         this.rollDiceButton = new Button("Roll Dice");
         this.nextTurnButton = new Button("Next Turn");
 
+
         // Game log text area setup
         this.gameLogArea = new TextArea();
         gameLogArea.setEditable(false);
@@ -186,6 +187,7 @@ public class CatanBoardGameView {
         Button zoomInButton = new Button("+");
         Button zoomOutButton = new Button("-");
         Button showCostsButton = new Button("Show Recipes");
+        Button developmentCardButton = new Button("Buy Development Card");
         Button tradeButton = new Button("Trade with Bank 4:1");
         Button exitButton = new Button("Exit");
         ToggleButton toggleConfirmBtn = new ToggleButton("Confirm: ON");
@@ -202,6 +204,10 @@ public class CatanBoardGameView {
             gameplay.setHasRolledThisTurn(true);
             rollDiceButton.setDisable(true);
             nextTurnButton.setVisible(true);
+        });
+        developmentCardButton.setOnAction(e-> {
+            gameplay.buyDevelopmentCard();
+            System.out.println("Development Card"); // remove later
         });
 
         TurnController turnController = new TurnController(gameController, rollDiceButton, nextTurnButton);
@@ -223,7 +229,7 @@ public class CatanBoardGameView {
 
         List<ButtonBase> allButtons = List.of(
                 rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton,
-                tradeButton, showCostsButton, toggleConfirmBtn, exitButton
+                tradeButton,developmentCardButton, showCostsButton, toggleConfirmBtn, exitButton
         );
 
         String style = "-fx-background-color: linear-gradient(to bottom, #f9f9f9, #e0e0e0); -fx-background-radius: 8;" +
@@ -284,6 +290,13 @@ public class CatanBoardGameView {
                     resourceText.setFont(Font.font("Arial", infoFontSize));
                     playerBox.getChildren().add(resourceText);
                 }
+                for (String cardName : player.getDevelopmentCards().keySet()) {
+                    int count = player.getDevelopmentCards().get(cardName);
+                    Text devCardText = new Text(cardName + ": " + count);
+                    devCardText.setFont(Font.font("Arial", infoFontSize));
+                    playerBox.getChildren().add(devCardText);
+                }
+
 
                 Text totalText = new Text("Total resources: " + totalResources);
                 totalText.setFont(Font.font("Arial", infoFontSize));
@@ -327,6 +340,8 @@ public class CatanBoardGameView {
             }
 
             playerBox.getChildren().add(playerName);
+
+
 
             int totalResources = 0;
             for (String resourceName : player.getResources().keySet()) {
