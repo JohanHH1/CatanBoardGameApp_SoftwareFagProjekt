@@ -85,7 +85,7 @@ public class Gameplay {
 
     public void nextPlayerTurn() {
         hasRolledThisTurn = false;
-
+        catanBoardGameView.centerBoard(catanBoardGameView.getBoardGroup(), catanBoardGameView.getGAME_WIDTH(), catanBoardGameView.getGAME_HEIGHT());
         // ---------------- INITIAL PHASE (Setup Turns) ----------------
         if (initialPhase && currentPlayer instanceof AIOpponent ai) {
             ai.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());

@@ -430,7 +430,7 @@ public class CatanBoardGameView {
         group.setScaleY(newScale);
     }
 
-    private void centerBoard(Group boardGroup, double screenWidth, double screenHeight) {
+    public void centerBoard(Group boardGroup, double screenWidth, double screenHeight) {
         Tile centerTile = board.getTiles().get((board.getTiles().size() - 1) / 2);
         Point2D centerPoint = centerTile.getCenter();
         double centerX = (screenWidth - 200) / 2 - centerPoint.getX();
