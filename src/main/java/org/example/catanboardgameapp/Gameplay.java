@@ -529,4 +529,11 @@ public class Gameplay {
     public CatanBoardGameView getCatanBoardGameView() {
         return catanBoardGameView;
     }
+
+    public void playDevelopmentCard(Player player, String cardName) {
+        currentPlayer.getDevelopmentCards().remove(cardName, 1);
+        catanBoardGameView.refreshSidebar();
+
+        System.out.println("playing development card " + cardName);
+    }
 }

@@ -381,11 +381,27 @@ public class CatanBoardGameView {
                     devCardDetailsBox.setVisible(false);
                     devCardDetailsBox.setManaged(false); // prevent layout space when hidden
 
-                    for (String cardName : player.getDevelopmentCards().keySet()) {
+
+                    /*for (String cardName : player.getDevelopmentCards().keySet()) {
                         int count = player.getDevelopmentCards().get(cardName);
                         Text cardText = new Text(cardName + ": " + count);
                         cardText.setFont(Font.font("Arial", infoFontSize));
                         devCardDetailsBox.getChildren().add(cardText);
+                    }*/
+                    for (String cardName : player.getDevelopmentCards().keySet()) {
+                        int count = player.getDevelopmentCards().get(cardName);
+                        if (count > 0) {
+                            Button cardButton = new Button(cardName + " (" + count + ")");
+                            cardButton.setFont(Font.font("Arial", infoFontSize));
+
+                            cardButton.setOnAction(e -> {
+                                // Call your method to play the card
+                                System.out.println("Playing card: " + cardName); // replace with actual logic
+                                gameplay.playDevelopmentCard(player, cardName); // example — adjust to your method
+                            });
+
+                            devCardDetailsBox.getChildren().add(cardButton);
+                        }
                     }
 
                     devCardButton.setOnAction(e -> {
@@ -395,6 +411,17 @@ public class CatanBoardGameView {
                     });
 
                     playerBox.getChildren().addAll(devCardButton, devCardDetailsBox);
+                } else {
+                    // === TOTALS ONLY for other players ===
+                    int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
+                    Text resourceTotal = new Text("Resources: " + totalResources);
+                    resourceTotal.setFont(Font.font("Arial", infoFontSize));
+                    playerBox.getChildren().add(resourceTotal);
+
+                    int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
+                    Text devCardTotal = new Text("Development Cards: " + totalDevCards);
+                    devCardTotal.setFont(Font.font("Arial", infoFontSize));
+                    playerBox.getChildren().add(devCardTotal);
                 }
 
                 //Text totalText = new Text("Total resources: " + totalResources);
