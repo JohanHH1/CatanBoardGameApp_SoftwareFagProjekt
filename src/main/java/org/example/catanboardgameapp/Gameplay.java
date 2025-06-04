@@ -33,7 +33,7 @@ public class Gameplay {
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
-    private final String[] developmentCardsTypes = {"Monopoly","Monopoly", "Knight","Knight","Knight"};
+    private final String[] developmentCardsTypes = {"Monopoly","Knight"};
     private List<String> shuffledDevelopmentCards;
     //__________________________DICE ROLL TRACKING_____________________________//
     private int lastRolledDie1;
@@ -189,7 +189,9 @@ public class Gameplay {
     }
     
     public void buyDevelopmentCard() {
-        if (canRemoveResource("Wool", 1) && canRemoveResource("Ore", 1) && canRemoveResource("Grain", 1)) {
+        if (shuffledDevelopmentCards.isEmpty()){
+            drawOrDisplay.showNoMoreDevelopmentCardToBuyPopup();
+        } else if (canRemoveResource("Wool", 1) && canRemoveResource("Ore", 1) && canRemoveResource("Grain", 1)) {
             removeResource("Wool", 1);
             removeResource("Ore", 1);
             removeResource("Grain", 1);

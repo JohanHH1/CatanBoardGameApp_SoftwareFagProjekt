@@ -274,6 +274,15 @@ public class DrawOrDisplay {
             alert.showAndWait();
         });
     }
+    public void showNoMoreDevelopmentCardToBuyPopup() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("No More Development Dards");
+            alert.setHeaderText("There are no more development cards left in the game.");
+            alert.setContentText("Buy something else");
+            alert.showAndWait();
+        });
+    }
 
 
 
@@ -283,4 +292,5 @@ public class DrawOrDisplay {
     public List<Circle> getRegisteredVertexClickable() {
         return vertexClickables;
     }
+
 }
