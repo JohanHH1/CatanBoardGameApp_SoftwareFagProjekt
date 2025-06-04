@@ -18,6 +18,7 @@ import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -170,35 +171,52 @@ public class DrawOrDisplay {
         return circle;
     }
 
-    public void drawHarbors(Board board, Group boardGroup) {
-        for (Edge edge : board.getEdges()) {
-            Harbor harbor = edge.getHarbor();
-            if (harbor != null) {
-                Point2D v1 = new Point2D(edge.getVertex1().getX(), edge.getVertex1().getY());
-                Point2D v2 = new Point2D(edge.getVertex2().getX(), edge.getVertex2().getY());
-                Point2D mid = v1.midpoint(v2);
 
-                // Visual marker
-                Circle circle = new Circle(mid.getX(), mid.getY(), 12.0 / boardRadius);
-                circle.setFill(Color.PURPLE);
-                circle.setStroke(Color.BLACK);
+    public void drawHarbors(List<Tile> tiles, Group boardGroup) {
+        for (Tile tile : tiles) {
+            Harbor harbor = tile.getHarbor();
+            if (harbor == null) continue;
 
-                // Optional label (abbreviated harbor type)
-                String label = harbor.getType().specific != null
-                        ? harbor.getType().specific.getName().substring(0, 1)
-                        : "3:1";
+            Edge edge = harbor.getEdge();
+            Vertex v1 = edge.getVertex1();
+            Vertex v2 = edge.getVertex2();
 
-                Text text = new Text(mid.getX(), mid.getY(), label);
-                text.setFont(Font.font("Arial", FontWeight.BOLD, 10));
-                text.setFill(Color.WHITE);
-                text.setStroke(Color.BLACK);
-                text.setX(text.getX() - text.getLayoutBounds().getWidth() / 2);
-                text.setY(text.getY() + text.getLayoutBounds().getHeight() / 2);
+            Point2D center = tile.getCenter();
+            double centerX = center.getX();
+            double centerY = center.getY();
 
-                boardGroup.getChildren().addAll(circle, text);
-            }
+            // Harbor text label
+            String text = (harbor.getType().specific == null)
+                    ? "3:1"
+                    : "2:1\n" + harbor.getType().specific.getName().toUpperCase();
+
+            Text label = new Text(text);
+            label.setFont(Font.font("Arial", FontWeight.BOLD, 30.0 / boardRadius));
+            label.setTextAlignment(TextAlignment.CENTER);
+
+            // Background box matching dice layout
+            Text sample = new Text("2:1\nWOOL");
+            sample.setFont(label.getFont());
+            Rectangle box = createBoxBehindDiceNumber(sample, centerX, centerY);
+
+            // Center label
+            label.setX(centerX - label.getLayoutBounds().getWidth() / 2);
+            label.setY(centerY + label.getLayoutBounds().getHeight() / 3);
+
+            // === Dock lines ===
+            double dockWidth = 8.0 / boardRadius;  // Thicker docks
+            Line dock1 = new Line(v1.getX(), v1.getY(), centerX, centerY);
+            Line dock2 = new Line(v2.getX(), v2.getY(), centerX, centerY);
+            dock1.setStroke(Color.BLACK);
+            dock2.setStroke(Color.BLACK);
+            dock1.setStrokeWidth(dockWidth);
+            dock2.setStrokeWidth(dockWidth);
+
+            // Add in correct order
+            boardGroup.getChildren().addAll(dock1, dock2, box, label);
         }
     }
+
 
 
     //______________________________LOAD IMAGES______________________________

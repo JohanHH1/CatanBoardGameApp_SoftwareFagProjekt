@@ -1,5 +1,7 @@
 package org.example.catanboardgameapp;
 
+import javafx.geometry.Point2D;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,6 +77,12 @@ public class Edge {
 
     public Harbor getHarbor() {
         return harbor;
+    }
+
+    public Point2D getMidPoint() {
+        double x = (vertex1.getX() + vertex2.getX()) / 2.0;
+        double y = (vertex1.getY() + vertex2.getY()) / 2.0;
+        return new Point2D(x, y);
     }
 
 }

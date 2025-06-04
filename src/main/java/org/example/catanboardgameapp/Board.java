@@ -198,14 +198,24 @@ public class Board {
                 })
                 .collect(Collectors.toList());
 
-        // Randomly pick and assign harbors
         for (int i = 0; i < Math.min(candidateEdges.size(), harborTypes.size()); i++) {
             Edge edge = candidateEdges.get(i);
             Harbor.HarborType type = harborTypes.get(i);
             Harbor harbor = new Harbor(type, edge);
-            edge.setHarbor(harbor); // You’ll need to add a `setHarbor()` method
+            edge.setHarbor(harbor);
+
+            // 🔽 Assign harbor to the sea tile so we can render on it later
+            Tile seaTile = edge.getAdjacentTiles().stream()
+                    .filter(Tile::isSea)
+                    .findFirst()
+                    .orElse(null);
+            if (seaTile != null) {
+                seaTile.setHarbor(harbor);
+            }
         }
     }
+
+
 
 
 
@@ -251,8 +261,7 @@ public class Board {
         }
 
         // Draw harbors on board (on correct boardGroup)
-        drawOrDisplay.drawHarbors(board, boardGroup);
-
+        drawOrDisplay.drawHarbors(getTiles(), boardGroup);
         return boardGroup;
     }
 

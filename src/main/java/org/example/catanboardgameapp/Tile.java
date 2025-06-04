@@ -20,7 +20,7 @@ public class Tile {
     private List<Vertex> vertices;
     private List<Edge> edges;
     private static final Map<Resource.ResourceType, Image> imageCache = new HashMap<>();
-
+    private Harbor harbor; // optional
     private boolean sea = false;          // default = land
 
     //___________________CONSTRUCTOR______________________//
@@ -31,7 +31,6 @@ public class Tile {
         this.resourcetype = resourcetype;
         this.tileDiceNumber = tileDiceNumber;
         this.center = center;
-        new DrawOrDisplay(boardRadius);   // side-effect only
     }
 
     //_____________________________SETTERS___________________________________//
@@ -91,6 +90,16 @@ public class Tile {
         iv.setX(Math.round(x - w / 2));
         iv.setY(Math.round(y - h / 2));
         return iv;
+    }
+
+
+
+    public void setHarbor(Harbor harbor) {
+        this.harbor = harbor;
+    }
+
+    public Harbor getHarbor() {
+        return harbor;
     }
 
 }
