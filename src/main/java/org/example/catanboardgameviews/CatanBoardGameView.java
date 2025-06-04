@@ -188,12 +188,12 @@ public class CatanBoardGameView {
         Button showCostsButton = new Button("Show Recipes");
         Button tradeButton = new Button("Trade with Bank 4:1");
         Button exitButton = new Button("Exit");
-        ToggleButton toggleConfirmBtn = new ToggleButton("Confirm ON");
+        ToggleButton toggleConfirmBtn = new ToggleButton("Confirm: ON");
         toggleConfirmBtn.setSelected(true);
 
         toggleConfirmBtn.setOnAction(e -> {
             boolean enabled = toggleConfirmBtn.isSelected();
-            toggleConfirmBtn.setText(enabled ? "Confirm ON" : "Confirm OFF");
+            toggleConfirmBtn.setText(enabled ? "Confirm ON" : "Confirm: OFF");
             gameController.getBuildController().toggleConfirmBeforeBuild();
         });
 

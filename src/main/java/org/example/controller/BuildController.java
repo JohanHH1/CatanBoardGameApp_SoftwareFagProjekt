@@ -45,8 +45,8 @@ public class BuildController {
             if (isConfirmBeforeBuildEnabled()) {
                 Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
                 confirmAlert.setTitle("Confirm Build");
-                confirmAlert.setHeaderText("Build ROAD");
-                confirmAlert.setContentText("Are you sure you want to place a Road here?");
+                confirmAlert.setHeaderText("Build Road");
+                confirmAlert.setContentText("Are you sure you want to place a road here?");
                 Optional<ButtonType> result = confirmAlert.showAndWait();
 
                 if (result.isEmpty() || result.get() != ButtonType.OK) {
