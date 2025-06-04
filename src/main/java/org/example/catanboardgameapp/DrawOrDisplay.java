@@ -264,6 +264,16 @@ public class DrawOrDisplay {
         });
     }
 
+    // Fail to buy development card
+    public void showFailToBuyDevelopmentCardPopup() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Insufficient Resources");
+            alert.setHeaderText("You do not have enough resources to buy a development card");
+            alert.setContentText("You need 1 grain, 1 wool, and 1 ore");
+            alert.showAndWait();
+        });
+    }
 
 
 

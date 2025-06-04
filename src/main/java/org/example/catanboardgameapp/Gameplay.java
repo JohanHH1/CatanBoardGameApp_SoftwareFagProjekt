@@ -199,7 +199,8 @@ public class Gameplay {
             catanBoardGameView.logToGameLog(currentPlayer.toString() +" bought a development card");
             //System.out.println(currentPlayer.getDevelopmentCards().toString());
             catanBoardGameView.refreshSidebar();
-
+        } else {
+            drawOrDisplay.showFailToBuyDevelopmentCardPopup();
         }
     }
 
