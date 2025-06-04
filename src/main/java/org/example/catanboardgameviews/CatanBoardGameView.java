@@ -281,26 +281,125 @@ public class CatanBoardGameView {
                 }
 
                 playerBox.getChildren().add(playerName);
+                /*if (player == gameplay.getCurrentPlayer()) {
+                    int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
 
-                int totalResources = 0;
-                for (String resourceName : player.getResources().keySet()) {
-                    int count = player.getResources().get(resourceName);
-                    totalResources += count;
-                    Text resourceText = new Text(resourceName + ": " + count);
-                    resourceText.setFont(Font.font("Arial", infoFontSize));
-                    playerBox.getChildren().add(resourceText);
+                    Button resourceButton = new Button("Resources: " + totalResources);
+                    resourceButton.setFont(Font.font("Arial", infoFontSize));
+
+                    VBox resourceDetailsBox = new VBox(3);
+                    resourceDetailsBox.setPadding(new Insets(5, 0, 0, 10));
+                    resourceDetailsBox.setVisible(false);
+
+                    for (String resourceName : player.getResources().keySet()) {
+                        int count = player.getResources().get(resourceName);
+                        Text resourceText = new Text(resourceName + ": " + count);
+                        resourceText.setFont(Font.font("Arial", infoFontSize));
+                        resourceDetailsBox.getChildren().add(resourceText);
+                    }
+
+                    resourceButton.setOnAction(e -> {
+                        resourceDetailsBox.setVisible(!resourceDetailsBox.isVisible());
+                    });
+
+                    playerBox.getChildren().addAll(resourceButton, resourceDetailsBox);
+                } else{
+                    // ==== RESOURCES: Only total shown ====
+                    int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
+                    Text totalResourceText = new Text("Resources: " + totalResources);
+                    totalResourceText.setFont(Font.font("Arial", infoFontSize));
+                    playerBox.getChildren().add(totalResourceText);
+
+                    // ==== DEVELOPMENT CARDS: Only total shown ====
+                    int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
+                    Text totalDevCardText = new Text("Development Cards: " + totalDevCards);
+                    totalDevCardText.setFont(Font.font("Arial", infoFontSize));
+                    playerBox.getChildren().add(totalDevCardText);
                 }
-                for (String cardName : player.getDevelopmentCards().keySet()) {
-                    int count = player.getDevelopmentCards().get(cardName);
-                    Text devCardText = new Text(cardName + ": " + count);
-                    devCardText.setFont(Font.font("Arial", infoFontSize));
-                    playerBox.getChildren().add(devCardText);
+
+                //int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
+                //Text devCardTotal = new Text("Development Cards: " + totalDevCards);
+                //devCardTotal.setFont(Font.font("Arial", infoFontSize));
+                //playerBox.getChildren().add(devCardTotal);
+                if (player == gameplay.getCurrentPlayer()) {
+                    int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
+
+                    Button devCardButton = new Button("Development Cards: " + totalDevCards);
+                    devCardButton.setFont(Font.font("Arial", infoFontSize));
+
+                    VBox devCardDetailsBox = new VBox(3);
+                    devCardDetailsBox.setPadding(new Insets(5, 0, 0, 10));
+                    devCardDetailsBox.setVisible(false); // Hidden by default
+
+                    for (String cardName : player.getDevelopmentCards().keySet()) {
+                        int count = player.getDevelopmentCards().get(cardName);
+                        Text cardText = new Text(cardName + ": " + count);
+                        cardText.setFont(Font.font("Arial", infoFontSize));
+                        devCardDetailsBox.getChildren().add(cardText);
+                    }
+
+                    devCardButton.setOnAction(e -> {
+                        devCardDetailsBox.setVisible(!devCardDetailsBox.isVisible());
+                    });
+
+                    playerBox.getChildren().addAll(devCardButton, devCardDetailsBox);
+                }
+*/
+                if (player == gameplay.getCurrentPlayer()) {
+                    // ==== RESOURCES ====
+                    int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
+                    Button resourceButton = new Button("Resources: " + totalResources);
+                    resourceButton.setFont(Font.font("Arial", infoFontSize));
+
+                    VBox resourceDetailsBox = new VBox(3);
+                    resourceDetailsBox.setPadding(new Insets(5, 0, 0, 10));
+                    resourceDetailsBox.setVisible(false);
+                    resourceDetailsBox.setManaged(false); // prevent layout space when hidden
+
+                    for (String resourceName : player.getResources().keySet()) {
+                        int count = player.getResources().get(resourceName);
+                        Text resourceText = new Text(resourceName + ": " + count);
+                        resourceText.setFont(Font.font("Arial", infoFontSize));
+                        resourceDetailsBox.getChildren().add(resourceText);
+                    }
+
+                    resourceButton.setOnAction(e -> {
+                        boolean showing = resourceDetailsBox.isVisible();
+                        resourceDetailsBox.setVisible(!showing);
+                        resourceDetailsBox.setManaged(!showing);
+                    });
+
+                    playerBox.getChildren().addAll(resourceButton, resourceDetailsBox);
+
+                    // ==== DEVELOPMENT CARDS ====
+                    int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
+                    Button devCardButton = new Button("Development Cards: " + totalDevCards);
+                    devCardButton.setFont(Font.font("Arial", infoFontSize));
+
+                    VBox devCardDetailsBox = new VBox(3);
+                    devCardDetailsBox.setPadding(new Insets(5, 0, 0, 10));
+                    devCardDetailsBox.setVisible(false);
+                    devCardDetailsBox.setManaged(false); // prevent layout space when hidden
+
+                    for (String cardName : player.getDevelopmentCards().keySet()) {
+                        int count = player.getDevelopmentCards().get(cardName);
+                        Text cardText = new Text(cardName + ": " + count);
+                        cardText.setFont(Font.font("Arial", infoFontSize));
+                        devCardDetailsBox.getChildren().add(cardText);
+                    }
+
+                    devCardButton.setOnAction(e -> {
+                        boolean showing = devCardDetailsBox.isVisible();
+                        devCardDetailsBox.setVisible(!showing);
+                        devCardDetailsBox.setManaged(!showing);
+                    });
+
+                    playerBox.getChildren().addAll(devCardButton, devCardDetailsBox);
                 }
 
-
-                Text totalText = new Text("Total resources: " + totalResources);
-                totalText.setFont(Font.font("Arial", infoFontSize));
-                playerBox.getChildren().add(totalText);
+                //Text totalText = new Text("Total resources: " + totalResources);
+               // totalText.setFont(Font.font("Arial", infoFontSize));
+                //playerBox.getChildren().add(totalText);
 
                 Text pointsText = new Text("Victory points: " + player.getPlayerScore());
                 pointsText.setFont(Font.font("Arial", infoFontSize));
