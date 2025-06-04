@@ -19,7 +19,7 @@ public class BuildController {
     private final Group boardGroup;
     private final DrawOrDisplay drawOrDisplay;
     private final GameController gameController;
-    private boolean confirmBeforeBuild = true;
+    private boolean confirmBeforeBuild = false; // 🔧 start with confirmation OFF
 
     //___________________________CONTROLLER__________________________________//
     public BuildController(GameController gameController) {
@@ -59,16 +59,15 @@ public class BuildController {
                 case SUCCESS -> {
                     buildRoad(edge, currentPlayer);
 
-                    boolean allStillInInitialPhase = gameController.getGameplay().getPlayerList().stream()
-                            .allMatch(p -> p.getRoads().size() <= 2);
-
-                    if (allStillInInitialPhase && gameController.getGameplay().isInInitialPhase()
-                            && gameController.getGameplay().isWaitingForInitialRoad()) {
+                    // ✅ Proceed only if road was placed AND no longer waiting
+                    if (gameController.getGameplay().isInInitialPhase()
+                            && !gameController.getGameplay().isWaitingForInitialRoad()) {
                         gameController.getGameplay().nextPlayerTurn();
                     }
 
                     gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                 }
+
 
                 case TOO_MANY_ROADS -> drawOrDisplay.showMaxRoadsReachedPopup();
 

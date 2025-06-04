@@ -56,35 +56,44 @@ public class MenuView {
         titleLabel.setEffect(new DropShadow());
 
         Button playButton = createMenuButton("Start New Game", 220, 60);
+        Button aiTestButton = createMenuButton("Start AI vs AI Test Match", 220, 60); // <-- New button
         Button optionsButton = createMenuButton("Options", 220, 60);
         Button creditsButton = createMenuButton("Credits", 220, 60);
         Button quitButton = createMenuButton("Quit Game", 220, 60);
         Button resumeButton = createMenuButton("Resume current Game", 220, 60);
 
-
         playButton.setOnAction(e -> startGame());
+        aiTestButton.setOnAction(e -> startAITestMatch()); // <-- New action
         optionsButton.setOnAction(e -> showOptionsMenu(primaryStage));
         creditsButton.setOnAction(e -> showCreditsScreen(primaryStage));
         quitButton.setOnAction(e -> primaryStage.close());
-        resumeButton.setDisable(!gameController.hasSavedSession()); // bara aktiv om gameplay finns
-        resumeButton.setOnAction(e -> {
-            gameController.resumeGame();
-        });
 
-        menuLayout.getChildren().addAll(titleLabel, playButton, optionsButton, creditsButton, quitButton, resumeButton);
+        resumeButton.setDisable(!gameController.hasSavedSession());
+        resumeButton.setOnAction(e -> gameController.resumeGame());
+
+        menuLayout.getChildren().addAll(
+                titleLabel, playButton, aiTestButton, optionsButton, creditsButton, quitButton, resumeButton
+        );
         return menuLayout;
     }
+
 
     private void startGame() {
         System.out.println("GAME IS STARTING");
         gameController.startGame(playerCount, boardSize, AIOpponentsCountEASY, AIOpponentsCountMEDIUM, AIOpponentsCountHARD);
     }
+    private void startAITestMatch() {
+        System.out.println("AI VS AI TEST MATCH IS STARTING");
+        playerCount = 0;              // No human players
+        boardSize = 3;                // Small board for quick testing
+        AIOpponentsCountEASY = 1;
+        AIOpponentsCountMEDIUM = 1;
+        AIOpponentsCountHARD = 1;
+        gameController.startGame(playerCount, boardSize, AIOpponentsCountEASY, AIOpponentsCountMEDIUM, AIOpponentsCountHARD);
+    }
+
 
     public void showOptionsMenu(Stage primaryStage) {
-        if (gameplay != null && gameplay.getCatanBoardGameView() != null) {
-            //gameplay.getCatanBoardGameView().resetGameUIState();
-        }
-
         VBox optionsLayout = new VBox(20);
         optionsLayout.setAlignment(Pos.CENTER);
         optionsLayout.setStyle(
@@ -147,7 +156,7 @@ public class MenuView {
             updateCounts.run();
         });
         controls[0][0].setOnAction(e -> {
-            if (humanPlayers[0] > 1) humanPlayers[0]--;
+            if (humanPlayers[0] > 0) humanPlayers[0]--;
             updateCounts.run();
         });
 

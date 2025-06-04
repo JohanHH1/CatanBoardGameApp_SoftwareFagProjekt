@@ -103,4 +103,8 @@ public class Vertex {
         return Objects.hash(x, y);
     }
 
+    public String getIdOrCoords() {
+        return String.format("(%.2f, %.2f)", getX(), getY());
+    }
+
 }

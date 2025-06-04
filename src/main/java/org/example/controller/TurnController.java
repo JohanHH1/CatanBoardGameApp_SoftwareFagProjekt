@@ -33,7 +33,7 @@ public class TurnController {
                 .mapToInt(p -> p.getRoads().size())
                 .sum();
 
-        if (currentPlayer instanceof AIOpponent) {
+        if (currentPlayer instanceof AIOpponent ai) {
             rollDiceButton.setDisable(true);
             nextTurnButton.setDisable(true);
 
@@ -42,14 +42,19 @@ public class TurnController {
                 int result = gameplay.rollDice();
 
                 if (result != 7) {
-                    ((AIOpponent) currentPlayer).makeMoveAI(gameplay);
-                    handleNextTurnButtonPressed(null); // move to next player
-                } else {
-                    handleNextTurnButtonPressed(null); // skip turn after robber
+                    ai.makeMoveAI(gameplay);
                 }
+
+                // Always continue to next player after AI finishes or skips due to 7
+                gameplay.nextPlayerTurn();
+                gameController.getGameView().refreshSidebar();
+
+                // Recursively call to update UI for the next player (if human)
+                handleNextTurnButtonPressed(null);
             });
             pause.play();
-        } else {
+        }
+        else {
             // Human player's turn
             rollDiceButton.setDisable(false);
             rollDiceButton.setVisible(true);

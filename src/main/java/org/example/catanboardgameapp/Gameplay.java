@@ -82,65 +82,80 @@ public class Gameplay {
     }
 
     //____________________________TURN MANAGEMENT______________________________//
+    private int turnCounter = 0;
 
     public void nextPlayerTurn() {
-        hasRolledThisTurn = false;
-        catanBoardGameView.centerBoard(catanBoardGameView.getBoardGroup(), catanBoardGameView.getGAME_WIDTH(), catanBoardGameView.getGAME_HEIGHT());
-        // ---------------- INITIAL PHASE (Setup Turns) ----------------
-        if (initialPhase && currentPlayer instanceof AIOpponent ai) {
-            ai.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
-
-            if (!waitingForInitialRoad && !currentPlayer.getSettlements().isEmpty()) {
-                currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
-
-                if (forwardOrder && currentPlayerIndex >= playerList.size()) {
-                    currentPlayerIndex = playerList.size() - 1;
-                    forwardOrder = false;
-                } else if (!forwardOrder && currentPlayerIndex < 0) {
-                    currentPlayerIndex = 0;
-                    initialPhase = false;
-                    forwardOrder = true;
-                }
-
-                waitingForInitialRoad = false;
-                lastInitialSettlement = null;
-                currentPlayer = playerList.get(currentPlayerIndex);
-
-                if (initialPhase && currentPlayer instanceof AIOpponent nextAI) {
-                    nextAI.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
-                }
-            }
+        turnCounter++;
+        int MAX_TURNS = 100;
+        if (turnCounter > MAX_TURNS) {
+            catanBoardGameView.logToGameLog("Maximum (100) turns reached. Ending test match.");
+            Platform.runLater(() -> menuView.showMainMenu());
             return;
         }
-        
-        // ---------------- PHASE TRANSITION ----------------
+
+        hasRolledThisTurn = false;
+        catanBoardGameView.centerBoard(
+                catanBoardGameView.getBoardGroup(),
+                catanBoardGameView.getGAME_WIDTH(),
+                catanBoardGameView.getGAME_HEIGHT()
+        );
+
+        // ------------------- INITIAL PLACEMENT PHASE -------------------
         if (initialPhase) {
+            if (waitingForInitialRoad) {
+                catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " must place a road.");
+                return;
+            }
+
             currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
 
             if (forwardOrder && currentPlayerIndex >= playerList.size()) {
                 currentPlayerIndex = playerList.size() - 1;
                 forwardOrder = false;
             } else if (!forwardOrder && currentPlayerIndex < 0) {
-                currentPlayerIndex = 0;
+                // Initial placement done, switch to normal phase
                 initialPhase = false;
                 forwardOrder = true;
+                currentPlayerIndex = 0;
+                currentPlayer = playerList.get(currentPlayerIndex);
+                waitingForInitialRoad = false;
+                lastInitialSettlement = null;
+
+                // ✅ NOW enter main phase logic
+                catanBoardGameView.showDiceButton();
+                return;
             }
-        } else {
-            currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
+
+            currentPlayer = playerList.get(currentPlayerIndex);
+            waitingForInitialRoad = false;
+            lastInitialSettlement = null;
+
+            if (initialPhase && currentPlayer instanceof AIOpponent ai) {
+                ai.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
+            } else if (initialPhase) {
+                System.out.println("HUMAN TURN NOW");
+                catanBoardGameView.prepareForHumanInitialPlacement(currentPlayer);
+            }
+            return;
         }
+
+        // ------------------- MAIN GAME PHASE -------------------
+        System.out.println("ROLL THE DICE IDIOT");
+        currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
+        currentPlayer = playerList.get(currentPlayerIndex);
         waitingForInitialRoad = false;
         lastInitialSettlement = null;
-        currentPlayer = playerList.get(currentPlayerIndex);
 
-        // fix this for AI...
-        if (!initialPhase && currentPlayer instanceof AIOpponent ai) {
-            catanBoardGameView.showDiceButton();
+        if (currentPlayer instanceof AIOpponent ai) {
             new Thread(() -> ai.makeMoveAI(this)).start();
-        } else if (!initialPhase) {
+        } else {
             catanBoardGameView.showDiceButton();
-            catanBoardGameView.hideAllVertexClickCircles();
         }
     }
+
+
+
+
 
     //_____________________________DICE________________________________//
 
@@ -155,11 +170,7 @@ public class Gameplay {
         } else {
             distributeResource(roll);
         }
-        updateValidBuildHighlights();
         return roll;
-    }
-
-    private void updateValidBuildHighlights() {
     }
 
     //_____________________________RESOURCES & TRADING_____________________________//
@@ -247,10 +258,6 @@ public class Gameplay {
 
         if (!isValidRoadPlacement(edge)) return BuildResult.INVALID_EDGE;
 
-/*        if (currentPlayer.getRoads().isEmpty()) {
-            currentPlayer.getRoads().add(edge);
-            return true;
-        }*/
         if(currentPlayer.getRoads().size() >= 14) {
             return BuildResult.TOO_MANY_ROADS;
         }
@@ -268,7 +275,7 @@ public class Gameplay {
     public BuildResult buildSettlement(Vertex vertex) {
         if (vertex == null || !isValidSettlementPlacement(vertex)) return BuildResult.INVALID_VERTEX;
         if (currentPlayer.getSettlements().contains(vertex)) return BuildResult.INVALID_VERTEX;
-        if (currentPlayer.getSettlements().size() > 4) {
+        if (currentPlayer.getSettlements().size() > 5) {
             return BuildResult.TOO_MANY_SETTLEMENTS;
         }
 
@@ -294,7 +301,7 @@ public class Gameplay {
 
     public BuildResult buildCity(Vertex vertex) {
         if (isNotValidCityPlacement(vertex)) return BuildResult.INVALID_VERTEX;
-        if (currentPlayer.getCities().size() > 3) {
+        if (currentPlayer.getCities().size() > 4) {
             return BuildResult.TOO_MANY_CITIES;
         }
 
@@ -314,11 +321,6 @@ public class Gameplay {
     }
 
     //______________________BOOLEANS___________________________//
-
-    public boolean isInitialPlacementDone() {
-        int totalRoads = playerList.stream().mapToInt(p -> p.getRoads().size()).sum();
-        return totalRoads >= (playerList.size() * 2 - 1);
-    }
 
     public boolean isValidSettlementPlacement(Vertex vertex) {
         if (vertex.hasSettlement()) return false;
@@ -443,27 +445,6 @@ public class Gameplay {
         return selection.values().stream().mapToInt(Integer::intValue).sum();
     }
 
-    public int getSettlementDiceValue(Vertex v) {
-        int total = 0;
-        for (Tile tile : board.getTiles()) {
-            if (tile.getVertices().contains(v)) {
-                total += getDiceProbabilityValue(tile.getTileDiceNumber());
-            }
-        }
-        return total;
-    }
-
-    private int getDiceProbabilityValue(int dice) {
-        return switch (dice) {
-            case 6, 8 -> 5;
-            case 5, 9 -> 4;
-            case 4, 10 -> 3;
-            case 3, 11 -> 2;
-            case 2, 12 -> 1;
-            default -> 0;
-        };
-    }
-
     //__________________________SETTERS________________________//
 
     public void setBoard(Board board) {
@@ -509,11 +490,7 @@ public class Gameplay {
     }
 
     public boolean isWaitingForInitialRoad() {
-        return !waitingForInitialRoad;
-    }
-
-    public DrawOrDisplay getDrawOrDisplay() {
-        return drawOrDisplay;
+        return waitingForInitialRoad;
     }
 
     public MenuView getMenuView() {

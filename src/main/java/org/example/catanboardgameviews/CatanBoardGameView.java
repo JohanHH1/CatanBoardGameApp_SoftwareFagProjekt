@@ -136,17 +136,14 @@ public class CatanBoardGameView {
         drawOrDisplay.initVerticeClickHandlers(board, boardGroup, buildController, boardRadius, root);
 
         VBox gameLogPanel = createGameLogPanel();
-
         Pane boardWrapper = new Pane(boardGroup);
         VBox boardOnly = new VBox(boardWrapper);
         VBox.setVgrow(boardWrapper, Priority.ALWAYS);
         centerBoard(boardGroup, GAME_WIDTH, GAME_HEIGHT);
-
         splitPane = new SplitPane(boardOnly, gameLogPanel);
         splitPane.setOrientation(Orientation.VERTICAL);
         splitPane.setDividerPositions(0.85);
         root.setCenter(splitPane);
-
         root.setTop(createTopButtonBar());
         root.setLeft(createLeftMenu(false));
 
@@ -194,15 +191,13 @@ public class CatanBoardGameView {
         Button developmentCardButton = new Button("Buy Development Card");
         Button tradeButton = new Button("Trade with Bank 4:1");
         Button exitButton = new Button("Exit");
-        ToggleButton toggleConfirmBtn = new ToggleButton("Confirm: ON");
-        toggleConfirmBtn.setSelected(true);
-
+        ToggleButton toggleConfirmBtn = new ToggleButton("Confirm: OFF");
+        toggleConfirmBtn.setSelected(false);
         toggleConfirmBtn.setOnAction(e -> {
             boolean enabled = toggleConfirmBtn.isSelected();
-            toggleConfirmBtn.setText(enabled ? "Confirm ON" : "Confirm: OFF");
+            toggleConfirmBtn.setText(enabled ? "Confirm: ON" : "Confirm: OFF");
             gameController.getBuildController().toggleConfirmBeforeBuild();
         });
-
         rollDiceButton.setOnAction(e -> {
             gameplay.rollDiceAndDistribute(gameplay, diceImage1, diceImage2, root, boardGroup, board);
             gameplay.setHasRolledThisTurn(true);
@@ -283,72 +278,8 @@ public class CatanBoardGameView {
                     playerBox.setStyle("-fx-background-color: lightyellow; -fx-border-color: black; -fx-border-width: 2px;");
                     playerName.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, nameFontSize + 2));
                 }
-
                 playerBox.getChildren().add(playerName);
-                /*if (player == gameplay.getCurrentPlayer()) {
-                    int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
 
-                    Button resourceButton = new Button("Resources: " + totalResources);
-                    resourceButton.setFont(Font.font("Arial", infoFontSize));
-
-                    VBox resourceDetailsBox = new VBox(3);
-                    resourceDetailsBox.setPadding(new Insets(5, 0, 0, 10));
-                    resourceDetailsBox.setVisible(false);
-
-                    for (String resourceName : player.getResources().keySet()) {
-                        int count = player.getResources().get(resourceName);
-                        Text resourceText = new Text(resourceName + ": " + count);
-                        resourceText.setFont(Font.font("Arial", infoFontSize));
-                        resourceDetailsBox.getChildren().add(resourceText);
-                    }
-
-                    resourceButton.setOnAction(e -> {
-                        resourceDetailsBox.setVisible(!resourceDetailsBox.isVisible());
-                    });
-
-                    playerBox.getChildren().addAll(resourceButton, resourceDetailsBox);
-                } else{
-                    // ==== RESOURCES: Only total shown ====
-                    int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
-                    Text totalResourceText = new Text("Resources: " + totalResources);
-                    totalResourceText.setFont(Font.font("Arial", infoFontSize));
-                    playerBox.getChildren().add(totalResourceText);
-
-                    // ==== DEVELOPMENT CARDS: Only total shown ====
-                    int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
-                    Text totalDevCardText = new Text("Development Cards: " + totalDevCards);
-                    totalDevCardText.setFont(Font.font("Arial", infoFontSize));
-                    playerBox.getChildren().add(totalDevCardText);
-                }
-
-                //int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
-                //Text devCardTotal = new Text("Development Cards: " + totalDevCards);
-                //devCardTotal.setFont(Font.font("Arial", infoFontSize));
-                //playerBox.getChildren().add(devCardTotal);
-                if (player == gameplay.getCurrentPlayer()) {
-                    int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
-
-                    Button devCardButton = new Button("Development Cards: " + totalDevCards);
-                    devCardButton.setFont(Font.font("Arial", infoFontSize));
-
-                    VBox devCardDetailsBox = new VBox(3);
-                    devCardDetailsBox.setPadding(new Insets(5, 0, 0, 10));
-                    devCardDetailsBox.setVisible(false); // Hidden by default
-
-                    for (String cardName : player.getDevelopmentCards().keySet()) {
-                        int count = player.getDevelopmentCards().get(cardName);
-                        Text cardText = new Text(cardName + ": " + count);
-                        cardText.setFont(Font.font("Arial", infoFontSize));
-                        devCardDetailsBox.getChildren().add(cardText);
-                    }
-
-                    devCardButton.setOnAction(e -> {
-                        devCardDetailsBox.setVisible(!devCardDetailsBox.isVisible());
-                    });
-
-                    playerBox.getChildren().addAll(devCardButton, devCardDetailsBox);
-                }
-*/
                 if (player == gameplay.getCurrentPlayer()) {
                     // ==== RESOURCES ====
                     int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
@@ -385,13 +316,6 @@ public class CatanBoardGameView {
                     devCardDetailsBox.setVisible(false);
                     devCardDetailsBox.setManaged(false); // prevent layout space when hidden
 
-
-                    /*for (String cardName : player.getDevelopmentCards().keySet()) {
-                        int count = player.getDevelopmentCards().get(cardName);
-                        Text cardText = new Text(cardName + ": " + count);
-                        cardText.setFont(Font.font("Arial", infoFontSize));
-                        devCardDetailsBox.getChildren().add(cardText);
-                    }*/
                     for (String cardName : player.getDevelopmentCards().keySet()) {
                         int count = player.getDevelopmentCards().get(cardName);
                         if (count > 0) {
@@ -407,7 +331,6 @@ public class CatanBoardGameView {
                             devCardDetailsBox.getChildren().add(cardButton);
                         }
                     }
-
                     devCardButton.setOnAction(e -> {
                         boolean showing = devCardDetailsBox.isVisible();
                         devCardDetailsBox.setVisible(!showing);
@@ -428,10 +351,6 @@ public class CatanBoardGameView {
                     playerBox.getChildren().add(devCardTotal);
                 }
 
-                //Text totalText = new Text("Total resources: " + totalResources);
-               // totalText.setFont(Font.font("Arial", infoFontSize));
-                //playerBox.getChildren().add(totalText);
-
                 Text pointsText = new Text("Victory points: " + player.getPlayerScore());
                 pointsText.setFont(Font.font("Arial", infoFontSize));
                 playerBox.getChildren().add(pointsText);
@@ -441,7 +360,6 @@ public class CatanBoardGameView {
 
             return null;
         }
-
         // First-time creation path
         playerListVBox = new VBox(10);
         playerListVBox.setPadding(new Insets(10));
@@ -455,24 +373,17 @@ public class CatanBoardGameView {
 
         for (Player player : gameplay.getPlayerList()) {
             VBox playerBox = new VBox(5);
-
             String displayName = (player instanceof AIOpponent ai)
                     ? "AIPlayer " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
                     : "Player " + player.getPlayerId();
-
             Text playerName = new Text(displayName);
             playerName.setFont(Font.font("Arial", FontWeight.BOLD, nameFontSize));
             playerName.setFill(player.getColor());
-
             if (player == gameplay.getCurrentPlayer()) {
                 playerBox.setStyle("-fx-background-color: lightyellow; -fx-border-color: black; -fx-border-width: 2px;");
                 playerName.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, nameFontSize + 2));
             }
-
             playerBox.getChildren().add(playerName);
-
-
-
             int totalResources = 0;
             for (String resourceName : player.getResources().keySet()) {
                 int count = player.getResources().get(resourceName);
@@ -485,7 +396,6 @@ public class CatanBoardGameView {
             Text totalText = new Text("Total resources: " + totalResources);
             totalText.setFont(Font.font("Arial", infoFontSize));
             playerBox.getChildren().add(totalText);
-
             Text pointsText = new Text("Victory points: " + player.getPlayerScore());
             pointsText.setFont(Font.font("Arial", infoFontSize));
             playerBox.getChildren().add(pointsText);
@@ -589,23 +499,16 @@ public class CatanBoardGameView {
         TranslateTransition move = new TranslateTransition(Duration.millis(500), boardGroup);
         move.setToX(targetTranslateX);
         move.setToY(targetTranslateY);
-
         // Animate scaling
         ScaleTransition zoom = new ScaleTransition(Duration.millis(500), boardGroup);
         zoom.setToX(0.75);
         zoom.setToY(0.75);
-
         SequentialTransition sequence = new SequentialTransition(zoom, move);
         sequence.play();
-
         // Optional UI adjustments
         scrollPane.setPrefHeight(120);
         if (splitPane != null) splitPane.setDividerPositions(0.85);
     }
-
-
-
-
 
     private void showBuildingCostsPopup() {
         Stage popup = new Stage();
@@ -617,7 +520,6 @@ public class CatanBoardGameView {
             System.err.println("Could not load building_costs.png");
             return;
         }
-
         ImageView imageView = new ImageView(new Image(imageStream));
         imageView.setPreserveRatio(true);
         imageView.setFitWidth(400);
@@ -631,10 +533,11 @@ public class CatanBoardGameView {
     }
 
     //__________________________VIEW UPDATES_____________________________//
-    public void resetGameUIState() {
-        boardGroup.getChildren().clear();
-        gameLogArea.clear();
-        board.clearBoard();
+
+    public void prepareForHumanInitialPlacement(Player currentPlayer) {
+        logToGameLog("Player " + currentPlayer.getPlayerId() + ", place your initial settlement.");
+        getRollDiceButton().setVisible(false);
+        getNextTurnButton().setVisible(false);
     }
 
     public void refreshSidebar() {
@@ -650,15 +553,6 @@ public class CatanBoardGameView {
 
     public void showDiceButton() {
         rollDiceButton.setVisible(true);
-    }
-
-    // hides the starting circles for settlement placements.
-    public void hideAllVertexClickCircles() {
-        for (Circle circle : drawOrDisplay.getRegisteredVertexClickable()) {
-            circle.setOpacity(0); // makes it invisible
-            //circle.setOpacity(1); // makes it vivible again if needed
-
-        }
     }
 
     //__________________________GETTERS_____________________________//
@@ -692,11 +586,9 @@ public class CatanBoardGameView {
     public Stage getPrimaryStage() {
         return primaryStage;
     }
-
     public double getGAME_WIDTH() {
         return GAME_WIDTH;
     }
-
     public double getGAME_HEIGHT() {
         return GAME_HEIGHT;
     }

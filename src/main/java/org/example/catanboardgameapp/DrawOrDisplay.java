@@ -1,4 +1,3 @@
-// FILE: DrawOrDisplay.java
 package org.example.catanboardgameapp;
 
 import javafx.animation.PauseTransition;
@@ -31,12 +30,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DrawOrDisplay {
+
     private final int boardRadius;
-    private final List<Circle> vertexClickables = new ArrayList<>();
+    private final List<Circle> vertexClickHighlights = new ArrayList<>();
+    private final List<Line> edgeClickHighlights = new ArrayList<>();
 
     public DrawOrDisplay(int boardRadius) {
         this.boardRadius = boardRadius;
     }
+
+    // ------------------------- Core Drawing ------------------------- //
 
     public void drawPlayerRoad(Line line, Player player, Group boardGroup) {
         line.setStroke(player.getColor());
@@ -54,6 +57,10 @@ public class DrawOrDisplay {
         }
         boardGroup.getChildren().add(circle);
     }
+
+    // -------------------- Initial Placement (Human) -------------------- //
+
+    // -------------------- Click Initialization (Build Phase) -------------------- //
 
     public void initEdgesClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
         Group edgeBaseLayer = controller.getGameController().getGameView().getEdgeBaseLayer();
@@ -100,7 +107,7 @@ public class DrawOrDisplay {
             clickable.setPickOnBounds(true);
             clickable.setOnMouseClicked(controller.createSettlementClickHandler(visible, vertex, root));
             clickable.setMouseTransparent(false);
-            vertexClickables.add(clickable);
+            vertexClickHighlights.add(clickable);
 
             if (DEBUG_VISUALIZE_CLICKS) {
                 clickable.setFill(Color.rgb(0, 255, 0, 0.2));
@@ -110,9 +117,12 @@ public class DrawOrDisplay {
                 clickable.setFill(Color.TRANSPARENT);
                 clickable.setStroke(Color.TRANSPARENT);
             }
+
             edgeClickLayer.getChildren().add(clickable);
         }
     }
+
+    // ------------------------- Utility Drawing ------------------------- //
 
     public Polygon createTilePolygon(Tile tile) {
         Polygon polygon = new Polygon();
@@ -144,7 +154,6 @@ public class DrawOrDisplay {
         boardGroup.getChildren().add(circle);
         return circle;
     }
-
 
     public void drawHarbors(List<Tile> tiles, Group boardGroup) {
         for (Tile tile : tiles) {
@@ -196,6 +205,9 @@ public class DrawOrDisplay {
         return new Image(stream);
     }
 
+
+
+    // ------------------------- ERRORS AND Popups ------------------------- //
     public void showErrorCross(Group boardGroup, double x, double y) {
         double size = 10.0 / boardRadius;
 
@@ -215,7 +227,6 @@ public class DrawOrDisplay {
         delay.play();
     }
 
-    // Block action until dice is rolled
     public void rollDiceBeforeActionPopup(String message) {
         Platform.runLater(() -> {
             Stage popup = new Stage();
@@ -237,7 +248,6 @@ public class DrawOrDisplay {
         });
     }
 
-    // Trade fail popup with message
     public void showTradeError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Trade Error");
@@ -246,7 +256,6 @@ public class DrawOrDisplay {
         alert.showAndWait();
     }
 
-    // Build road fail too many roads
     public void showMaxRoadsReachedPopup() {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -257,7 +266,6 @@ public class DrawOrDisplay {
         });
     }
 
-    // Build settlement fail too many settlements
     public void showMaxSettlementsReachedPopup() {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -268,7 +276,6 @@ public class DrawOrDisplay {
         });
     }
 
-    // Upgrade city fail too many cities
     public void showMaxCitiesReachedPopup() {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -279,7 +286,6 @@ public class DrawOrDisplay {
         });
     }
 
-    // Fail to buy development card
     public void showFailToBuyDevelopmentCardPopup() {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -289,12 +295,13 @@ public class DrawOrDisplay {
             alert.showAndWait();
         });
     }
+
     public void showNoMoreDevelopmentCardToBuyPopup() {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("No More Development Dards");
+            alert.setTitle("No More Development Cards");
             alert.setHeaderText("There are no more development cards left in the game.");
-            alert.setContentText("Buy something else");
+            alert.setContentText("Buy something else.");
             alert.showAndWait();
         });
     }
@@ -302,10 +309,6 @@ public class DrawOrDisplay {
 
 
 
-    //_____________________________GETTERS__________________________//
-
-    public List<Circle> getRegisteredVertexClickable() {
-        return vertexClickables;
-    }
+    // ------------------------- Getter ------------------------- //
 
 }
