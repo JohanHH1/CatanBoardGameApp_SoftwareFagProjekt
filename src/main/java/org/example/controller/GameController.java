@@ -51,6 +51,15 @@ public class GameController {
         }
         menuView.showMainMenu();
     }
+    public void resumeGame() {
+        if (gameplay == null) return;
+
+        CatanBoardGameView view = new CatanBoardGameView(primaryStage, gameplay, this, gameplay.getBoardRadius());
+        gameplay.setCatanBoardGameView(view);
+        view.buildGameUI();
+        primaryStage.setScene(view.getScene());
+    }
+
 
 
     public void setBuildController(BuildController buildController) {
@@ -68,4 +77,10 @@ public class GameController {
     public BuildController getBuildController() {
         return buildController;
     }
+
+    //___________________________BOOLEAN__________________________________//
+    public boolean hasSavedSession() {
+        return gameplay != null;
+    }
+
 }

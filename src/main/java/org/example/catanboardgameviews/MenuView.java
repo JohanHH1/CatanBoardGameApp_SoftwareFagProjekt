@@ -59,13 +59,19 @@ public class MenuView {
         Button optionsButton = createMenuButton("Options", 220, 60);
         Button creditsButton = createMenuButton("Credits", 220, 60);
         Button quitButton = createMenuButton("Quit Game", 220, 60);
+        Button resumeButton = createMenuButton("Resume Game", 220, 60);
+
 
         playButton.setOnAction(e -> startGame());
         optionsButton.setOnAction(e -> showOptionsMenu(primaryStage));
         creditsButton.setOnAction(e -> showCreditsScreen(primaryStage));
         quitButton.setOnAction(e -> primaryStage.close());
+        resumeButton.setDisable(!gameController.hasSavedSession()); // bara aktiv om gameplay finns
+        resumeButton.setOnAction(e -> {
+            gameController.resumeGame();
+        });
 
-        menuLayout.getChildren().addAll(titleLabel, playButton, optionsButton, creditsButton, quitButton);
+        menuLayout.getChildren().addAll(titleLabel, playButton, optionsButton, creditsButton, quitButton, resumeButton);
         return menuLayout;
     }
 
