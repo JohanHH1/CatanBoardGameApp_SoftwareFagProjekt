@@ -215,10 +215,6 @@ public class Board {
         }
     }
 
-
-
-
-
     // Draws all the hex tiles and overlays them with icons and dice numbers
     public Group createBoardTiles(Board board, int radius) {
         Group boardGroup = new Group();
