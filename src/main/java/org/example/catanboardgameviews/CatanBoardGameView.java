@@ -166,14 +166,10 @@ public class CatanBoardGameView {
 
         Label logLabel = new Label("Game Log");
 
-        scrollPane = new ScrollPane(gameLogArea);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-
-        VBox logColumn = new VBox(logLabel, scrollPane);
+        scrollPane = null;
+        VBox logColumn = new VBox(logLabel, gameLogArea);
         logColumn.setPadding(new Insets(5, 10, 5, 0));
-        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        VBox.setVgrow(gameLogArea, Priority.ALWAYS);
 
         HBox bottomContent = new HBox(diceColumn, logColumn);
         HBox.setHgrow(logColumn, Priority.ALWAYS);
@@ -502,7 +498,6 @@ public class CatanBoardGameView {
         SequentialTransition sequence = new SequentialTransition(zoom, move);
         sequence.play();
         // Optional UI adjustments
-        scrollPane.setPrefHeight(120);
         if (splitPane != null) splitPane.setDividerPositions(0.85);
     }
 
@@ -532,7 +527,18 @@ public class CatanBoardGameView {
     public void logToGameLog(String message) {
         Platform.runLater(() -> {
             gameLogArea.appendText(message + "\n");
-            gameLogArea.positionCaret(gameLogArea.getLength());
+
+            // Force scroll to bottom after layout using timeline delay
+            javafx.animation.Timeline scrollTimeline = new javafx.animation.Timeline(
+                    new javafx.animation.KeyFrame(
+                            javafx.util.Duration.millis(50),
+                            ae -> {
+                                gameLogArea.setScrollTop(Double.MAX_VALUE);
+                                gameLogArea.positionCaret(gameLogArea.getLength());
+                            }
+                    )
+            );
+            scrollTimeline.play();
         });
     }
 
