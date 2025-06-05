@@ -7,6 +7,7 @@ import org.example.catanboardgameapp.Gameplay;
 import org.example.catanboardgameapp.Player;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TradeController {
 
@@ -86,5 +87,20 @@ public class TradeController {
         gameplay.getCatanBoardGameView().logToGameLog("Player " + currentPlayer.getPlayerId() +
                 " played a Monopoly card and took " + taken + " " + chosenResource + " from other players.");
         gameplay.getCatanBoardGameView().refreshSidebar();
+    }
+    public void playYearOfPlentyCardFromButton() {
+        Gameplay gameplay = gameController.getGameplay();
+        Player currentPlayer = gameplay.getCurrentPlayer();
+
+        Map<String, Integer> selected = new DrawOrDisplay(gameplay.getBoardRadius()).showYearOfPlentyDialog();
+        if (selected != null) {
+            gameplay.addResourcesToPlayer(selected);
+            gameplay.getCatanBoardGameView().logToGameLog("Player " + currentPlayer.getPlayerId() +
+                    " used Year of Plenty and received: " +
+                    selected.entrySet().stream()
+                            .map(e -> e.getValue() + " " + e.getKey())
+                            .collect(Collectors.joining(", ")) + ".");
+            gameplay.getCatanBoardGameView().refreshSidebar();
+        }
     }
 }

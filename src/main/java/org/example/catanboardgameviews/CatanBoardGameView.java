@@ -502,6 +502,7 @@ public class CatanBoardGameView {
     }
 
 
+
     //__________________________VIEW UPDATES_____________________________//
     public void updateDiceImages(int die1, int die2) {
         diceImage1.setImage(drawOrDisplay.loadDiceImage(die1));

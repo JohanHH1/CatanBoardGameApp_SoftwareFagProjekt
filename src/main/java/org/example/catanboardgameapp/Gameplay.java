@@ -37,7 +37,7 @@ public class Gameplay {
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
-    private final String[] developmentCardsTypes = {"Monopoly","Knight"}; //,"Road Building","Year Of Plenty", "Victory Point"};
+    private final String[] developmentCardsTypes = {"Year Of Plenty"}; //"Monopoly","Knight"}; //,"Road Building","Year Of Plenty", "Victory Point"};
     private List<String> shuffledDevelopmentCards;
 
     //__________________________DICE ROLL TRACKING_____________________________//
@@ -540,21 +540,27 @@ public class Gameplay {
             Group boardGroup = catanBoardGameView.getBoardGroup();
                 catanBoardGameView.getNextTurnButton().setDisable(true);
                 catanBoardGameView.getRobber().showRobberTargets(boardGroup);
-
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a knight development card");
-        } else if (cardName.equals("Road Building")){
+        } else if (cardName.equals("Road Building")){  // has to be made
             //code here
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a road building development card");
-        } else if (cardName.equals("Year Of Plenty")){
-            // code here
+
+        } else if (cardName.equals("Year Of Plenty")){ //done
+            new TradeController(gameController).playYearOfPlentyCardFromButton();
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a year of plenty development card");
 
-        } else if (cardName.equals("Victory Point")){
+        } else if (cardName.equals("Victory Point")){ // done
             currentPlayer.increasePlayerScore();
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a victory point development card");
         }
         currentPlayer.getDevelopmentCards().remove(cardName, 1);
         catanBoardGameView.refreshSidebar();
+    }
+    public void addResourcesToPlayer(Map<String, Integer> added) {
+        added.forEach((res, amt) -> {
+            int current = currentPlayer.getResources().getOrDefault(res, 0);
+            currentPlayer.getResources().put(res, current + amt);
+        });
     }
 
     public int monopolizeResource(String resource, Player player) {

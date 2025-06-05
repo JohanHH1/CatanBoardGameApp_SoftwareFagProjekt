@@ -13,6 +13,8 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
@@ -22,13 +24,13 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.controller.BuildController;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class DrawOrDisplay {
 
@@ -341,6 +343,82 @@ public class DrawOrDisplay {
 
     public void resetCounters() {
         settlementCounter = 0;
+    }
+
+    public Map<String, Integer> showYearOfPlentyDialog() {
+        List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
+
+        Stage dialogStage = new Stage();
+        dialogStage.initModality(Modality.APPLICATION_MODAL);
+        dialogStage.initStyle(StageStyle.UNDECORATED);
+        dialogStage.setTitle("Year of Plenty");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(10));
+        grid.getColumnConstraints().addAll(
+                new ColumnConstraints(100), new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints()
+        );
+
+        Map<String, Integer> selection = new HashMap<>();
+        Map<String, Text> counterTexts = new HashMap<>();
+        Button confirmButton = new Button("Take Resources");
+        confirmButton.setDisable(true);
+
+        int row = 0;
+        for (String resource : resources) {
+            selection.put(resource, 0);
+
+            Text label = new Text(resource);
+            Button minus = new Button("-");
+            Button plus = new Button("+");
+            Text counter = new Text("0");
+
+            counter.setWrappingWidth(30);
+            counter.setTextAlignment(TextAlignment.CENTER);
+            counterTexts.put(resource, counter);
+
+            plus.setOnAction(e -> {
+                if (selection.get(resource) < 2 && getTotalSelected(selection) < 2) {
+                    selection.put(resource, selection.get(resource) + 1);
+                    counter.setText(selection.get(resource).toString());
+                    confirmButton.setDisable(getTotalSelected(selection) != 2);
+                }
+            });
+
+            minus.setOnAction(e -> {
+                if (selection.get(resource) > 0) {
+                    selection.put(resource, selection.get(resource) - 1);
+                    counter.setText(selection.get(resource).toString());
+                    confirmButton.setDisable(getTotalSelected(selection) != 2);
+                }
+            });
+
+            grid.addRow(row++, label, minus, counter, plus);
+        }
+
+        VBox container = new VBox(15,
+                new Text("Select exactly 2 resources to gain from the bank:"),
+                grid,
+                confirmButton
+        );
+        container.setPadding(new Insets(15));
+        container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
+
+        final Map<String, Integer>[] selected = new Map[]{null};
+        confirmButton.setOnAction(e -> {
+            selected[0] = new HashMap<>(selection);
+            dialogStage.close();
+        });
+
+        dialogStage.setScene(new Scene(container));
+        dialogStage.showAndWait();
+        return selected[0];
+    }
+
+    private int getTotalSelected(Map<String, Integer> map) {
+        return map.values().stream().mapToInt(Integer::intValue).sum();
     }
 
 
