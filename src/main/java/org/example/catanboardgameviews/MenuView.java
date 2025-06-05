@@ -23,6 +23,12 @@ public class MenuView {
     private int AIOpponentsCountEASY = 0;
     private int AIOpponentsCountMEDIUM = 0;
     private int AIOpponentsCountHARD = 0;
+    private int maxRoads = 15;
+    private int maxSettlements = 5;
+    private int maxCities = 4;
+    private int maxVictoryPoints = 10;
+
+
 
     private final GameController gameController;
     private Gameplay gameplay;
@@ -109,7 +115,8 @@ public class MenuView {
         totalNote.setFont(Font.font("Arial", 16));
         totalNote.setTextFill(Color.LIGHTGRAY);
 
-        int[] humanPlayers = {3}, boardSizeVal = {3}, easyAI = {0}, mediumAI = {0}, hardAI = {0};
+        int[] humanPlayers = {3}, boardSizeVal = {3}, easyAI = {0}, mediumAI = {0}, hardAI = {0},
+        maxRoadsVal = {15}, maxSettlementsVal = {5}, maxCitiesVal = {4}, maxVictoryPointsVal = {10};;
 
         Font labelFont = Font.font("Arial", FontWeight.BOLD, 14);
         Color fontColor = Color.WHITE;
@@ -119,14 +126,22 @@ public class MenuView {
                 new Label("Number of EASY AI:"),
                 new Label("Number of MEDIUM AI:"),
                 new Label("Number of HARD AI:"),
-                new Label("Board Size (3-10):")
+                new Label("Board Size (3-10):"),
+                new Label("Max Roads per Player:"),
+                new Label("Max Settlements per Player:"),
+                new Label("Max Cities per Player:"),
+                new Label("Max Victory Points per Player:"),
         };
         Label[] values = {
                 new Label(String.valueOf(humanPlayers[0])),
                 new Label(String.valueOf(easyAI[0])),
                 new Label(String.valueOf(mediumAI[0])),
                 new Label(String.valueOf(hardAI[0])),
-                new Label(String.valueOf(boardSizeVal[0]))
+                new Label(String.valueOf(boardSizeVal[0])),
+                new Label(String.valueOf(maxRoadsVal[0])),
+                new Label(String.valueOf(maxSettlementsVal[0])),
+                new Label(String.valueOf(maxCitiesVal[0])),
+                new Label(String.valueOf(maxVictoryPointsVal[0])),
         };
         for (int i = 0; i < labels.length; i++) {
             labels[i].setFont(labelFont);
@@ -141,10 +156,14 @@ public class MenuView {
             values[2].setText(String.valueOf(mediumAI[0]));
             values[3].setText(String.valueOf(hardAI[0]));
             values[4].setText(String.valueOf(boardSizeVal[0]));
+            values[5].setText(String.valueOf(maxRoadsVal[0]));
+            values[6].setText(String.valueOf(maxSettlementsVal[0]));
+            values[7].setText(String.valueOf(maxCitiesVal[0]));
+            values[8].setText(String.valueOf(maxVictoryPointsVal[0]));
         };
 
-        Button[][] controls = new Button[5][2];
-        for (int i = 0; i < 5; i++) {
+        Button[][] controls = new Button[9][2];
+        for (int i = 0; i < 9; i++) {
             controls[i][0] = new Button("-");
             controls[i][1] = new Button("+");
             controls[i][0].setMinWidth(35);
@@ -195,6 +214,38 @@ public class MenuView {
             if (boardSizeVal[0] > 3) boardSizeVal[0]--;
             updateCounts.run();
         });
+        controls[5][1].setOnAction(e -> {
+            if (maxRoadsVal[0] < 20) maxRoadsVal[0]++;
+            updateCounts.run();
+        });
+        controls[5][0].setOnAction(e -> {
+            if (maxRoadsVal[0] > 1) maxRoadsVal[0]--;
+            updateCounts.run();
+        });
+        controls[6][1].setOnAction(e -> {
+            if (maxSettlementsVal[0] < 10) maxSettlementsVal[0]++;
+            updateCounts.run();
+        });
+        controls[6][0].setOnAction(e -> {
+            if (maxSettlementsVal[0] > 1) maxSettlementsVal[0]--;
+            updateCounts.run();
+        });
+        controls[7][1].setOnAction(e -> {
+            if (maxCitiesVal[0] < 6) maxCitiesVal[0]++;
+            updateCounts.run();
+        });
+        controls[7][0].setOnAction(e -> {
+            if (maxCitiesVal[0] > 1) maxCitiesVal[0]--;
+            updateCounts.run();
+        });
+        controls[8][1].setOnAction(e -> {
+            if (maxVictoryPointsVal[0] < 10) maxVictoryPointsVal[0]++;
+            updateCounts.run();
+        });
+        controls[8][0].setOnAction(e -> {
+            if (maxVictoryPointsVal[0] > 1) maxVictoryPointsVal[0]--;
+            updateCounts.run();
+        });
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -220,6 +271,10 @@ public class MenuView {
             AIOpponentsCountEASY = easyAI[0];
             AIOpponentsCountMEDIUM = mediumAI[0];
             AIOpponentsCountHARD = hardAI[0];
+            maxRoads = maxRoadsVal[0];
+            maxSettlements = maxSettlementsVal[0];
+            maxCities = maxCitiesVal[0];
+            maxVictoryPoints = maxVictoryPointsVal[0];
             showMainMenu();
         });
 
@@ -281,5 +336,22 @@ public class MenuView {
                         "-fx-background-radius: 10;"
         ));
         return button;
+    }
+
+    // getters
+    public int getMaxRoads() {
+        return maxRoads;
+    }
+
+    public int getMaxSettlements() {
+        return maxSettlements;
+    }
+
+    public int getMaxCities() {
+        return maxCities;
+    }
+
+    public int getMaxVictoryPoints() {
+        return maxVictoryPoints;
     }
 }

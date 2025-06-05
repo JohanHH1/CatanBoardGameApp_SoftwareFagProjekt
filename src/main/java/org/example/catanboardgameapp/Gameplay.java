@@ -268,7 +268,7 @@ public class Gameplay {
 
         if (!isValidRoadPlacement(edge)) return BuildResult.INVALID_EDGE;
 
-        if(currentPlayer.getRoads().size() >= 14) {
+        if (currentPlayer.getRoads().size() >= menuView.getMaxRoads()) {
             return BuildResult.TOO_MANY_ROADS;
         }
 
@@ -285,7 +285,7 @@ public class Gameplay {
     public BuildResult buildSettlement(Vertex vertex) {
         if (vertex == null || !isValidSettlementPlacement(vertex)) return BuildResult.INVALID_VERTEX;
         if (currentPlayer.getSettlements().contains(vertex)) return BuildResult.INVALID_VERTEX;
-        if (currentPlayer.getSettlements().size() > 5) {
+        if (currentPlayer.getSettlements().size() >= menuView.getMaxSettlements()) {
             return BuildResult.TOO_MANY_SETTLEMENTS;
         }
 
@@ -311,7 +311,7 @@ public class Gameplay {
 
     public BuildResult buildCity(Vertex vertex) {
         if (isNotValidCityPlacement(vertex)) return BuildResult.INVALID_VERTEX;
-        if (currentPlayer.getCities().size() > 4) {
+        if (currentPlayer.getCities().size() >= menuView.getMaxCities()) {
             return BuildResult.TOO_MANY_CITIES;
         }
 
@@ -395,7 +395,7 @@ public class Gameplay {
     public void increasePlayerScore() {
         currentPlayer.increasePlayerScore();
 
-        if (currentPlayer.getPlayerScore() >= 10) {
+        if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
             Platform.runLater(() -> {
                 // Build scoreboard message
                 StringBuilder scoreboard = new StringBuilder("Final Scores:\n\n");

@@ -14,6 +14,8 @@ public class GameController {
     private CatanBoardGameView gameView;
     private Gameplay gameplay;
     private BuildController buildController;
+    private MenuView menuView;
+
 
     //___________________________CONSTRUCTOR_________________________________//
     public GameController(Stage primaryStage) {
@@ -27,9 +29,9 @@ public class GameController {
         gameplay = new Gameplay(primaryStage, boardSize - 1, this);
 
         // Set up the menu reference (for returnToMenu use)
-        MenuView menuView = new MenuView(primaryStage, this);
-        gameplay.setMenuView(menuView);
-
+        //MenuView menuView = new MenuView(primaryStage, this);
+        //gameplay.setMenuView(menuView);
+        gameplay.setMenuView(this.menuView);
         // Add all players (And AI players if chosen)
         gameplay.initializeAllPlayers(playerCount, easyAI, medAI, hardAI);
         gameplay.resetTurnCounter();
@@ -71,6 +73,13 @@ public class GameController {
 
         // Restore scene
         primaryStage.setScene(gameView.getScene());
+    }
+
+    public void setMenuView(MenuView menuView) {
+        this.menuView = menuView;
+        if (gameplay != null) {
+            gameplay.setMenuView(menuView);
+        }
     }
 
 

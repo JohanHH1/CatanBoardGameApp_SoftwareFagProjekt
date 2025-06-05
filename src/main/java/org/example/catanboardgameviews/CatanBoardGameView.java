@@ -278,10 +278,7 @@ public class CatanBoardGameView {
                     playerName.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, nameFontSize + 2));
                 }
                 playerBox.getChildren().add(playerName);
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
                 if (player == gameplay.getCurrentPlayer()) {
                     // ==== RESOURCES ====
                     int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
