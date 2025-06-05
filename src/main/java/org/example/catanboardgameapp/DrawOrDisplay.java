@@ -35,6 +35,7 @@ public class DrawOrDisplay {
     private final int boardRadius;
     private final List<Circle> vertexClickHighlights = new ArrayList<>();
     private final List<Line> edgeClickHighlights = new ArrayList<>();
+    private static int settlementCounter = 0;
 
     public DrawOrDisplay(int boardRadius) {
         this.boardRadius = boardRadius;
@@ -42,22 +43,33 @@ public class DrawOrDisplay {
 
     // ------------------------- Core Drawing ------------------------- //
 
-    public void drawPlayerRoad(Line line, Player player, Group boardGroup) {
+    public void drawRoad(Line line, Player player, Group boardGroup) {
         line.setStroke(player.getColor());
         line.setStrokeWidth(1.5 * (10.0 / boardRadius));
         boardGroup.getChildren().add(line);
     }
 
-    public void drawPlayerSettlement(Circle circle, Vertex vertex, Group boardGroup) {
+    public void drawSettlement(Circle circle, Vertex vertex, Group boardGroup) {
         if (vertex.getOwner() != null) {
             circle.setFill(vertex.getOwner().getColor());
             circle.setRadius(20.0 / boardRadius);
+
+            // Label with placement order
+            settlementCounter++;
+            Text label = new Text(String.valueOf(settlementCounter));
+            label.setFill(Color.BLACK);
+            label.setStyle("-fx-font-weight: bold;");
+            label.setX(vertex.getX() - 4); // offset for centering
+            label.setY(vertex.getY() + 4); // offset for vertical alignment
+
+            boardGroup.getChildren().addAll(circle, label);
         } else {
             circle.setFill(Color.TRANSPARENT);
             circle.setRadius(10.0 / boardRadius);
+            boardGroup.getChildren().add(circle);
         }
-        boardGroup.getChildren().add(circle);
     }
+
 
     // -------------------- Initial Placement (Human) -------------------- //
 
@@ -206,8 +218,6 @@ public class DrawOrDisplay {
         return new Image(stream);
     }
 
-
-
     // ------------------------- ERRORS AND Popups ------------------------- //
     public void showBuildingCostsPopup() {
         Stage popup = new Stage();
@@ -329,6 +339,9 @@ public class DrawOrDisplay {
         });
     }
 
+    public void resetCounters() {
+        settlementCounter = 0;
+    }
 
 
 

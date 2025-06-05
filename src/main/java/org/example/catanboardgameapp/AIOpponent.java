@@ -104,7 +104,7 @@ public class AIOpponent extends Player {
         }
         System.out.println("AI Player " + getPlayerId() + " (" + strategyLevel.name() + ") chose settlement with score: " + chosenSettlementScore);
         Circle circle = new Circle(chosenSettlement.getX(), chosenSettlement.getY(), 16.0 / gameplay.getBoardRadius());
-        drawOrDisplay.drawPlayerSettlement(circle, chosenSettlement, boardGroup);
+        drawOrDisplay.drawSettlement(circle, chosenSettlement, boardGroup);
 
         // STEP 3: Choose best connecting road
         Edge chosenEdge = null;
@@ -143,7 +143,7 @@ public class AIOpponent extends Player {
                         chosenEdge.getVertex2().getX(), chosenEdge.getVertex2().getY()
                 );
                 System.out.println("AI Player " + getPlayerId() + " (" + strategyLevel.name() + ") placed road with score: " + chosenRoadScore);
-                drawOrDisplay.drawPlayerRoad(line, this, boardGroup);
+                drawOrDisplay.drawRoad(line, this, boardGroup);
 
                 // Done! Advance turn
                 Platform.runLater(() -> {

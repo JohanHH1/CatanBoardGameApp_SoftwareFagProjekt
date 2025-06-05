@@ -135,9 +135,6 @@ public class Gameplay {
         }
 
         // ------------------- MAIN GAME PHASE -------------------
-        System.out.println("ROLL THE DICE IDIOT");
-        currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
-        currentPlayer = playerList.get(currentPlayerIndex);
         waitingForInitialRoad = false;
         lastInitialSettlement = null;
 
@@ -149,6 +146,11 @@ public class Gameplay {
     }
     // Helper function for nextPlayerTurn function above
     private void startOfTurnEffects() {
+        if(!initialPhase) {
+            currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
+            currentPlayer = playerList.get(currentPlayerIndex);
+        }
+        catanBoardGameView.refreshSidebar();
         catanBoardGameView.showDiceButton();
         catanBoardGameView.hideTurnButton();
         hasRolledThisTurn = false;
@@ -157,8 +159,8 @@ public class Gameplay {
                 catanBoardGameView.getGAME_WIDTH(),
                 catanBoardGameView.getGAME_HEIGHT()
         );
-        var gameView = gameController.getGameView();
-        gameView.refreshSidebar();
+//        var gameView = gameController.getGameView();
+//        gameView.refreshSidebar();
     }
 
     //_____________________________DICE________________________________//
@@ -474,8 +476,9 @@ public class Gameplay {
     public void setHasRolledThisTurn(boolean b) {
         hasRolledThisTurn = b;
     }
-    public void resetTurnCounter() {
+    public void resetCounters() {
         turnCounter=0;
+        drawOrDisplay.resetCounters();
     }
 
 //__________________________GETTERS________________________//

@@ -34,8 +34,8 @@ public class GameController {
         gameplay.setMenuView(this.menuView);
         // Add all players (And AI players if chosen)
         gameplay.initializeAllPlayers(playerCount, easyAI, medAI, hardAI);
-        gameplay.resetTurnCounter();
-        // Create the game UI and logic
+        gameplay.resetCounters();
+                // Create the game UI and logic
         gameView = new CatanBoardGameView(primaryStage, gameplay, this, boardSize - 1); // scene is initialized inside constructor
 
         // Register game view back into gameplay (after it's fully constructed)

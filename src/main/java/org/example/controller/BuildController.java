@@ -116,7 +116,7 @@ public class BuildController {
             switch (result) {
                 case SUCCESS -> {
                     vertex.setOwner(currentPlayer);
-                    drawOrDisplay.drawPlayerSettlement(visibleCircle, vertex, boardGroup);
+                    drawOrDisplay.drawSettlement(visibleCircle, vertex, boardGroup);
                     gameController.getGameView().logToGameLog("Settlement built by player " + currentPlayer.getPlayerId());
                     gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                 }
@@ -157,7 +157,7 @@ public class BuildController {
                 edge.getVertex1().getX(), edge.getVertex1().getY(),
                 edge.getVertex2().getX(), edge.getVertex2().getY()
         );
-        drawOrDisplay.drawPlayerRoad(playerRoadLine, currentPlayer, boardGroup);
+        drawOrDisplay.drawRoad(playerRoadLine, currentPlayer, boardGroup);
         gameController.getGameView().getRoadLayer().getChildren().add(playerRoadLine);
 
     }
