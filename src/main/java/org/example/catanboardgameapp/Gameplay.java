@@ -36,7 +36,7 @@ public class Gameplay {
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
-    private final String[] developmentCardsTypes = {"Monopoly","Knight"};
+    private final String[] developmentCardsTypes = {"Monopoly","Knight","Road Building","Year Of Plenty", "Victory Point"};
     private List<String> shuffledDevelopmentCards;
 
     //__________________________DICE ROLL TRACKING_____________________________//
@@ -220,9 +220,7 @@ public class Gameplay {
             removeResource("Grain", 1);
             String cardType = shuffledDevelopmentCards.remove(0);
             currentPlayer.getDevelopmentCards().put(cardType, 1);
-            //System.out.println(cardType);
             catanBoardGameView.logToGameLog(currentPlayer.toString() +" bought a development card");
-            //System.out.println(currentPlayer.getDevelopmentCards().toString());
             catanBoardGameView.refreshSidebar();
         } else {
             drawOrDisplay.showFailToBuyDevelopmentCardPopup();
