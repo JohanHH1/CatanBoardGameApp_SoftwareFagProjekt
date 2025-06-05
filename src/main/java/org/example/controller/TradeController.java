@@ -4,6 +4,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
 import org.example.catanboardgameapp.DrawOrDisplay;
 import org.example.catanboardgameapp.Gameplay;
+import org.example.catanboardgameapp.Player;
+
 import java.util.*;
 
 public class TradeController {
@@ -64,5 +66,25 @@ public class TradeController {
                 gameController.getGameView().refreshSidebar();
             }
         });
+    }
+    public void playMonopolyCardFromButton() {
+        Gameplay gameplay = gameController.getGameplay();
+        Player currentPlayer = gameplay.getCurrentPlayer();
+
+        List<String> resourceOptions = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(resourceOptions.get(0), resourceOptions);
+        dialog.setTitle("Monopoly Development Card");
+        dialog.setHeaderText("Select the resource to monopolize:");
+        dialog.setContentText("Resource:");
+        Optional<String> result = dialog.showAndWait();
+        if (result.isEmpty()) return;
+
+        String chosenResource = result.get();
+        int taken = gameplay.monopolizeResource(chosenResource, currentPlayer);
+
+        gameplay.getCatanBoardGameView().logToGameLog("Player " + currentPlayer.getPlayerId() +
+                " played a Monopoly card and took " + taken + " " + chosenResource + " from other players.");
+        gameplay.getCatanBoardGameView().refreshSidebar();
     }
 }
