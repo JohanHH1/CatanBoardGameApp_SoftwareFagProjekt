@@ -37,7 +37,7 @@ public class Gameplay {
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
-    private final String[] developmentCardsTypes = {"Monopoly"};//,"Knight","Road Building","Year Of Plenty", "Victory Point"};
+    private final String[] developmentCardsTypes = {"Monopoly","Knight"}; //,"Road Building","Year Of Plenty", "Victory Point"};
     private List<String> shuffledDevelopmentCards;
 
     //__________________________DICE ROLL TRACKING_____________________________//
@@ -530,12 +530,17 @@ public class Gameplay {
 
     public void playDevelopmentCard(Player player, String cardName) {
 
-        if (cardName.equals("Monopoly")){
-            //code here
+        if (cardName.equals("Monopoly")){ // done
             new TradeController(gameController).playMonopolyCardFromButton();
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a monopoly development card");
-        } else if (cardName.equals("Knight")){
-            //code here
+
+        } else if (cardName.equals("Knight")){ //done
+            catanBoardGameView.hideDiceButton();
+            catanBoardGameView.showTurnButton();
+            Group boardGroup = catanBoardGameView.getBoardGroup();
+                catanBoardGameView.getNextTurnButton().setDisable(true);
+                catanBoardGameView.getRobber().showRobberTargets(boardGroup);
+
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a knight development card");
         } else if (cardName.equals("Road Building")){
             //code here
