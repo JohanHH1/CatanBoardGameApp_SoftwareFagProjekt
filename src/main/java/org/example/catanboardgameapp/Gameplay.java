@@ -11,6 +11,7 @@ import org.example.catanboardgameviews.CatanBoardGameView;
 import java.util.*;
 import org.example.catanboardgameviews.MenuView;
 import org.example.controller.GameController;
+import org.example.controller.TradeController;
 
 public class Gameplay {
 
@@ -36,7 +37,7 @@ public class Gameplay {
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
-    private final String[] developmentCardsTypes = {"Monopoly","Knight","Road Building","Year Of Plenty", "Victory Point"};
+    private final String[] developmentCardsTypes = {"Monopoly"};//,"Knight","Road Building","Year Of Plenty", "Victory Point"};
     private List<String> shuffledDevelopmentCards;
 
     //__________________________DICE ROLL TRACKING_____________________________//
@@ -528,28 +529,41 @@ public class Gameplay {
     }
 
     public void playDevelopmentCard(Player player, String cardName) {
+
+        if (cardName.equals("Monopoly")){
+            //code here
+            new TradeController(gameController).playMonopolyCardFromButton();
+            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a monopoly development card");
+        } else if (cardName.equals("Knight")){
+            //code here
+            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a knight development card");
+        } else if (cardName.equals("Road Building")){
+            //code here
+            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a road building development card");
+        } else if (cardName.equals("Year Of Plenty")){
+            // code here
+            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a year of plenty development card");
+
+        } else if (cardName.equals("Victory Point")){
+            currentPlayer.increasePlayerScore();
+            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a victory point development card");
+        }
         currentPlayer.getDevelopmentCards().remove(cardName, 1);
         catanBoardGameView.refreshSidebar();
-        if (cardName.equals("Monopoly")){
+    }
 
-        } else if (cardName.equals("Knight")){
-
-        }else if (cardName.equals("Road Building")){
-
-        }else if (cardName.equals("Year Of Plenty")){
-
-        }else if (cardName.equals("Victory Point")){
-            currentPlayer.increasePlayerScore();
-           // catanBoardGameView.logToGameLog(currentPlayer.getName() + "Maximum (100) turns reached. Ending test match.");
-
-
+    public int monopolizeResource(String resource, Player player) {
+        int totalTaken = 0;
+        for (Player other : playerList) {
+            if (!other.equals(player)) {
+                int amount = other.getResources().getOrDefault(resource, 0);
+                if (amount > 0) {
+                    other.getResources().put(resource, 0);
+                    totalTaken += amount;
+                }
+            }
         }
-        //MONOPOLY("Monopoly"),
-          //      KNIGHT("Knight"),
-            //    ROADBUILDING("Road Building"),
-              //  YEAROFPLENTY("Year Of Plenty"),
-                //VICTORYPOINT("Victory Point");
-
-        System.out.println("playing development card " + cardName);
+        player.getResources().merge(resource, totalTaken, Integer::sum);
+        return totalTaken;
     }
 }
