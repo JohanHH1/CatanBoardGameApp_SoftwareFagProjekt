@@ -37,7 +37,7 @@ public class Gameplay {
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
-    private final String[] developmentCardsTypes = {"Road Building"}; //"Monopoly","Knight"}; //,"Road Building","Year Of Plenty", "Victory Point"};
+    private final String[] developmentCardsTypes = { "Monopoly","Monopoly","Road Building","Road Building","Year Of Plenty","Year Of Plenty", "Victory Point", "Victory Point", "Victory Point", "Victory Point", "Victory Point","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight"};
     private List<String> shuffledDevelopmentCards;
 
     //__________________________DICE ROLL TRACKING_____________________________//
@@ -252,7 +252,7 @@ public class Gameplay {
             removeResource("Ore", 1);
             removeResource("Grain", 1);
             String cardType = shuffledDevelopmentCards.remove(0);
-            currentPlayer.getDevelopmentCards().put(cardType, 1);
+            currentPlayer.getDevelopmentCards().put(cardType,currentPlayer.getDevelopmentCards().getOrDefault(cardType, 0) + 1);
             catanBoardGameView.logToGameLog(currentPlayer.toString() +" bought a development card");
             catanBoardGameView.refreshSidebar();
         } else {
@@ -530,11 +530,11 @@ public class Gameplay {
 
     public void playDevelopmentCard(Player player, String cardName) {
 
-        if (cardName.equals("Monopoly")){ // done
+        if (cardName.equals("Monopoly")){ 
             new TradeController(gameController).playMonopolyCardFromButton();
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a monopoly development card");
 
-        } else if (cardName.equals("Knight")){ //done
+        } else if (cardName.equals("Knight")){
             catanBoardGameView.hideDiceButton();
             catanBoardGameView.showTurnButton();
             Group boardGroup = catanBoardGameView.getBoardGroup();
@@ -542,20 +542,19 @@ public class Gameplay {
                 catanBoardGameView.getRobber().showRobberTargets(boardGroup);
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a knight development card");
 
-        } else if (cardName.equals("Road Building")){  // has to be made
-            //code here
+        } else if (cardName.equals("Road Building")){
             startPlacingFreeRoads(2);
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a road building development card");
 
-        } else if (cardName.equals("Year Of Plenty")){ //done
+        } else if (cardName.equals("Year Of Plenty")){
             new TradeController(gameController).playYearOfPlentyCardFromButton();
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a year of plenty development card");
 
-        } else if (cardName.equals("Victory Point")){ // done
+        } else if (cardName.equals("Victory Point")){
             currentPlayer.increasePlayerScore();
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a victory point development card");
         }
-        currentPlayer.getDevelopmentCards().remove(cardName, 1);
+        currentPlayer.getDevelopmentCards().put(cardName,currentPlayer.getDevelopmentCards().getOrDefault(cardName, 0) - 1);
         catanBoardGameView.refreshSidebar();
     }
     private boolean placingFreeRoads = false;
