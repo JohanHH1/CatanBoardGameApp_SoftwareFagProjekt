@@ -33,6 +33,24 @@ public class BuildController {
     // Handles mouse click on road (edge) during gameplay or initial setup
     public EventHandler<MouseEvent> createRoadClickHandler(Edge edge, Line visibleLine, BorderPane root) {
         return event -> {
+            if (gameController.getGameplay().isPlacingFreeRoads()) {
+                if (gameController.getGameplay().isValidRoadPlacement(edge)) {
+                    gameController.getGameplay().getCurrentPlayer().getRoads().add(edge);
+                    buildRoad(edge, gameController.getGameplay().getCurrentPlayer());
+                    gameController.getGameView().logToGameLog("Placed free road via Road Building card.");
+                    gameController.getGameplay().decrementFreeRoads();
+
+                    if (!gameController.getGameplay().isPlacingFreeRoads()) {
+                        gameController.getGameView().logToGameLog("Finished placing 2 free roads.");
+                        gameController.getGameView().refreshSidebar();
+                    }
+                } else {
+                    double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
+                    double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
+                    drawOrDisplay.showErrorCross(boardGroup, midX, midY);
+                }
+                return;
+            }
             // Enforce dice roll in main phase
             if (!gameController.getGameplay().isInInitialPhase() && gameController.getGameplay().hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
@@ -85,6 +103,10 @@ public class BuildController {
     // Handles mouse click on a vertex (for building settlement or upgrading to city)
     public EventHandler<MouseEvent> createSettlementClickHandler(Circle visibleCircle, Vertex vertex, BorderPane root) {
         return event -> {
+            if (gameController.getGameplay().isPlacingFreeRoads()) {
+                drawOrDisplay.showMustPlaceTwoRoadsPopup();
+                return;
+            }
             // Enforce dice roll in main phase
             if (!gameController.getGameplay().isInInitialPhase() && gameController.getGameplay().hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");

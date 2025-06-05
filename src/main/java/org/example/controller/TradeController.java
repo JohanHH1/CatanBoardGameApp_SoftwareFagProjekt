@@ -23,6 +23,10 @@ public class TradeController {
     //___________________________FUNCTIONS__________________________________//
     public void setupTradeButton(Button tradeButton) {
         tradeButton.setOnAction(e -> {
+            if (gameController.getGameplay().isPlacingFreeRoads()) {
+                drawOrDisplay.showMustPlaceTwoRoadsPopup();
+                return;
+            }
             Gameplay gameplay = gameController.getGameplay();
 
             if (!gameplay.isInInitialPhase() && gameplay.hasRolledDice()) {

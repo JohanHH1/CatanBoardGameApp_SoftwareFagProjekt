@@ -602,4 +602,5 @@ public class CatanBoardGameView {
     public double getGAME_HEIGHT() {
         return GAME_HEIGHT;
     }
+
 }

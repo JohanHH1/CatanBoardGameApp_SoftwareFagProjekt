@@ -37,7 +37,7 @@ public class Gameplay {
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
-    private final String[] developmentCardsTypes = {"Year Of Plenty"}; //"Monopoly","Knight"}; //,"Road Building","Year Of Plenty", "Victory Point"};
+    private final String[] developmentCardsTypes = {"Road Building"}; //"Monopoly","Knight"}; //,"Road Building","Year Of Plenty", "Victory Point"};
     private List<String> shuffledDevelopmentCards;
 
     //__________________________DICE ROLL TRACKING_____________________________//
@@ -541,8 +541,10 @@ public class Gameplay {
                 catanBoardGameView.getNextTurnButton().setDisable(true);
                 catanBoardGameView.getRobber().showRobberTargets(boardGroup);
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a knight development card");
+
         } else if (cardName.equals("Road Building")){  // has to be made
             //code here
+            startPlacingFreeRoads(2);
             catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a road building development card");
 
         } else if (cardName.equals("Year Of Plenty")){ //done
@@ -556,6 +558,32 @@ public class Gameplay {
         currentPlayer.getDevelopmentCards().remove(cardName, 1);
         catanBoardGameView.refreshSidebar();
     }
+    private boolean placingFreeRoads = false;
+    private int freeRoadsLeft = 0;
+
+    public void startPlacingFreeRoads(int count) {
+        this.placingFreeRoads = true;
+        this.freeRoadsLeft = count;
+    }
+
+    public void finishFreeRoadPlacement() {
+        this.placingFreeRoads = false;
+        this.freeRoadsLeft = 0;
+    }
+
+    public boolean isPlacingFreeRoads() {
+        return placingFreeRoads;
+    }
+
+    public int getFreeRoadsLeft() {
+        return freeRoadsLeft;
+    }
+
+    public void decrementFreeRoads() {
+        if (freeRoadsLeft > 0) freeRoadsLeft--;
+        if (freeRoadsLeft == 0) placingFreeRoads = false;
+    }
+
     public void addResourcesToPlayer(Map<String, Integer> added) {
         added.forEach((res, amt) -> {
             int current = currentPlayer.getResources().getOrDefault(res, 0);

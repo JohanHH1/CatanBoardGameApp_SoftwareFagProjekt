@@ -340,6 +340,15 @@ public class DrawOrDisplay {
             alert.showAndWait();
         });
     }
+    public void showMustPlaceTwoRoadsPopup() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Road Building In Progress");
+            alert.setHeaderText("You must place two roads before continuing.");
+            alert.setContentText("Complete your Road Building card action by placing two free roads. Other actions are temporarily disabled.");
+            alert.showAndWait();
+        });
+    }
 
     public void resetCounters() {
         settlementCounter = 0;
