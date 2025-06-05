@@ -365,32 +365,28 @@ public class Gameplay {
     public boolean isValidSettlementPlacement(Vertex vertex) {
         if (vertex.hasSettlement()) return false;
 
-        // Prevent placement on sea: valid vertices must border at least one non-desert tile
-        List<Tile> adjacentTiles = vertex.getAdjacentTiles();
-        long landTiles = adjacentTiles.stream()
-                .filter(t -> !t.getResourcetype().getName().equalsIgnoreCase("Desert"))
-                .count();
+        // Must border at least one land tile
+        boolean hasLand = vertex.getAdjacentTiles().stream()
+                .anyMatch(tile -> !tile.isSea());
+        if (!hasLand) return false;
 
-        if (landTiles == 0) return false;
-
-        // Check distance rule: no neighboring settlements
+        // Distance rule — no adjacent settlements
         for (Vertex neighbor : vertex.getNeighbors()) {
             if (neighbor.hasSettlement()) return false;
         }
 
         return true;
     }
-
     public boolean isValidRoadPlacement(Edge edge) {
-        // Prevent placing on sea — valid edges must have both vertices adjacent to land
-        boolean edgeInSea = edge.getVertex1().getAdjacentTiles().isEmpty()
-                || edge.getVertex2().getAdjacentTiles().isEmpty();
-        if (edgeInSea) return false;
+        // Reject edges where either end is sea-only
+        boolean vertex1HasLand = edge.getVertex1().getAdjacentTiles().stream().anyMatch(t -> !t.isSea());
+        boolean vertex2HasLand = edge.getVertex2().getAdjacentTiles().stream().anyMatch(t -> !t.isSea());
+        if (!vertex1HasLand || !vertex2HasLand) return false;
 
-        // Prevent duplicate road
+        // No duplicate road
         if (playerList.stream().anyMatch(p -> p.getRoads().contains(edge))) return false;
 
-        // Block building through opponent’s settlements
+        // Block building through opponent's settlements
         for (Player player : playerList) {
             if (player != currentPlayer) {
                 if (player.getSettlements().contains(edge.getVertex1()) &&
@@ -404,7 +400,7 @@ public class Gameplay {
             }
         }
 
-        // Valid if connected to this player's existing road or settlement
+        // Must connect to a player's own road or settlement
         boolean connectsToSettlement = currentPlayer.getSettlements().contains(edge.getVertex1()) ||
                 currentPlayer.getSettlements().contains(edge.getVertex2());
 
@@ -413,8 +409,6 @@ public class Gameplay {
 
         return connectsToSettlement || connectsToRoad;
     }
-
-
 
     public boolean isNotValidCityPlacement(Vertex vertex) {
         return !(vertex.hasSettlement() && vertex.getOwner() == currentPlayer);
