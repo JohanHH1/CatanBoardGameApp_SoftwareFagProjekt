@@ -533,6 +533,25 @@ public class Gameplay {
     public void playDevelopmentCard(Player player, String cardName) {
         currentPlayer.getDevelopmentCards().remove(cardName, 1);
         catanBoardGameView.refreshSidebar();
+        if (cardName.equals("Monopoly")){
+
+        } else if (cardName.equals("Knight")){
+
+        }else if (cardName.equals("Road Building")){
+
+        }else if (cardName.equals("Year Of Plenty")){
+
+        }else if (cardName.equals("Victory Point")){
+            currentPlayer.increasePlayerScore();
+           // catanBoardGameView.logToGameLog(currentPlayer.getName() + "Maximum (100) turns reached. Ending test match.");
+
+
+        }
+        //MONOPOLY("Monopoly"),
+          //      KNIGHT("Knight"),
+            //    ROADBUILDING("Road Building"),
+              //  YEAROFPLENTY("Year Of Plenty"),
+                //VICTORYPOINT("Victory Point");
 
         System.out.println("playing development card " + cardName);
     }
