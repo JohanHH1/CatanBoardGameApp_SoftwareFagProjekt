@@ -217,7 +217,7 @@ public class CatanBoardGameView {
         zoomOutButton.setOnAction(e -> zoom(boardGroup, 0.9));
 
         new TradeController(gameController).setupTradeButton(tradeButton);
-        showCostsButton.setOnAction(e -> showBuildingCostsPopup());
+        showCostsButton.setOnAction(e -> drawOrDisplay.showBuildingCostsPopup());
         exitButton.setOnAction(e -> {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
             Optional<ButtonType> result = alert.showAndWait();
@@ -510,49 +510,42 @@ public class CatanBoardGameView {
         if (splitPane != null) splitPane.setDividerPositions(0.85);
     }
 
-    private void showBuildingCostsPopup() {
-        Stage popup = new Stage();
-        popup.initModality(Modality.APPLICATION_MODAL);
-        popup.setTitle("Building Costs");
-
-        InputStream imageStream = CatanBoardGameView.class.getResourceAsStream("/UI/catanBuildingCosts.png");
-        if (imageStream == null) {
-            System.err.println("Could not load building_costs.png");
-            return;
-        }
-        ImageView imageView = new ImageView(new Image(imageStream));
-        imageView.setPreserveRatio(true);
-        imageView.setFitWidth(400);
-
-        VBox layout = new VBox(imageView);
-        layout.setPadding(new Insets(10));
-
-        Scene scene = new Scene(layout);
-        popup.setScene(scene);
-        popup.showAndWait();
-    }
 
     //__________________________VIEW UPDATES_____________________________//
 
     public void prepareForHumanInitialPlacement(Player currentPlayer) {
         logToGameLog("Player " + currentPlayer.getPlayerId() + ", place your initial settlement.");
-        getRollDiceButton().setVisible(false);
-        getNextTurnButton().setVisible(false);
+        System.out.println("HIDING BUTTONS FOR HUMAN IN INITIAL PHASE");
+        hideTurnButton();
+        hideDiceButton();
     }
 
     public void refreshSidebar() {
+        System.out.println("REFRESHING SIDEBAR");
         createLeftMenu(true);
     }
 
     public void logToGameLog(String message) {
         Platform.runLater(() -> {
             gameLogArea.appendText(message + "\n");
-            gameLogArea.setScrollTop(Double.MAX_VALUE);
+            gameLogArea.positionCaret(gameLogArea.getLength());
         });
     }
 
+
+    //________________________SHOW/HIDE BUTTONS____________________________________//
+
     public void showDiceButton() {
         rollDiceButton.setVisible(true);
+    }
+    public void hideDiceButton() {
+        rollDiceButton.setVisible(false);
+    }
+    public void showTurnButton() {
+        nextTurnButton.setVisible(true);
+    }
+    public void hideTurnButton() {
+        nextTurnButton.setVisible(false);
     }
 
     //__________________________GETTERS_____________________________//

@@ -10,10 +10,12 @@ import javafx.stage.Stage;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import java.util.*;
 import org.example.catanboardgameviews.MenuView;
+import org.example.controller.GameController;
 
 public class Gameplay {
 
     //__________________________CONFIG & VIEWS_____________________________//
+    private GameController gameController;
     private final int boardRadius;
     private final DrawOrDisplay drawOrDisplay;
     private CatanBoardGameView catanBoardGameView;
@@ -29,21 +31,24 @@ public class Gameplay {
     private boolean forwardOrder = true;
     private boolean hasRolledThisTurn = false;
     private boolean waitingForInitialRoad = false;
+    private int turnCounter = 0;
 
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
     private final String[] developmentCardsTypes = {"Monopoly","Knight"};
     private List<String> shuffledDevelopmentCards;
+
     //__________________________DICE ROLL TRACKING_____________________________//
     private int lastRolledDie1;
     private int lastRolledDie2;
 
 
     //__________________________CONSTRUCTOR_____________________________//
-    public Gameplay(Stage primaryStage, int boardRadius) {
+    public Gameplay(Stage primaryStage, int boardRadius, GameController gameController) {
         this.drawOrDisplay = new DrawOrDisplay(boardRadius);
         this.boardRadius = boardRadius;
+        this.gameController = gameController;
     }
 
     //________________________INITIALIZE_______________________________//
@@ -82,9 +87,9 @@ public class Gameplay {
     }
 
     //____________________________TURN MANAGEMENT______________________________//
-    private int turnCounter = 0;
 
     public void nextPlayerTurn() {
+        startOfTurnEffects();
         turnCounter++;
         int MAX_TURNS = 100;
         if (turnCounter > MAX_TURNS) {
@@ -93,12 +98,6 @@ public class Gameplay {
             return;
         }
 
-        hasRolledThisTurn = false;
-        catanBoardGameView.centerBoard(
-                catanBoardGameView.getBoardGroup(),
-                catanBoardGameView.getGAME_WIDTH(),
-                catanBoardGameView.getGAME_HEIGHT()
-        );
 
         // ------------------- INITIAL PLACEMENT PHASE -------------------
         if (initialPhase) {
@@ -153,13 +152,26 @@ public class Gameplay {
         }
     }
 
-
+    private void startOfTurnEffects() {
+        catanBoardGameView.showDiceButton();
+        catanBoardGameView.hideTurnButton();
+        hasRolledThisTurn = false;
+        catanBoardGameView.centerBoard(
+                catanBoardGameView.getBoardGroup(),
+                catanBoardGameView.getGAME_WIDTH(),
+                catanBoardGameView.getGAME_HEIGHT()
+        );
+        var gameView = gameController.getGameView();
+        gameView.refreshSidebar();
+    }
 
 
 
     //_____________________________DICE________________________________//
 
     public int rollDice() {
+        catanBoardGameView.hideDiceButton();
+        catanBoardGameView.showTurnButton();
         Random rand = new Random();
         lastRolledDie1 = rand.nextInt(6) + 1;
         lastRolledDie2 = rand.nextInt(6) + 1;
@@ -320,25 +332,36 @@ public class Gameplay {
         return BuildResult.INSUFFICIENT_RESOURCES;
     }
 
-    //______________________BOOLEANS___________________________//
-
+    //______________________VALID BUILD CHECKS___________________________//
     public boolean isValidSettlementPlacement(Vertex vertex) {
         if (vertex.hasSettlement()) return false;
+
+        // Prevent placement on sea: valid vertices must border at least one non-desert tile
+        List<Tile> adjacentTiles = vertex.getAdjacentTiles();
+        long landTiles = adjacentTiles.stream()
+                .filter(t -> !t.getResourcetype().getName().equalsIgnoreCase("Desert"))
+                .count();
+
+        if (landTiles == 0) return false;
+
+        // Check distance rule: no neighboring settlements
         for (Vertex neighbor : vertex.getNeighbors()) {
             if (neighbor.hasSettlement()) return false;
         }
+
         return true;
     }
 
-    public boolean isNotValidCityPlacement(Vertex vertex) {
-        return !(vertex.hasSettlement() && vertex.getOwner() == currentPlayer);
-    }
-
     public boolean isValidRoadPlacement(Edge edge) {
-        for (Player player : playerList) {
-            if (player.getRoads().contains(edge)) return false;
-        }
+        // Prevent placing on sea — valid edges must have both vertices adjacent to land
+        boolean edgeInSea = edge.getVertex1().getAdjacentTiles().isEmpty()
+                || edge.getVertex2().getAdjacentTiles().isEmpty();
+        if (edgeInSea) return false;
 
+        // Prevent duplicate road
+        if (playerList.stream().anyMatch(p -> p.getRoads().contains(edge))) return false;
+
+        // Block building through opponent’s settlements
         for (Player player : playerList) {
             if (player != currentPlayer) {
                 if (player.getSettlements().contains(edge.getVertex1()) &&
@@ -352,6 +375,7 @@ public class Gameplay {
             }
         }
 
+        // Valid if connected to this player's existing road or settlement
         boolean connectsToSettlement = currentPlayer.getSettlements().contains(edge.getVertex1()) ||
                 currentPlayer.getSettlements().contains(edge.getVertex2());
 
@@ -359,6 +383,12 @@ public class Gameplay {
                 r.isConnectedTo(edge.getVertex1()) || r.isConnectedTo(edge.getVertex2()));
 
         return connectsToSettlement || connectsToRoad;
+    }
+
+
+
+    public boolean isNotValidCityPlacement(Vertex vertex) {
+        return !(vertex.hasSettlement() && vertex.getOwner() == currentPlayer);
     }
 
 
@@ -461,6 +491,9 @@ public class Gameplay {
 
     public void setHasRolledThisTurn(boolean b) {
         hasRolledThisTurn = b;
+    }
+    public void resetTurnCounter() {
+        turnCounter=0;
     }
 
 //__________________________GETTERS________________________//

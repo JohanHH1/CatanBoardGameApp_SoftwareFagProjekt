@@ -2,7 +2,9 @@ package org.example.controller;
 
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.example.catanboardgameapp.AIOpponent;
 import org.example.catanboardgameapp.Gameplay;
+import org.example.catanboardgameapp.Player;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.catanboardgameviews.MenuView;
 
@@ -22,7 +24,7 @@ public class GameController {
 
     public void startGame(int playerCount, int boardSize, int easyAI, int medAI, int hardAI) {
         // Initialize core game logic and data
-        gameplay = new Gameplay(primaryStage, boardSize - 1);
+        gameplay = new Gameplay(primaryStage, boardSize - 1, this);
 
         // Set up the menu reference (for returnToMenu use)
         MenuView menuView = new MenuView(primaryStage, this);
@@ -30,7 +32,7 @@ public class GameController {
 
         // Add all players (And AI players if chosen)
         gameplay.initializeAllPlayers(playerCount, easyAI, medAI, hardAI);
-
+        gameplay.resetTurnCounter();
         // Create the game UI and logic
         gameView = new CatanBoardGameView(primaryStage, gameplay, this, boardSize - 1); // scene is initialized inside constructor
 
@@ -44,13 +46,21 @@ public class GameController {
         // Show the game
         primaryStage.setScene(gameView.getScene());
         primaryStage.show();
+        Player currentPlayer = gameplay.getCurrentPlayer();
+
+        if (gameplay.isInInitialPhase()) {
+            if (currentPlayer instanceof AIOpponent ai) {
+                ai.placeInitialSettlementAndRoad(gameplay, gameView.getBoardGroup());
+            } else {
+                gameView.prepareForHumanInitialPlacement(currentPlayer);
+            }
+        }
     }
 
     public void returnToMenu(MenuView menuView) {
-        if (gameView != null) {
-            //gameView.resetGameUIState();
+        if (menuView != null) {
+            menuView.showMainMenu();
         }
-        menuView.showMainMenu();
     }
 
     public void resumeGame() {

@@ -11,6 +11,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -208,6 +209,28 @@ public class DrawOrDisplay {
 
 
     // ------------------------- ERRORS AND Popups ------------------------- //
+    public void showBuildingCostsPopup() {
+        Stage popup = new Stage();
+        popup.initModality(Modality.APPLICATION_MODAL);
+        popup.setTitle("Building Costs");
+
+        InputStream imageStream = CatanBoardGameView.class.getResourceAsStream("/UI/catanBuildingCosts.png");
+        if (imageStream == null) {
+            System.err.println("Could not load building_costs.png");
+            return;
+        }
+        ImageView imageView = new ImageView(new Image(imageStream));
+        imageView.setPreserveRatio(true);
+        imageView.setFitWidth(400);
+
+        VBox layout = new VBox(imageView);
+        layout.setPadding(new Insets(10));
+
+        Scene scene = new Scene(layout);
+        popup.setScene(scene);
+        popup.showAndWait();
+    }
+
     public void showErrorCross(Group boardGroup, double x, double y) {
         double size = 10.0 / boardRadius;
 

@@ -79,7 +79,7 @@ public class MenuView {
 
 
     private void startGame() {
-        System.out.println("GAME IS STARTING");
+        System.out.println("NEW GAME IS STARTING");
         gameController.startGame(playerCount, boardSize, AIOpponentsCountEASY, AIOpponentsCountMEDIUM, AIOpponentsCountHARD);
     }
     private void startAITestMatch() {

@@ -18,7 +18,7 @@ public class AIOpponent extends Player {
     public enum Strategy {
         ROADBUILDER, CITYUPGRADER, SETTLEMENTPLACER, LONGESTROAD, BIGGESTARMY,
     }
-    
+
     private final StrategyLevel strategyLevel;
     private final Random random = new Random();
     private final DrawOrDisplay drawOrDisplay;
@@ -89,7 +89,8 @@ public class AIOpponent extends Player {
                     }
                 }
 
-                // Cleanup if road fails
+                // Cleanup if road fails (should never happen)
+                System.out.println("SOMETING WONG - AI STEWPID");
                 v.setOwner(null);
                 getSettlements().remove(v);
                 boardGroup.getChildren().remove(circle);
@@ -98,7 +99,6 @@ public class AIOpponent extends Player {
 
         gameplay.getCatanBoardGameView().logToGameLog("AI " + getPlayerId() + " could not place initial settlement + road.");
     }
-
 
     private Strategy chooseStrategy() {
         return null;
