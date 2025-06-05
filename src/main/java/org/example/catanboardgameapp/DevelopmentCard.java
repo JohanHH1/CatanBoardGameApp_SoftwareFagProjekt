@@ -4,7 +4,10 @@ public class DevelopmentCard {
 
     public enum DevelopmentCardType {
         MONOPOLY("Monopoly"),
-        KNIGHT("Knight");
+        KNIGHT("Knight"),
+        ROADBUILDING("Road Building"),
+        YEAROFPLENTY("Year Of Plenty"),
+        VICTORYPOINT("Victory Point");
 
         private final String name;
 
