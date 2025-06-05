@@ -199,10 +199,7 @@ public class CatanBoardGameView {
             gameController.getBuildController().toggleConfirmBeforeBuild();
         });
         rollDiceButton.setOnAction(e -> {
-            gameplay.rollDiceAndDistribute(gameplay, diceImage1, diceImage2, root, boardGroup, board);
-            gameplay.setHasRolledThisTurn(true);
-            rollDiceButton.setDisable(true);
-            nextTurnButton.setVisible(true);
+            gameplay.rollDice();
         });
         developmentCardButton.setOnAction(e-> {
             gameplay.buyDevelopmentCard();
@@ -511,6 +508,14 @@ public class CatanBoardGameView {
 
 
     //__________________________VIEW UPDATES_____________________________//
+    public void updateDiceImages(int die1, int die2) {
+        diceImage1.setImage(drawOrDisplay.loadDiceImage(die1));
+        diceImage2.setImage(drawOrDisplay.loadDiceImage(die2));
+        diceImage1.setFitWidth(40);
+        diceImage1.setFitHeight(40);
+        diceImage2.setFitWidth(40);
+        diceImage2.setFitHeight(40);
+    }
 
     public void prepareForHumanInitialPlacement(Player currentPlayer) {
         logToGameLog("Player " + currentPlayer.getPlayerId() + ", place your initial settlement.");
@@ -548,6 +553,12 @@ public class CatanBoardGameView {
     }
 
     //__________________________GETTERS_____________________________//
+    public ImageView getDiceImage1() {
+        return diceImage1;
+    }
+    public ImageView getDiceImage2() {
+        return diceImage2;
+    }
     public Scene getScene() {
         return scene;
     }

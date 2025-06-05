@@ -97,15 +97,12 @@ public class Gameplay {
             Platform.runLater(() -> menuView.showMainMenu());
             return;
         }
-
-
         // ------------------- INITIAL PLACEMENT PHASE -------------------
         if (initialPhase) {
             if (waitingForInitialRoad) {
                 catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " must place a road.");
                 return;
             }
-
             currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
 
             if (forwardOrder && currentPlayerIndex >= playerList.size()) {
@@ -120,11 +117,10 @@ public class Gameplay {
                 waitingForInitialRoad = false;
                 lastInitialSettlement = null;
 
-                // ✅ NOW enter main phase logic
+                // NOW enter main phase logic
                 catanBoardGameView.showDiceButton();
                 return;
             }
-
             currentPlayer = playerList.get(currentPlayerIndex);
             waitingForInitialRoad = false;
             lastInitialSettlement = null;
@@ -151,7 +147,7 @@ public class Gameplay {
             catanBoardGameView.showDiceButton();
         }
     }
-
+    // Helper function for nextPlayerTurn function above
     private void startOfTurnEffects() {
         catanBoardGameView.showDiceButton();
         catanBoardGameView.hideTurnButton();
@@ -165,25 +161,59 @@ public class Gameplay {
         gameView.refreshSidebar();
     }
 
-
-
     //_____________________________DICE________________________________//
-
     public int rollDice() {
-        catanBoardGameView.hideDiceButton();
-        catanBoardGameView.showTurnButton();
+        // Mark dice as rolled this turn
+        setHasRolledThisTurn(true);
+        // Roll the dice
         Random rand = new Random();
         lastRolledDie1 = rand.nextInt(6) + 1;
         lastRolledDie2 = rand.nextInt(6) + 1;
         int roll = lastRolledDie1 + lastRolledDie2;
+
+        // UPDATE DICES AFTER ROLL
+        catanBoardGameView.updateDiceImages(lastRolledDie1, lastRolledDie2);
+
+        // Log the result
         catanBoardGameView.logToGameLog("Dice rolled: " + lastRolledDie1 + " + " + lastRolledDie2 + " = " + roll);
+
+        // Hide/Show relevant UI
+        catanBoardGameView.hideDiceButton();
+        catanBoardGameView.showTurnButton();
+        Group boardGroup = catanBoardGameView.getBoardGroup();
+
+        // Handle robber or distribute resources
         if (roll == 7) {
+            catanBoardGameView.getNextTurnButton().setDisable(true);
             catanBoardGameView.getRobber().requireRobberMove();
+            catanBoardGameView.getRobber().showRobberTargets(boardGroup);
         } else {
-            distributeResource(roll);
+            distributeResources(roll);
         }
+
+        // Refresh UI
+        catanBoardGameView.refreshSidebar();
         return roll;
     }
+
+    public void distributeResources(int diceRoll) {
+        if (diceRoll == 7) return;
+
+        for (Tile tile : board.getTiles()) {
+            if (tile.getTileDiceNumber() == diceRoll) {
+                for (Vertex vertex : tile.getVertices()) {
+                    Player owner = vertex.getOwner();
+                    if (owner != null) {
+                        String res = tile.getResourcetype().getName();
+                        int amount = vertex.getTypeOf().equals("City") ? 2 : 1;
+                        owner.getResources().merge(res, amount, Integer::sum);
+                        catanBoardGameView.logToGameLog("Player " + owner.getPlayerId() + " gets " + res);
+                    }
+                }
+            }
+        }
+    }
+
 
     //_____________________________RESOURCES & TRADING_____________________________//
 
@@ -429,47 +459,7 @@ public class Gameplay {
 
     //___________________________HELPER FUNCTIONS_____________________________//
 
-    public void rollDiceAndDistribute(Gameplay gameplay, ImageView dice1, ImageView dice2, BorderPane root, Group boardGroup, Board board) {
-        int result = gameplay.rollDice();
-        int die1 = gameplay.getLastRolledDie1();
-        int die2 = gameplay.getLastRolledDie2();
-
-        dice1.setImage(drawOrDisplay.loadDiceImage(die1));
-        dice2.setImage(drawOrDisplay.loadDiceImage(die2));
-        dice1.setFitWidth(40);
-        dice2.setFitWidth(40);
-        dice1.setFitHeight(40);
-        dice2.setFitHeight(40);
-
-        if (result == 7) {
-            catanBoardGameView.getNextTurnButton().setVisible(false);
-            catanBoardGameView.getNextTurnButton().setDisable(true);
-            catanBoardGameView.getRobber().showRobberTargets(boardGroup);
-        } else {
-            catanBoardGameView.getNextTurnButton().setVisible(false);
-        }
-        catanBoardGameView.refreshSidebar();
-        catanBoardGameView.getRollDiceButton().setVisible(false);
-    }
-
-    public void distributeResource(int diceRoll) {
-        if (diceRoll == 7) return;
-        for (Tile tile : board.getTiles()) {
-            if (tile.getTileDiceNumber() == diceRoll) {
-                for (Vertex vertex : tile.getVertices()) {
-                    Player owner = vertex.getOwner();
-                    if (owner != null) {
-                        String res = tile.getResourcetype().getName();
-                        int current = owner.getResources().getOrDefault(res, 0);
-                        owner.getResources().put(res, current + (vertex.getTypeOf().equals("City") ? 2 : 1));
-                        catanBoardGameView.logToGameLog("Player " + owner.getPlayerId() + " gets " + res);
-                    }
-                }
-            }
-        }
-    }
-
-    public int getTotalSelectedCards(Map<String, Integer> selection) {
+        public int getTotalSelectedCards(Map<String, Integer> selection) {
         return selection.values().stream().mapToInt(Integer::intValue).sum();
     }
 
