@@ -72,9 +72,6 @@ public class DrawOrDisplay {
         }
     }
 
-
-    // -------------------- Initial Placement (Human) -------------------- //
-
     // -------------------- Click Initialization (Build Phase) -------------------- //
 
     public void initEdgesClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
@@ -350,10 +347,6 @@ public class DrawOrDisplay {
         });
     }
 
-    public void resetCounters() {
-        settlementCounter = 0;
-    }
-
     public Map<String, Integer> showYearOfPlentyDialog() {
         List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
 
@@ -430,7 +423,9 @@ public class DrawOrDisplay {
         return map.values().stream().mapToInt(Integer::intValue).sum();
     }
 
-
+    public void resetCounters() {
+        settlementCounter = 0;
+    }
 
     // ------------------------- Getter ------------------------- //
 

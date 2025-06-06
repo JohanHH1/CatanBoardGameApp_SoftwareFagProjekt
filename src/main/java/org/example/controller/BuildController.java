@@ -33,14 +33,14 @@ public class BuildController {
     // Handles mouse click on road (edge) during gameplay or initial setup
     public EventHandler<MouseEvent> createRoadClickHandler(Edge edge, Line visibleLine, BorderPane root) {
         return event -> {
-            if (gameController.getGameplay().isPlacingFreeRoads()) {
+            if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
                 if (gameController.getGameplay().isValidRoadPlacement(edge)) {
                     gameController.getGameplay().getCurrentPlayer().getRoads().add(edge);
                     buildRoad(edge, gameController.getGameplay().getCurrentPlayer());
                     gameController.getGameView().logToGameLog("Placed free road via Road Building card.");
-                    gameController.getGameplay().decrementFreeRoads();
+                    gameController.getGameplay().getDevelopmentCard().decrementFreeRoads();
 
-                    if (!gameController.getGameplay().isPlacingFreeRoads()) {
+                    if (!gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
                         gameController.getGameView().logToGameLog("Finished placing 2 free roads.");
                         gameController.getGameView().refreshSidebar();
                     }
@@ -77,7 +77,7 @@ public class BuildController {
                 case SUCCESS -> {
                     buildRoad(edge, currentPlayer);
 
-                    // ✅ Proceed only if road was placed AND no longer waiting
+                    // Proceed only if road was placed AND no longer waiting
                     if (gameController.getGameplay().isInInitialPhase()
                             && !gameController.getGameplay().isWaitingForInitialRoad()) {
                         gameController.getGameplay().nextPlayerTurn();
@@ -103,7 +103,7 @@ public class BuildController {
     // Handles mouse click on a vertex (for building settlement or upgrading to city)
     public EventHandler<MouseEvent> createSettlementClickHandler(Circle visibleCircle, Vertex vertex, BorderPane root) {
         return event -> {
-            if (gameController.getGameplay().isPlacingFreeRoads()) {
+            if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
                 drawOrDisplay.showMustPlaceTwoRoadsPopup();
                 return;
             }

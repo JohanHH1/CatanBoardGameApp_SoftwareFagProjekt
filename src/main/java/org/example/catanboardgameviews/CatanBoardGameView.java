@@ -208,7 +208,7 @@ public class CatanBoardGameView {
         zoomInButton.setOnAction(e -> zoom(boardGroup, 1.1));
         zoomOutButton.setOnAction(e -> zoom(boardGroup, 0.9));
 
-        new TradeController(gameController).setupTradeButton(tradeButton);
+        new TradeController(gameController, boardRadius).setupTradeButton(tradeButton);
         showCostsButton.setOnAction(e -> drawOrDisplay.showBuildingCostsPopup());
         exitButton.setOnAction(e -> {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);

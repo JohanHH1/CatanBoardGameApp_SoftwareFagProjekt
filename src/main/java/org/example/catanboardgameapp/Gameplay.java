@@ -37,7 +37,12 @@ public class Gameplay {
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
-    private final String[] developmentCardsTypes = { "Monopoly","Monopoly","Road Building","Road Building","Year Of Plenty","Year Of Plenty", "Victory Point", "Victory Point", "Victory Point", "Victory Point", "Victory Point","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight"};
+    private final DevelopmentCard developmentCard;
+    private final String[] developmentCardsTypes =
+            { "Monopoly","Monopoly","Road Building","Road Building","Year Of Plenty","Year Of Plenty",
+              "Victory Point", "Victory Point", "Victory Point", "Victory Point", "Victory Point",
+              "Knight", "Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight",
+              "Knight","Knight", "Knight","Knight","Knight"};
     private List<String> shuffledDevelopmentCards;
 
     //__________________________DICE ROLL TRACKING_____________________________//
@@ -50,6 +55,8 @@ public class Gameplay {
         this.drawOrDisplay = new DrawOrDisplay(boardRadius);
         this.boardRadius = boardRadius;
         this.gameController = gameController;
+        this.developmentCard = new DevelopmentCard(playerList, catanBoardGameView, new TradeController(gameController, boardRadius));
+
     }
 
     //________________________INITIALIZE_______________________________//
@@ -160,8 +167,6 @@ public class Gameplay {
                 catanBoardGameView.getGAME_WIDTH(),
                 catanBoardGameView.getGAME_HEIGHT()
         );
-//        var gameView = gameController.getGameView();
-//        gameView.refreshSidebar();
     }
 
     //_____________________________DICE________________________________//
@@ -217,6 +222,34 @@ public class Gameplay {
         }
     }
 
+    //_________________________BUY AND PLAY DEVELOPMENT CARDS____________________________________________//
+    public void buyDevelopmentCard() {
+        if (shuffledDevelopmentCards.isEmpty()){
+            drawOrDisplay.showNoMoreDevelopmentCardToBuyPopup();
+        } else if (canRemoveResource("Wool", 1) && canRemoveResource("Ore", 1) && canRemoveResource("Grain", 1)) {
+            removeResource("Wool", 1);
+            removeResource("Ore", 1);
+            removeResource("Grain", 1);
+            String cardType = shuffledDevelopmentCards.remove(0);
+            currentPlayer.getDevelopmentCards().put(cardType,currentPlayer.getDevelopmentCards().getOrDefault(cardType, 0) + 1);
+            catanBoardGameView.logToGameLog(currentPlayer.toString() +" bought a development card");
+            catanBoardGameView.refreshSidebar();
+        } else {
+            drawOrDisplay.showFailToBuyDevelopmentCardPopup();
+        }
+    }
+    public void playDevelopmentCard(Player player, String cardName) {
+        DevelopmentCard.DevelopmentCardType type =
+                DevelopmentCard.DevelopmentCardType.fromName(cardName);
+
+        type.play(player, developmentCard);
+
+        player.getDevelopmentCards().merge(cardName, -1, Integer::sum);
+        catanBoardGameView.refreshSidebar();
+    }
+    public DevelopmentCard getDevelopmentCard() {
+        return developmentCard;
+    }
 
     //_____________________________RESOURCES & TRADING_____________________________//
 
@@ -242,22 +275,6 @@ public class Gameplay {
         addResource(receive, 1);
         catanBoardGameView.logToGameLog("Traded 4 " + give + " for 1 " + receive);
         return true;
-    }
-    
-    public void buyDevelopmentCard() {
-        if (shuffledDevelopmentCards.isEmpty()){
-            drawOrDisplay.showNoMoreDevelopmentCardToBuyPopup();
-        } else if (canRemoveResource("Wool", 1) && canRemoveResource("Ore", 1) && canRemoveResource("Grain", 1)) {
-            removeResource("Wool", 1);
-            removeResource("Ore", 1);
-            removeResource("Grain", 1);
-            String cardType = shuffledDevelopmentCards.remove(0);
-            currentPlayer.getDevelopmentCards().put(cardType,currentPlayer.getDevelopmentCards().getOrDefault(cardType, 0) + 1);
-            catanBoardGameView.logToGameLog(currentPlayer.toString() +" bought a development card");
-            catanBoardGameView.refreshSidebar();
-        } else {
-            drawOrDisplay.showFailToBuyDevelopmentCardPopup();
-        }
     }
 
     //_____________________________BUILDING FUNCTIONS____________________________//
@@ -448,7 +465,7 @@ public class Gameplay {
         }
     }
 
-
+    // SKAL BRUGES TIL LONGEST ROAD BIGGEST ARMY
     public void decreasePlayerScore() {
         currentPlayer.decreasePlayerScore();
         currentPlayer.decreasePlayerScore();
@@ -528,80 +545,5 @@ public class Gameplay {
         return catanBoardGameView;
     }
 
-    public void playDevelopmentCard(Player player, String cardName) {
 
-        if (cardName.equals("Monopoly")){ 
-            new TradeController(gameController).playMonopolyCardFromButton();
-            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a monopoly development card");
-
-        } else if (cardName.equals("Knight")){
-            catanBoardGameView.hideDiceButton();
-            catanBoardGameView.showTurnButton();
-            Group boardGroup = catanBoardGameView.getBoardGroup();
-                catanBoardGameView.getNextTurnButton().setDisable(true);
-                catanBoardGameView.getRobber().showRobberTargets(boardGroup);
-            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a knight development card");
-
-        } else if (cardName.equals("Road Building")){
-            startPlacingFreeRoads(2);
-            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a road building development card");
-
-        } else if (cardName.equals("Year Of Plenty")){
-            new TradeController(gameController).playYearOfPlentyCardFromButton();
-            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a year of plenty development card");
-
-        } else if (cardName.equals("Victory Point")){
-            currentPlayer.increasePlayerScore();
-            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a victory point development card");
-        }
-        currentPlayer.getDevelopmentCards().put(cardName,currentPlayer.getDevelopmentCards().getOrDefault(cardName, 0) - 1);
-        catanBoardGameView.refreshSidebar();
-    }
-    private boolean placingFreeRoads = false;
-    private int freeRoadsLeft = 0;
-
-    public void startPlacingFreeRoads(int count) {
-        this.placingFreeRoads = true;
-        this.freeRoadsLeft = count;
-    }
-
-    public void finishFreeRoadPlacement() {
-        this.placingFreeRoads = false;
-        this.freeRoadsLeft = 0;
-    }
-
-    public boolean isPlacingFreeRoads() {
-        return placingFreeRoads;
-    }
-
-    public int getFreeRoadsLeft() {
-        return freeRoadsLeft;
-    }
-
-    public void decrementFreeRoads() {
-        if (freeRoadsLeft > 0) freeRoadsLeft--;
-        if (freeRoadsLeft == 0) placingFreeRoads = false;
-    }
-
-    public void addResourcesToPlayer(Map<String, Integer> added) {
-        added.forEach((res, amt) -> {
-            int current = currentPlayer.getResources().getOrDefault(res, 0);
-            currentPlayer.getResources().put(res, current + amt);
-        });
-    }
-
-    public int monopolizeResource(String resource, Player player) {
-        int totalTaken = 0;
-        for (Player other : playerList) {
-            if (!other.equals(player)) {
-                int amount = other.getResources().getOrDefault(resource, 0);
-                if (amount > 0) {
-                    other.getResources().put(resource, 0);
-                    totalTaken += amount;
-                }
-            }
-        }
-        player.getResources().merge(resource, totalTaken, Integer::sum);
-        return totalTaken;
-    }
 }

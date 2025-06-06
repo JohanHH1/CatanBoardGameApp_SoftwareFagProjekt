@@ -2,6 +2,7 @@ package org.example.controller;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
+import org.example.catanboardgameapp.DevelopmentCard;
 import org.example.catanboardgameapp.DrawOrDisplay;
 import org.example.catanboardgameapp.Gameplay;
 import org.example.catanboardgameapp.Player;
@@ -15,15 +16,15 @@ public class TradeController {
     private final DrawOrDisplay drawOrDisplay;
 
     //___________________________CONTROLLER__________________________________//
-    public TradeController(GameController gameController) {
+    public TradeController(GameController gameController, int boardRadius) {
         this.gameController = gameController;
-        this.drawOrDisplay = new DrawOrDisplay(gameController.getGameplay().getBoardRadius());
+        this.drawOrDisplay = new DrawOrDisplay(boardRadius);
     }
 
     //___________________________FUNCTIONS__________________________________//
     public void setupTradeButton(Button tradeButton) {
         tradeButton.setOnAction(e -> {
-            if (gameController.getGameplay().isPlacingFreeRoads()) {
+            if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
                 drawOrDisplay.showMustPlaceTwoRoadsPopup();
                 return;
             }
@@ -72,8 +73,10 @@ public class TradeController {
             }
         });
     }
+
     public void playMonopolyCardFromButton() {
         Gameplay gameplay = gameController.getGameplay();
+        DevelopmentCard devCard = gameplay.getDevelopmentCard();
         Player currentPlayer = gameplay.getCurrentPlayer();
 
         List<String> resourceOptions = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
@@ -86,19 +89,21 @@ public class TradeController {
         if (result.isEmpty()) return;
 
         String chosenResource = result.get();
-        int taken = gameplay.monopolizeResource(chosenResource, currentPlayer);
+        int taken = devCard.monopolizeResource(chosenResource, currentPlayer);
 
         gameplay.getCatanBoardGameView().logToGameLog("Player " + currentPlayer.getPlayerId() +
                 " played a Monopoly card and took " + taken + " " + chosenResource + " from other players.");
         gameplay.getCatanBoardGameView().refreshSidebar();
     }
+
     public void playYearOfPlentyCardFromButton() {
         Gameplay gameplay = gameController.getGameplay();
+        DevelopmentCard devCard = gameplay.getDevelopmentCard();
         Player currentPlayer = gameplay.getCurrentPlayer();
 
         Map<String, Integer> selected = new DrawOrDisplay(gameplay.getBoardRadius()).showYearOfPlentyDialog();
         if (selected != null) {
-            gameplay.addResourcesToPlayer(selected);
+            devCard.addResourcesToPlayer(currentPlayer, selected);
             gameplay.getCatanBoardGameView().logToGameLog("Player " + currentPlayer.getPlayerId() +
                     " used Year of Plenty and received: " +
                     selected.entrySet().stream()
@@ -107,4 +112,5 @@ public class TradeController {
             gameplay.getCatanBoardGameView().refreshSidebar();
         }
     }
+
 }

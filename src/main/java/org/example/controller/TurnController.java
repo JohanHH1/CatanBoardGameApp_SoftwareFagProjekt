@@ -11,21 +11,17 @@ import org.example.catanboardgameapp.Player;
 public class TurnController {
 
     private final GameController gameController;
-    private final Button rollDiceButton;
-    private final Button nextTurnButton;
     private final DrawOrDisplay drawOrDisplay;
 
     //___________________________CONTROLLER__________________________________//
     public TurnController(GameController gameController, Button rollDiceButton, Button nextTurnButton) {
         this.gameController = gameController;
-        this.rollDiceButton = rollDiceButton;
-        this.nextTurnButton = nextTurnButton;
         this.drawOrDisplay = new DrawOrDisplay(gameController.getGameplay().getBoardRadius());
     }
 
     //___________________________FUNCTIONS__________________________________//
     public void handleNextTurnButtonPressed(ActionEvent event) {
-        if (gameController.getGameplay().isPlacingFreeRoads()) {
+        if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
             drawOrDisplay.showMustPlaceTwoRoadsPopup();
             return;
         }
