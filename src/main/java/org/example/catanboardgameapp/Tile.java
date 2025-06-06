@@ -65,7 +65,7 @@ public class Tile {
     public ImageView getResourceIcon(Resource.ResourceType type,
                                      double x, double y, double hexSize) {
         // Don't return icon for SEA tiles
-        if (type == Resource.ResourceType.SEA) return null;
+        //if (type == Resource.ResourceType.SEA) return null;
 
         Image image = imageCache.computeIfAbsent(type, t -> {
             String filename = switch (t) {
@@ -75,6 +75,7 @@ public class Tile {
                 case GRAIN  -> "/Icons/grain.png";
                 case WOOL   -> "/Icons/wool.png";
                 case DESERT -> "/Icons/desert.png";
+                case SEA   -> "/Icons/sea.png";
                 default     -> "/Icons/error.png"; // fallback for safety
             };
             InputStream stream = CatanBoardGameView.class.getResourceAsStream(filename);
