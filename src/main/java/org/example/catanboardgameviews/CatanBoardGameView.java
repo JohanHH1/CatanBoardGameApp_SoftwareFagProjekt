@@ -137,7 +137,8 @@ public class CatanBoardGameView {
         drawOrDisplay.initVerticeClickHandlers(board, boardGroup, buildController, boardRadius, root);
 
         VBox gameLogPanel = createGameLogPanel();
-        Pane boardWrapper = new Pane(boardGroup);
+
+        Pane boardWrapper = createBoardWrapperWithBackground(boardGroup);
         VBox boardOnly = new VBox(boardWrapper);
         VBox.setVgrow(boardWrapper, Priority.ALWAYS);
         centerBoard(boardGroup, GAME_WIDTH, GAME_HEIGHT);
@@ -435,6 +436,31 @@ public class CatanBoardGameView {
             boardGroup.setTranslateY(initialTranslateY[0] + deltaY);
         });
     }
+
+    private Pane createBoardWrapperWithBackground(Group boardGroup) {
+        Pane boardWrapper = new Pane(boardGroup);
+        boardWrapper.setPrefSize(GAME_WIDTH, GAME_HEIGHT);
+
+        Image backgroundImage = new Image(
+                getClass().getResource("/backgrounds/boardBackground.png").toExternalForm()
+        );
+
+        BackgroundSize backgroundSize = new BackgroundSize(
+                100, 100, true, true, false, true
+        );
+
+        BackgroundImage bgImage = new BackgroundImage(
+                backgroundImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                backgroundSize
+        );
+
+        boardWrapper.setBackground(new Background(bgImage));
+        return boardWrapper;
+    }
+
 
     //__________________________UTILITY METHODS_____________________________//
 
