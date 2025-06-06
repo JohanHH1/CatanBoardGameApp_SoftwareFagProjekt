@@ -227,7 +227,7 @@ public class DrawOrDisplay {
     }
 
     // ------------------------- ERRORS AND Popups ------------------------- //
-    public void showBuildingCostsPopup() {
+        public void showBuildingCostsPopup() {
         Stage popup = new Stage();
         popup.initModality(Modality.APPLICATION_MODAL);
         popup.setTitle("Building Costs");

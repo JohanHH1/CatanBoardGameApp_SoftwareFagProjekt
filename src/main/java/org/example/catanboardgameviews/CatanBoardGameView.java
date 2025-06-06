@@ -148,7 +148,11 @@ public class CatanBoardGameView {
         root.setTop(createTopButtonBar());
         root.setLeft(createLeftMenu(false));
 
+        // Setup KEY buttons clickable ESC, SPACE, ASDW, R for reset board etc
         setupInputHandlers(boardWrapper);
+        // Ensure focus so key events work
+        root.setFocusTraversable(true);
+        root.requestFocus();
     }
 
     private VBox createGameLogPanel() {
@@ -382,11 +386,25 @@ public class CatanBoardGameView {
                 case S -> boardGroup.setTranslateY(boardGroup.getTranslateY() + step);
                 case D -> boardGroup.setTranslateX(boardGroup.getTranslateX() + step);
                 case R, C -> centerBoard(boardGroup, GAME_WIDTH, GAME_HEIGHT);
+                case SPACE -> {
+                    if (!gameplay.isGamePaused()) {
+                        gameplay.pauseGame();
+                        Alert pauseAlert = new Alert(Alert.AlertType.INFORMATION, "Game is paused. Press OK to resume.", ButtonType.OK);
+                        pauseAlert.setTitle("Game Paused");
+                        pauseAlert.setHeaderText(null);
+
+                        pauseAlert.showAndWait(); // Wait for user to press OK
+                        gameController.resumeGame(); // Always resume after OK
+                    }
+                }
                 case ESCAPE -> {
+                    gameplay.pauseGame();
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Exit to main menu?", ButtonType.YES, ButtonType.NO);
                     Optional<ButtonType> result = alert.showAndWait();
                     if (result.isPresent() && result.get() == ButtonType.YES) {
                         gameController.returnToMenu(gameplay.getMenuView());
+                    } else if (result.isPresent() && result.get() == ButtonType.NO) {
+                        gameController.resumeGame();  // Only resume if they cancel the exit
                     }
                 }
             }

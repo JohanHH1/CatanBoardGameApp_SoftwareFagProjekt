@@ -145,11 +145,26 @@ public class AIOpponent extends Player {
 
     //__________________________________MAKE MOVE LOGIC________________________________________//
     public void makeMoveAI(Gameplay gameplay) {
-        // Simulate thinking delay on background thread
+        // Wait in background thread until game is resumed
+        while (gameplay.isGamePaused()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+
+        // Simulate thinking delay
         pauseBeforeMove();
 
-        // Defer UI interaction to JavaFX Application Thread
+        // Schedule move on UI thread
         Platform.runLater(() -> {
+            // Double-check paused state inside UI thread
+            if (gameplay.isGamePaused()) {
+                return; // Do not continue
+            }
+
             gameplay.rollDice();
 
             switch (strategyLevel) {
@@ -159,13 +174,11 @@ public class AIOpponent extends Player {
                 }
                 case MEDIUM -> {
                     gameplay.getCatanBoardGameView().logToGameLog("Strategy: MEDIUM (EASY FOR NOW)");
-                    makeEasyLevelMove(gameplay); // Temporarily use EASY logic
-                    // makeMediumLevelMove(gameplay);
+                    makeEasyLevelMove(gameplay); // Replace later
                 }
                 case HARD -> {
                     gameplay.getCatanBoardGameView().logToGameLog("Strategy: HARD (EASY FOR NOW)");
-                    makeEasyLevelMove(gameplay); // Temporarily use EASY logic
-                    // makeHardLevelMove(gameplay);
+                    makeEasyLevelMove(gameplay); // Replace later
                 }
             }
         });
@@ -672,7 +685,7 @@ public class AIOpponent extends Player {
         try {
             //int delay = ThreadLocalRandom.current().nextInt(3000, 10000);
             //int delay = ThreadLocalRandom.current().nextInt(700, 900); // ~0.7 to 0.9 sec
-            int delay = ThreadLocalRandom.current().nextInt(7, 11); // ~0.2 to 0.6 sec
+            int delay = ThreadLocalRandom.current().nextInt(90, 100); // ~0.2 to 0.6 sec
             Thread.sleep(delay);
             Thread.sleep(1000);
         } catch (InterruptedException e) {

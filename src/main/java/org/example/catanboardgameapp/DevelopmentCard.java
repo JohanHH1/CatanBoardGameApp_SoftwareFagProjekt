@@ -89,8 +89,13 @@ public class DevelopmentCard {
     // ------------------------
 
     public void log(String message) {
-        view.logToGameLog(message);
+        if (view != null) {
+            view.logToGameLog(message);
+        } else {
+            System.err.println("LOG FAIL (view=null): " + message); // optional fallback
+        }
     }
+
 
     public void startPlacingFreeRoads(int count) {
         this.placingFreeRoads = true;
