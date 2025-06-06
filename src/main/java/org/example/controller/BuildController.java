@@ -101,7 +101,7 @@ public class BuildController {
     //___________________________ SETTLEMENT / CITY PLACEMENT HANDLER ___________________________
 
     // Handles mouse click on a vertex (for building settlement or upgrading to city)
-    public EventHandler<MouseEvent> createSettlementClickHandler(Circle visibleCircle, Vertex vertex, BorderPane root) {
+    public EventHandler<MouseEvent> createSettlementClickHandler(Circle circle, Vertex vertex, BorderPane root) {
         return event -> {
             if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
                 drawOrDisplay.showMustPlaceTwoRoadsPopup();
@@ -138,7 +138,7 @@ public class BuildController {
             switch (result) {
                 case SUCCESS -> {
                     vertex.setOwner(currentPlayer);
-                    drawOrDisplay.drawSettlement(visibleCircle, vertex, boardGroup);
+                    drawOrDisplay.drawSettlement(circle, vertex, boardGroup);
                     gameController.getGameView().logToGameLog("Settlement built by player " + currentPlayer.getPlayerId());
                     gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                 }
@@ -152,7 +152,7 @@ public class BuildController {
                     }
                     if (cityResult == BuildResult.UPGRADED_TO_CITY) {
                         vertex.setOwner(currentPlayer);
-                        gameController.getGameView().getSettlementLayer().getChildren().remove(visibleCircle);
+                        gameController.getGameView().getSettlementLayer().getChildren().remove(circle);
                         Rectangle citySquare = new Rectangle(vertex.getX() - 6, vertex.getY() - 6, 12, 12);
                         citySquare.setFill(currentPlayer.getColor());
                         citySquare.setStroke(Color.BLACK);

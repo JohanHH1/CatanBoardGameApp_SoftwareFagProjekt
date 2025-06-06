@@ -58,7 +58,7 @@ public class AIOpponent extends Player {
 
     public void placeInitialSettlementAndRoad(Gameplay gameplay, Group boardGroup) {
         pauseBeforeMove();
-        System.out.println("placeInitialSettlementAndRoad");
+        //System.out.println("placeInitialSettlementAndRoad");
 
         List<Vertex> candidates = new ArrayList<>(gameplay.getBoard().getVertices());
 
@@ -104,7 +104,10 @@ public class AIOpponent extends Player {
         }
         System.out.println("AI Player " + getPlayerId() + " (" + strategyLevel.name() + ") chose settlement with score: " + chosenSettlementScore);
         Circle circle = new Circle(chosenSettlement.getX(), chosenSettlement.getY(), 16.0 / gameplay.getBoardRadius());
+
+        chosenSettlement.setOwner(gameplay.getCurrentPlayer());
         drawOrDisplay.drawSettlement(circle, chosenSettlement, boardGroup);
+
 
         // STEP 3: Choose best connecting road
         Edge chosenEdge = null;
@@ -169,7 +172,7 @@ public class AIOpponent extends Player {
     }
 
     private void pauseBeforeMove() {
-        System.out.println("AI is thinking for about a second before making a move");
+        //System.out.println("AI is thinking for about a second before making a move");
         try {
             //int delay = ThreadLocalRandom.current().nextInt(3000, 10000);
             int delay = ThreadLocalRandom.current().nextInt(700, 900); // ~0.2 to 0.6 sec

@@ -38,6 +38,7 @@ public class DrawOrDisplay {
     private final List<Circle> vertexClickHighlights = new ArrayList<>();
     private final List<Line> edgeClickHighlights = new ArrayList<>();
     private static int settlementCounter = 0;
+    private static final boolean SHOW_SETTLEMENT_ORDER = true;
 
     public DrawOrDisplay(int boardRadius) {
         this.boardRadius = boardRadius;
@@ -55,21 +56,29 @@ public class DrawOrDisplay {
         if (vertex.getOwner() != null) {
             circle.setFill(vertex.getOwner().getColor());
             circle.setRadius(20.0 / boardRadius);
+        } else {
+            System.out.println("SOMETHING WRONG DRAWING WITHOUT ANY PLAYER AS OWNER???");
+            circle.setFill(Color.TRANSPARENT);
+            circle.setRadius(10.0 / boardRadius);
+        }
 
-            // Label with placement order
+        // 1. Add circle
+        boardGroup.getChildren().add(circle);
+
+        // 2. Add label *after* road is drawn, and ensure it’s last
+        if (SHOW_SETTLEMENT_ORDER && vertex.getOwner() != null) {
             settlementCounter++;
             Text label = new Text(String.valueOf(settlementCounter));
             label.setFill(Color.BLACK);
             label.setStyle("-fx-font-weight: bold;");
-            label.setX(vertex.getX() - 4); // offset for centering
-            label.setY(vertex.getY() + 4); // offset for vertical alignment
+            label.applyCss();
+            label.setX(vertex.getX() - label.getLayoutBounds().getWidth() / 2);
+            label.setY(vertex.getY() + label.getLayoutBounds().getHeight() / 4);
 
-            boardGroup.getChildren().addAll(circle, label);
-        } else {
-            circle.setFill(Color.TRANSPARENT);
-            circle.setRadius(10.0 / boardRadius);
-            boardGroup.getChildren().add(circle);
+            // Add *after* all game objects
+            Platform.runLater(() -> boardGroup.getChildren().add(label));
         }
+
     }
 
     // -------------------- Click Initialization (Build Phase) -------------------- //

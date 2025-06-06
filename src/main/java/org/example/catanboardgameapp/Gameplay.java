@@ -209,10 +209,15 @@ public class Gameplay {
 
         for (Tile tile : board.getTiles()) {
             if (tile.getTileDiceNumber() == diceRoll) {
+                Resource.ResourceType type = tile.getResourcetype();
+
+                // Skip tiles that are not supposed to produce anything
+                if (type == Resource.ResourceType.SEA || type == Resource.ResourceType.DESERT) continue;
+
                 for (Vertex vertex : tile.getVertices()) {
                     Player owner = vertex.getOwner();
                     if (owner != null) {
-                        String res = tile.getResourcetype().getName();
+                        String res = type.getName();
                         int amount = vertex.getTypeOf().equals("City") ? 2 : 1;
                         owner.getResources().merge(res, amount, Integer::sum);
                         catanBoardGameView.logToGameLog("Player " + owner.getPlayerId() + " gets " + res);
@@ -295,15 +300,17 @@ public class Gameplay {
         if (currentPlayer.getSettlements().size() == 2) {
             currentPlayer.setSecondSettlement(vertex);
             for (Tile tile : vertex.getAdjacentTiles()) {
-                String type = tile.getResourcetype().getName();
-                if (!type.equals("Desert")) {
-                    currentPlayer.getResources().merge(type, 1, Integer::sum);
+                Resource.ResourceType type = tile.getResourcetype();
+
+                // Only collect valid resource types
+                if (type != Resource.ResourceType.DESERT && type != Resource.ResourceType.SEA) {
+                    currentPlayer.getResources().merge(type.getName(), 1, Integer::sum);
                 }
             }
         }
         return BuildResult.SUCCESS;
     }
-
+    
     public BuildResult buildRoad(Edge edge) {
         if (initialPhase && waitingForInitialRoad) {
             if (!edge.isConnectedTo(lastInitialSettlement)) return BuildResult.NOT_CONNECTED;
