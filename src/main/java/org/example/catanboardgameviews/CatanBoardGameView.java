@@ -186,7 +186,7 @@ public class CatanBoardGameView {
         Button zoomOutButton = new Button("-");
         Button showCostsButton = new Button("Show Recipes");
         Button developmentCardButton = new Button("Buy Development Card");
-        Button tradeButton = new Button("Trade with Bank 4:1");
+        Button tradeButton = new Button("Trade with Bank");
         Button exitButton = new Button("Exit");
         ToggleButton toggleConfirmBtn = new ToggleButton("Confirm: OFF");
         toggleConfirmBtn.setSelected(false);

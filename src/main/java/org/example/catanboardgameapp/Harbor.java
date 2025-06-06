@@ -34,4 +34,6 @@ public class Harbor {
     public boolean usableBy(Player player) {
         return edge.getVertex1().getOwner() == player || edge.getVertex2().getOwner() == player;
     }
+
+
 }

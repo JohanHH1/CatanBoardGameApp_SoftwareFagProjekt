@@ -296,4 +296,11 @@ public class Board {
     public double getHexSize() {
         return hexSize;
     }
+
+    public List<Harbor> getHarbors() {
+        return edges.stream()
+                .map(Edge::getHarbor)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
 }
