@@ -52,7 +52,7 @@ public class BuildController {
                 return;
             }
             // Enforce dice roll in main phase
-            if (!gameController.getGameplay().isInInitialPhase() && gameController.getGameplay().hasRolledDice()) {
+            if (!gameController.getGameplay().isInInitialPhase() && !gameController.getGameplay().hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
                 return;
             }
@@ -108,7 +108,7 @@ public class BuildController {
                 return;
             }
             // Enforce dice roll in main phase
-            if (!gameController.getGameplay().isInInitialPhase() && gameController.getGameplay().hasRolledDice()) {
+            if (!gameController.getGameplay().isInInitialPhase() && !gameController.getGameplay().hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
                 return;
             }

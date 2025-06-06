@@ -161,7 +161,7 @@ public class Gameplay {
         catanBoardGameView.refreshSidebar();
         catanBoardGameView.showDiceButton();
         catanBoardGameView.hideTurnButton();
-        hasRolledThisTurn = false;
+        setHasRolledThisTurn(false);
         catanBoardGameView.centerBoard(
                 catanBoardGameView.getBoardGroup(),
                 catanBoardGameView.getGAME_WIDTH(),
@@ -522,7 +522,7 @@ public class Gameplay {
     }
 
     public boolean hasRolledDice() {
-        return !hasRolledThisTurn;
+        return hasRolledThisTurn;
     }
 
     public boolean isWaitingForInitialRoad() {

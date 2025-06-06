@@ -30,7 +30,7 @@ public class TradeController {
             }
             Gameplay gameplay = gameController.getGameplay();
 
-            if (!gameplay.isInInitialPhase() && gameplay.hasRolledDice()) {
+            if (!gameplay.isInInitialPhase() && !gameplay.hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before Trading!");
                 return;
             }
