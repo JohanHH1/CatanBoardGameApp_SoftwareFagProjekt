@@ -125,10 +125,19 @@ public class Gameplay {
                 waitingForInitialRoad = false;
                 lastInitialSettlement = null;
 
-                // NOW enter main phase logic
-                catanBoardGameView.showDiceButton();
+                // START PLAYER 1 TURN without skipping
+                Platform.runLater(() -> {
+                    catanBoardGameView.logToGameLog("All initial placements complete. Starting first turn...");
+
+                    if (currentPlayer instanceof AIOpponent ai) {
+                        new Thread(() -> ai.makeMoveAI(this)).start();
+                    } else {
+                        catanBoardGameView.showDiceButton(); // For human player
+                    }
+                });
                 return;
             }
+
             currentPlayer = playerList.get(currentPlayerIndex);
             waitingForInitialRoad = false;
             lastInitialSettlement = null;
@@ -310,7 +319,7 @@ public class Gameplay {
         }
         return BuildResult.SUCCESS;
     }
-    
+
     public BuildResult buildRoad(Edge edge) {
         if (initialPhase && waitingForInitialRoad) {
             if (!edge.isConnectedTo(lastInitialSettlement)) return BuildResult.NOT_CONNECTED;

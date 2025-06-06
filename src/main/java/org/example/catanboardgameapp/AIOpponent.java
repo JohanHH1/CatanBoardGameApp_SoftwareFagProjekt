@@ -16,7 +16,7 @@ public class AIOpponent extends Player {
     }
 
     public enum Strategy {
-        ROADBUILDER, CITYUPGRADER, SETTLEMENTPLACER, LONGESTROAD, BIGGESTARMY,
+        ROADBUILDER, CITYUPGRADER, SETTLEMENTPLACER, LONGESTROAD, BIGGESTARMY, NONE
     }
 
     private final StrategyLevel strategyLevel;
@@ -30,158 +30,125 @@ public class AIOpponent extends Player {
         this.drawOrDisplay = new DrawOrDisplay(gameplay.getBoardRadius());
     }
 
-    //___________________________FUNCTIONS___________________________//
+    //___________________________MAKE MOVE LOGIC___________________________//
     public void makeMoveAI(Gameplay gameplay) {
-        System.out.println("makeMoveAI");
+        // Simulate thinking delay on background thread
         pauseBeforeMove();
 
-        gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " (" + strategyLevel + ") is taking its turn...");
+        // Defer UI interaction to JavaFX Application Thread
+        Platform.runLater(() -> {
+            gameplay.rollDice();
+            gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " (" + strategyLevel + ") is taking its turn...");
+            gameplay.getCatanBoardGameView().logToGameLog(getPlayerId() + " rolled the dice");
 
-        switch (strategyLevel) {
-            case EASY -> {
-                gameplay.getCatanBoardGameView().logToGameLog("Strategy: EASY");
-                makeEasyLevelMove(gameplay);
+            switch (strategyLevel) {
+                case EASY -> {
+                    gameplay.getCatanBoardGameView().logToGameLog("Strategy: EASY");
+                    makeEasyLevelMove(gameplay);
+                }
+                case MEDIUM -> {
+                    gameplay.getCatanBoardGameView().logToGameLog("Strategy: MEDIUM (EASY FOR NOW)");
+                    makeEasyLevelMove(gameplay); // Temporarily use EASY logic
+                    // makeMediumLevelMove(gameplay);
+                }
+                case HARD -> {
+                    gameplay.getCatanBoardGameView().logToGameLog("Strategy: HARD (EASY FOR NOW)");
+                    makeEasyLevelMove(gameplay); // Temporarily use EASY logic
+                    // makeHardLevelMove(gameplay);
+                }
             }
-            case MEDIUM -> {
-                gameplay.getCatanBoardGameView().logToGameLog("Strategy: MEDIUM");
-                makeMediumLevelMove(gameplay);
-            }
-            case HARD -> {
-                gameplay.getCatanBoardGameView().logToGameLog("Strategy: HARD");
-                makeHardLevelMove(gameplay);
+        });
+    }
+
+    private void makeEasyLevelMove(Gameplay gameplay) {
+        Strategy strategy = determineStrategy(gameplay);
+        gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " is using strategy: " + strategy);
+
+        boolean moveMade = false;
+
+        // First, try the intended build
+        switch (strategy) {
+            case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
+            case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
+            case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+        }
+
+        // If build failed, try to trade toward that build
+        if (!moveMade) {
+            boolean traded = tryBankTrade(gameplay, strategy);
+            if (traded) {
+                // Try the build again after trading
+                switch (strategy) {
+                    case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
+                    case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
+                    case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                }
             }
         }
 
+        // If no action could be completed this turn, just move on
+        gameplay.nextPlayerTurn();
         gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " has ended its turn.");
     }
 
-
-    public void placeInitialSettlementAndRoad(Gameplay gameplay, Group boardGroup) {
-        pauseBeforeMove();
-        //System.out.println("placeInitialSettlementAndRoad");
-
-        List<Vertex> candidates = new ArrayList<>(gameplay.getBoard().getVertices());
-
-        // STEP 1: Pick a settlement vertex
-        Vertex chosenSettlement = null;
-        int chosenSettlementScore = 0;
-
-        if (strategyLevel == StrategyLevel.EASY) {
-            Collections.shuffle(candidates);
-            for (Vertex v : candidates) {
-                if (gameplay.isValidSettlementPlacement(v)) {
-                    chosenSettlement = v;
-                    break;
-                }
+    //______________________________CHOSING STRATEGY LOGIC_______________________________________//
+    private Strategy determineStrategy(Gameplay gameplay) {
+        switch (strategyLevel) {
+            case EASY -> {
+                return determineEasyStrategy(gameplay);
             }
-        } else {
-            // MEDIUM or HARD - pick best scored settlement
-            int bestScore = Integer.MIN_VALUE;
-
-            for (Vertex v : candidates) {
-                if (!gameplay.isValidSettlementPlacement(v)) continue;
-
-                int score = getSmartSettlementScore(v, gameplay);
-                if (score > bestScore) {
-                    bestScore = score;
-                    chosenSettlement = v;
-                    chosenSettlementScore = score;
-                }
+            case MEDIUM -> {
+                return determineMediumStrategy(gameplay);
             }
-
-        }
-
-        if (chosenSettlement == null) {
-            gameplay.getCatanBoardGameView().logToGameLog("AI " + getPlayerId() + " could not find a valid initial settlement.");
-            return;
-        }
-
-        // STEP 2: Attempt to place the settlement
-        BuildResult settlementResult = gameplay.buildInitialSettlement(chosenSettlement);
-        if (settlementResult != BuildResult.SUCCESS) {
-            gameplay.getCatanBoardGameView().logToGameLog("AI " + getPlayerId() + " failed to place initial settlement.");
-            return;
-        }
-        System.out.println("AI Player " + getPlayerId() + " (" + strategyLevel.name() + ") chose settlement with score: " + chosenSettlementScore);
-        Circle circle = new Circle(chosenSettlement.getX(), chosenSettlement.getY(), 16.0 / gameplay.getBoardRadius());
-
-        chosenSettlement.setOwner(gameplay.getCurrentPlayer());
-        drawOrDisplay.drawSettlement(circle, chosenSettlement, boardGroup);
-
-
-        // STEP 3: Choose best connecting road
-        Edge chosenEdge = null;
-        int chosenRoadScore = 0;
-        List<Edge> edges = gameplay.getBoard().getEdges();
-
-        if (strategyLevel == StrategyLevel.EASY) {
-            Collections.shuffle(edges);
-            for (Edge edge : edges) {
-                if (edge.isConnectedTo(chosenSettlement) && gameplay.isValidRoadPlacement(edge)) {
-                    chosenEdge = edge;
-                    break;
-                }
+            case HARD -> {
+                return determineHardStrategy(gameplay);
             }
-        } else {
-            // Medium/Hard – score by avoiding sea & maximizing future options
-            int bestEdgeScore = Integer.MIN_VALUE;
-            for (Edge edge : edges) {
-                if (!edge.isConnectedTo(chosenSettlement) || !gameplay.isValidRoadPlacement(edge)) continue;
-
-                int score = getSmartRoadScore(edge, chosenSettlement, gameplay);
-                if (score > bestEdgeScore) {
-                    bestEdgeScore = score;
-                    chosenEdge = edge;
-                    chosenRoadScore = score;
-                }
-            }
-
-        }
-
-        if (chosenEdge != null) {
-            BuildResult roadResult = gameplay.buildRoad(chosenEdge);
-            if (roadResult == BuildResult.SUCCESS) {
-                Line line = new Line(
-                        chosenEdge.getVertex1().getX(), chosenEdge.getVertex1().getY(),
-                        chosenEdge.getVertex2().getX(), chosenEdge.getVertex2().getY()
-                );
-                System.out.println("AI Player " + getPlayerId() + " (" + strategyLevel.name() + ") placed road with score: " + chosenRoadScore);
-                drawOrDisplay.drawRoad(line, this, boardGroup);
-
-                // Done! Advance turn
-                Platform.runLater(() -> {
-                    gameplay.getCatanBoardGameView().logToGameLog(
-                            "AI Player " + getPlayerId() + " (" + strategyLevel.name() + ") finished placing their initial settlement and road."
-                    );
-                    gameplay.nextPlayerTurn();
-                });
-                return;
+            default -> {
+                return Strategy.NONE;
             }
         }
-        // Cleanup if road failed (Should not happen)
-        System.out.println("SOMETHING WRONG WITH AI BRAIN");
-        chosenSettlement.setOwner(null);
-        getSettlements().remove(chosenSettlement);
-        boardGroup.getChildren().remove(circle);
-        gameplay.getCatanBoardGameView().logToGameLog("AI " + getPlayerId() + " failed to place road. Resetting.");
     }
 
+    private Strategy determineEasyStrategy(Gameplay gameplay) {
+        // Priority: CITYUPGRADER > SETTLEMENTPLACER > ROADBUILDER
 
-    private Strategy chooseStrategy() {
-        return null;
+        // 1. City upgrade
+        boolean hasCityResources = hasResources("Ore", 3) && hasResources("Grain", 2);
+        boolean canUpgrade = !getSettlements().isEmpty();
+        if (hasCityResources && canUpgrade) {
+            return Strategy.CITYUPGRADER;
+        }
+
+        // 2. Settlement
+        boolean hasSettlementResources = hasResources("Brick", 1)
+                && hasResources("Wood", 1)
+                && hasResources("Wool", 1)
+                && hasResources("Grain", 1);
+
+        if (hasSettlementResources && !getValidSettlementSpots(gameplay).isEmpty()) {
+            return Strategy.SETTLEMENTPLACER;
+        }
+
+        // 3. Road
+        boolean hasRoadResources = hasResources("Brick", 1) && hasResources("Wood", 1);
+        boolean hasValidRoadSpots = gameplay.getBoard().getEdges().stream()
+                .anyMatch(e -> gameplay.isValidRoadPlacement(e));
+        if (hasRoadResources && hasValidRoadSpots) {
+            return Strategy.ROADBUILDER;
+        }
+
+        // 4. Wait
+        System.out.println(gameplay.getCurrentPlayer() + ": "+ strategyLevel + ": Cant find proper strategy right now");
+        return Strategy.NONE;
+    }
+    private Strategy determineMediumStrategy(Gameplay gameplay) {
+        // NOT YET IMPLEMENTED
+        return Strategy.NONE;
     }
 
-    private void pauseBeforeMove() {
-        //System.out.println("AI is thinking for about a second before making a move");
-        try {
-            //int delay = ThreadLocalRandom.current().nextInt(3000, 10000);
-            int delay = ThreadLocalRandom.current().nextInt(700, 900); // ~0.2 to 0.6 sec
-
-            Thread.sleep(delay);
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+    private Strategy determineHardStrategy(Gameplay gameplay) {
+        // NOT YET IMPLEMENTED
+        return Strategy.NONE;
     }
 
     private int getSmartRoadScore(Edge edge, Vertex source, Gameplay gameplay) {
@@ -209,58 +176,43 @@ public class AIOpponent extends Player {
         return score;
     }
 
-
-    private void makeEasyLevelMove(Gameplay gameplay) {
+    private void makeMediumLevelMove(Gameplay gameplay) {
         tryBuildCity(gameplay);
         tryBuildSettlement(gameplay);
         tryBuildRoad(gameplay);
     }
 
-    private void makeMediumLevelMove(Gameplay gameplay) {
-        tryBuildCity(gameplay);
-        tryBuildBestSettlement(gameplay);
-        tryBuildRoad(gameplay);
-    }
-
     private void makeHardLevelMove(Gameplay gameplay) {
-        tryBankTrade(gameplay);
-        tryBuildCity(gameplay);
-        tryBuildBestSettlement(gameplay);
-        tryBuildRoad(gameplay);
+        //check makeEASY move for implementation
     }
 
-    private void tryBuildCity(Gameplay gameplay) {
+    private boolean tryBuildCity(Gameplay gameplay) {
         if (hasResources("Ore", 3) && hasResources("Grain", 2)) {
             List<Vertex> settlements = getSettlements();
             if (!settlements.isEmpty()) {
                 Vertex chosenVertex = settlements.get(random.nextInt(settlements.size()));
-                gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " tries upgrading to a city at vertex " + chosenVertex.getIdOrCoords());
                 BuildResult result = gameplay.buildCity(chosenVertex);
                 if (result == BuildResult.UPGRADED_TO_CITY) {
                     gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " upgraded to a city.");
+                    return true;
                 }
             }
         }
+        return false;
     }
 
-
-    private void tryBuildSettlement(Gameplay gameplay) {
+    private boolean tryBuildSettlement(Gameplay gameplay) {
+        // Check if AI has enough resources for a settlement
         if (!hasResources("Brick", 1) || !hasResources("Wood", 1)
-                || !hasResources("Wool", 1) || !hasResources("Grain", 1)) return;
-
-        List<Vertex> validSpots = getValidSettlementSpots(gameplay);
-        if (!validSpots.isEmpty()) {
-            Collections.shuffle(validSpots);
-            gameplay.buildSettlement(validSpots.get(0));
-            gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " built a settlement.");
+                || !hasResources("Wool", 1) || !hasResources("Grain", 1)) {
+            return false;
         }
-    }
 
-    private void tryBuildBestSettlement(Gameplay gameplay) {
-        if (!hasResources("Brick", 1) || !hasResources("Wood", 1)
-                || !hasResources("Wool", 1) || !hasResources("Grain", 1)) return;
-
+        // Get all valid build spots connected to current roads
         List<Vertex> validSpots = getValidSettlementSpots(gameplay);
+        if (validSpots.isEmpty()) return false;
+
+        // Pick the best scoring vertex
         Vertex bestSpot = null;
         int bestScore = Integer.MIN_VALUE;
 
@@ -272,39 +224,128 @@ public class AIOpponent extends Player {
             }
         }
 
-        if (bestSpot != null) gameplay.buildSettlement(bestSpot);
-        gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " built a settlement.");
+        if (bestSpot != null) {
+            BuildResult result = gameplay.buildSettlement(bestSpot);
+            if (result == BuildResult.SUCCESS) {
+                gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " built a settlement at vertex " + bestSpot.getIdOrCoords());
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    private void tryBuildRoad(Gameplay gameplay) {
-        if (!hasResources("Brick", 1) || !hasResources("Wood", 1)) return;
+    private boolean tryBuildRoad(Gameplay gameplay) {
+        // Ensure resources for road
+        if (!hasResources("Brick", 1) || !hasResources("Wood", 1)) return false;
 
         List<Edge> validRoads = new ArrayList<>();
         for (Edge edge : gameplay.getBoard().getEdges()) {
-            if (gameplay.isValidRoadPlacement(edge)) validRoads.add(edge);
+            if (gameplay.isValidRoadPlacement(edge)) {
+                validRoads.add(edge);
+            }
         }
 
-        if (!validRoads.isEmpty()) {
-            Collections.shuffle(validRoads);
-            gameplay.buildRoad(validRoads.get(0));
+        if (validRoads.isEmpty()) return false;
+
+        // Score and select the best road
+        Edge bestEdge = null;
+        int bestScore = Integer.MIN_VALUE;
+
+        for (Edge edge : validRoads) {
+            // Get connected settlement as a source (owned end)
+            Vertex source = (getSettlements().contains(edge.getVertex1())) ? edge.getVertex1() :
+                    (getSettlements().contains(edge.getVertex2())) ? edge.getVertex2() : null;
+
+            // If source is null, fallback to either endpoint for scoring
+            if (source == null) {
+                source = edge.getVertex1();
+            }
+
+            int score = getSmartRoadScore(edge, source, gameplay);
+            if (score > bestScore) {
+                bestScore = score;
+                bestEdge = edge;
+            }
         }
+
+        if (bestEdge != null) {
+            BuildResult result = gameplay.buildRoad(bestEdge);
+            if (result == BuildResult.SUCCESS) {
+                gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() +
+                        " built a road between " +
+                        bestEdge.getVertex1().getIdOrCoords() + " and " +
+                        bestEdge.getVertex2().getIdOrCoords());
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    private void tryBankTrade(Gameplay gameplay) {
+    private boolean tryBankTrade(Gameplay gameplay, Strategy strategy) {
         Map<String, Integer> resources = getResources();
         List<String> allTypes = List.of("Brick", "Wood", "Ore", "Grain", "Wool");
 
-        for (String need : allTypes) {
-            if (resources.getOrDefault(need, 0) == 0) {
-                for (String give : allTypes) {
-                    if (!give.equals(need) && resources.getOrDefault(give, 0) >= 4) {
-                        gameplay.tradeWithBank(give, need);
-                        gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " traded with the bank.");
-                        return;
+        Map<String, Integer> targetCost = new HashMap<>();
+
+        switch (strategy) {
+            case CITYUPGRADER -> {
+                targetCost.put("Ore", 3);
+                targetCost.put("Grain", 2);
+            }
+            case SETTLEMENTPLACER -> {
+                targetCost.put("Brick", 1);
+                targetCost.put("Wood", 1);
+                targetCost.put("Wool", 1);
+                targetCost.put("Grain", 1);
+            }
+            case ROADBUILDER -> {
+                targetCost.put("Brick", 1);
+                targetCost.put("Wood", 1);
+            }
+            default -> {
+                return false;
+            }
+        }
+
+        // Check if we're just one resource short from building
+        if (!canCompleteBuildWithOneTrade(resources, targetCost)) {
+            return false;
+        }
+
+        // Find missing resource(s)
+        for (String need : targetCost.keySet()) {
+            int owned = resources.getOrDefault(need, 0);
+            int required = targetCost.get(need);
+            if (owned >= required) continue; // Already have enough
+
+            // Need this resource – try to find something to trade for it
+            for (String give : allTypes) {
+                if (!give.equals(need) && resources.getOrDefault(give, 0) >= 4) {
+                    boolean traded = gameplay.tradeWithBank(give, need);
+                    if (traded) {
+                        gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() +
+                                " traded 4 " + give + " for 1 " + need + " (Strategy: " + strategy + ")");
+                        return true;
                     }
                 }
             }
         }
+
+        return false;
+    }
+
+
+    private boolean canCompleteBuildWithOneTrade(Map<String, Integer> currentResources, Map<String, Integer> targetCost) {
+        int missingCount = 0;
+        for (Map.Entry<String, Integer> entry : targetCost.entrySet()) {
+            int owned = currentResources.getOrDefault(entry.getKey(), 0);
+            if (owned < entry.getValue()) {
+                missingCount += (entry.getValue() - owned);
+            }
+        }
+        return missingCount == 1;
     }
 
     public boolean lateGame() {
@@ -431,5 +472,128 @@ public class AIOpponent extends Player {
     }
     public StrategyLevel getStrategyLevel() {
         return strategyLevel;
+    }
+
+    public void placeInitialSettlementAndRoad(Gameplay gameplay, Group boardGroup) {
+        pauseBeforeMove();
+        //System.out.println("placeInitialSettlementAndRoad");
+
+        List<Vertex> candidates = new ArrayList<>(gameplay.getBoard().getVertices());
+
+        // STEP 1: Pick a settlement vertex
+        Vertex chosenSettlement = null;
+        int chosenSettlementScore = 0;
+
+        if (strategyLevel == StrategyLevel.EASY) {
+            Collections.shuffle(candidates);
+            for (Vertex v : candidates) {
+                if (gameplay.isValidSettlementPlacement(v)) {
+                    chosenSettlement = v;
+                    break;
+                }
+            }
+        } else {
+            // MEDIUM or HARD - pick best scored settlement
+            int bestScore = Integer.MIN_VALUE;
+
+            for (Vertex v : candidates) {
+                if (!gameplay.isValidSettlementPlacement(v)) continue;
+
+                int score = getSmartSettlementScore(v, gameplay);
+                if (score > bestScore) {
+                    bestScore = score;
+                    chosenSettlement = v;
+                    chosenSettlementScore = score;
+                }
+            }
+
+        }
+
+        if (chosenSettlement == null) {
+            gameplay.getCatanBoardGameView().logToGameLog("AI " + getPlayerId() + " could not find a valid initial settlement.");
+            return;
+        }
+
+        // STEP 2: Attempt to place the settlement
+        BuildResult settlementResult = gameplay.buildInitialSettlement(chosenSettlement);
+        if (settlementResult != BuildResult.SUCCESS) {
+            gameplay.getCatanBoardGameView().logToGameLog("AI " + getPlayerId() + " failed to place initial settlement.");
+            return;
+        }
+        System.out.println("AI Player " + getPlayerId() + " (" + strategyLevel.name() + ") chose settlement with score: " + chosenSettlementScore);
+        Circle circle = new Circle(chosenSettlement.getX(), chosenSettlement.getY(), 16.0 / gameplay.getBoardRadius());
+
+        chosenSettlement.setOwner(gameplay.getCurrentPlayer());
+        drawOrDisplay.drawSettlement(circle, chosenSettlement, boardGroup);
+
+
+        // STEP 3: Choose best connecting road
+        Edge chosenEdge = null;
+        int chosenRoadScore = 0;
+        List<Edge> edges = gameplay.getBoard().getEdges();
+
+        if (strategyLevel == StrategyLevel.EASY) {
+            Collections.shuffle(edges);
+            for (Edge edge : edges) {
+                if (edge.isConnectedTo(chosenSettlement) && gameplay.isValidRoadPlacement(edge)) {
+                    chosenEdge = edge;
+                    break;
+                }
+            }
+        } else {
+            // Medium/Hard – score by avoiding sea & maximizing future options
+            int bestEdgeScore = Integer.MIN_VALUE;
+            for (Edge edge : edges) {
+                if (!edge.isConnectedTo(chosenSettlement) || !gameplay.isValidRoadPlacement(edge)) continue;
+
+                int score = getSmartRoadScore(edge, chosenSettlement, gameplay);
+                if (score > bestEdgeScore) {
+                    bestEdgeScore = score;
+                    chosenEdge = edge;
+                    chosenRoadScore = score;
+                }
+            }
+
+        }
+
+        if (chosenEdge != null) {
+            BuildResult roadResult = gameplay.buildRoad(chosenEdge);
+            if (roadResult == BuildResult.SUCCESS) {
+                Line line = new Line(
+                        chosenEdge.getVertex1().getX(), chosenEdge.getVertex1().getY(),
+                        chosenEdge.getVertex2().getX(), chosenEdge.getVertex2().getY()
+                );
+                System.out.println("AI Player " + getPlayerId() + " (" + strategyLevel.name() + ") placed road with score: " + chosenRoadScore);
+                drawOrDisplay.drawRoad(line, this, boardGroup);
+
+                // Done! Advance turn
+                Platform.runLater(() -> {
+                    gameplay.getCatanBoardGameView().logToGameLog(
+                            "AI Player " + getPlayerId() + " (" + strategyLevel.name() + ") finished placing their initial settlement and road."
+                    );
+                    gameplay.nextPlayerTurn();
+                });
+                return;
+            }
+        }
+        // Cleanup if road failed (Should not happen)
+        System.out.println("SOMETHING WRONG WITH AI BRAIN");
+        chosenSettlement.setOwner(null);
+        getSettlements().remove(chosenSettlement);
+        boardGroup.getChildren().remove(circle);
+        gameplay.getCatanBoardGameView().logToGameLog("AI " + getPlayerId() + " failed to place road. Resetting.");
+    }
+
+    private void pauseBeforeMove() {
+        //System.out.println("AI is thinking for about a second before making a move");
+        try {
+            //int delay = ThreadLocalRandom.current().nextInt(3000, 10000);
+            //int delay = ThreadLocalRandom.current().nextInt(700, 900); // ~0.7 to 0.9 sec
+            int delay = ThreadLocalRandom.current().nextInt(7, 11); // ~0.2 to 0.6 sec
+            Thread.sleep(delay);
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
