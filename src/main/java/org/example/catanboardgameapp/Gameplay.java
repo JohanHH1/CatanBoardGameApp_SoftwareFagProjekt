@@ -40,7 +40,7 @@ public class Gameplay {
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
-    private final DevelopmentCard developmentCard;
+    private DevelopmentCard developmentCard;
     private final String[] developmentCardsTypes =
             { "Monopoly","Monopoly","Road Building","Road Building","Year Of Plenty","Year Of Plenty",
               "Victory Point", "Victory Point", "Victory Point", "Victory Point", "Victory Point",
@@ -58,16 +58,25 @@ public class Gameplay {
         this.drawOrDisplay = new DrawOrDisplay(boardRadius);
         this.boardRadius = boardRadius;
         this.gameController = gameController;
-        this.developmentCard = new DevelopmentCard(playerList, catanBoardGameView, new TradeController(gameController, boardRadius));
-
     }
 
     //________________________INITIALIZE_______________________________//
-    public void initializeDevelopmentCards(){
+    public void initializeDevelopmentCards() {
+        if (catanBoardGameView == null) {
+            throw new IllegalStateException("CatanBoardGameView must be set before initializing development cards.");
+        }
+        // Create the development card handler (now that view is valid)
+        this.developmentCard = new DevelopmentCard(
+                playerList,
+                catanBoardGameView,
+                new TradeController(gameController, boardRadius)
+        );
+        // Shuffle the development card deck
         List<String> shuffledDevCards = new ArrayList<>(Arrays.asList(developmentCardsTypes));
         Collections.shuffle(shuffledDevCards);
         this.shuffledDevelopmentCards = shuffledDevCards;
     }
+
     // Initialize players and any chosen AI players
     public void initializeAllPlayers(int humanCount, int aiEasy, int aiMedium, int aiHard) {
         playerList.clear();
