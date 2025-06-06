@@ -26,7 +26,7 @@ public class AIOpponent extends Player {
 
     //__________________________________CONSTRUCTOR___________________________________________//
     public AIOpponent(int playerId, Color color, StrategyLevel level, Gameplay gameplay) {
-        super(playerId, color);
+        super(playerId, color, gameplay);
         this.strategyLevel = level;
         this.drawOrDisplay = new DrawOrDisplay(gameplay.getBoardRadius());
         this.gameplay = gameplay;
@@ -465,47 +465,6 @@ public class AIOpponent extends Player {
         }
         return missingCount == 1;
     }
-
-
-    //______________________________ROBBER LOGIC____________________________//
-    public Map<String, Integer> chooseDiscardCards() {
-        Map<String, Integer> resources = new HashMap<>(getResources());
-        int total = resources.values().stream().mapToInt(Integer::intValue).sum();
-        int toDiscard = total / 2;
-
-        if (toDiscard == 0) return null;
-
-        Map<String, Integer> discardMap = new HashMap<>();
-
-        // Simple heuristic: discard from most abundant resource
-        List<Map.Entry<String, Integer>> sorted = new ArrayList<>(resources.entrySet());
-        sorted.sort((a, b) -> Integer.compare(b.getValue(), a.getValue())); // highest first
-
-        for (Map.Entry<String, Integer> entry : sorted) {
-            if (toDiscard == 0) break;
-
-            String res = entry.getKey();
-            int available = entry.getValue();
-            int discard = Math.min(available, toDiscard);
-            if (discard > 0) {
-                discardMap.put(res, discard);
-                toDiscard -= discard;
-            }
-        }
-
-        // Log discards
-        if (gameplay != null && gameplay.getCatanBoardGameView() != null) {
-            StringBuilder log = new StringBuilder("AI Player " + getPlayerId() + " discarded: ");
-            discardMap.forEach((res, amt) -> log.append(amt).append(" ").append(res).append(", "));
-            if (!discardMap.isEmpty()) {
-                log.setLength(log.length() - 2); // remove trailing comma
-                gameplay.getCatanBoardGameView().logToGameLog(log.toString());
-            }
-        }
-
-        return discardMap;
-    }
-
 
     public Set<String> getNeededResourcesForStrategy(Strategy strategy) {
         Set<String> needed = new HashSet<>();

@@ -87,7 +87,7 @@ public class Gameplay {
         int idCounter = 1;
 
         for (int i = 0; i < humanCount && !colors.isEmpty(); i++) {
-            playerList.add(new Player(idCounter++, colors.remove(0)));
+            playerList.add(new Player(idCounter++, colors.remove(0), this));
         }
         for (int i = 0; i < aiEasy && !colors.isEmpty(); i++) {
             playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.EASY, this));

@@ -189,7 +189,7 @@ public class Robber {
         }
         return new ArrayList<>(victims);
     }
-
+    
     //____________________CARD DISCARD HANDLER__________________________
 
     public void requireRobberMove() {
@@ -199,14 +199,13 @@ public class Robber {
             if (total > 7) {
                 Map<String, Integer> discarded;
                 if (p instanceof AIOpponent ai) {
-                    discarded = ai.chooseDiscardCards(); // Implement this in AIOpponent
+                    discarded = ai.chooseDiscardCards();
                 } else {
                     discarded = showDiscardDialog(p, gameplay);
                 }
                 if (discarded != null) {
                     discardResourcesForPlayer(p, discarded);
                 }
-
             }
         }
     }
@@ -270,15 +269,24 @@ public class Robber {
         }
 
         final Map<String, Integer>[] result = new Map[]{null};
+
+        // Manual discard handler
         discardButton.setOnAction(e -> {
             result[0] = discardSelection;
+            dialogStage.close();
+        });
+
+        // Random discard button
+        Button randomDiscardButton = new Button("Discard cards randomly");
+        randomDiscardButton.setOnAction(e -> {
+            result[0] = player.chooseDiscardCards();
             dialogStage.close();
         });
 
         VBox container = new VBox(15,
                 new Text(player + " you must discard " + toDiscard + " resource cards."),
                 grid,
-                discardButton
+                new HBox(10, discardButton, randomDiscardButton)
         );
         container.setPadding(new Insets(15));
         container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
