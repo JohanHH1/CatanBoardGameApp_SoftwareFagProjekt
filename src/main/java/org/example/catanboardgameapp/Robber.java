@@ -45,6 +45,10 @@ public class Robber {
     //____________________ROBBER PLACEMENT LOGIC__________________________
 
     public void showRobberTargets(Group boardGroup) {
+        if (gameplay.getCurrentPlayer() instanceof AIOpponent ai) {
+            placeRobberAutomatically(ai, boardGroup);
+            return;
+        }
         boardGroup.getChildren().remove(this.robberCircle); // remove old robber
 
         List<Circle> highlightCircles = new ArrayList<>();
@@ -91,6 +95,91 @@ public class Robber {
         }
     }
 
+    //______________________________AI HELPERS__________________________________//
+    private void placeRobberAutomatically(AIOpponent ai, Group boardGroup) {
+        AIOpponent.StrategyLevel level = ai.getStrategyLevel();
+        Tile chosenTile;
+
+        // ----------------- EASY: Random placement -----------------
+        if (level == AIOpponent.StrategyLevel.EASY) {
+            List<Tile> candidates = board.getTiles().stream()
+                    .filter(t -> !t.isSea() && t != currentTile)
+                    .toList();
+            chosenTile = candidates.get(new Random().nextInt(candidates.size()));
+            catanBoardGameView.logToGameLog("AI " + ai.getPlayerId() + " (EASY) placed robber randomly.");
+        }
+
+        // ----------------- MEDIUM / HARD: Smart scoring -----------------
+        else {
+            List<Tile> validTargets = board.getTiles().stream()
+                    .filter(t -> !t.isSea() && t != currentTile)
+                    .toList();
+
+            Tile bestTile = null;
+            int bestScore = Integer.MIN_VALUE;
+
+            for (Tile tile : validTargets) {
+                int score = 0;
+                boolean blocksSelf = tile.getVertices().stream()
+                        .anyMatch(v -> v.getOwner() == ai);
+
+                if (blocksSelf) {
+                    continue; // MEDIUM/HARD: never block self
+                }
+
+                for (Vertex v : tile.getVertices()) {
+                    Player owner = v.getOwner();
+                    if (owner == null || owner == ai) continue;
+
+                    int weight = v.getTypeOf().equals("City") ? 2 : 1;
+                    int diceValue = ai.getSettlementDiceValue(v, gameplay);
+                    score += diceValue * weight;
+
+                    if (level == AIOpponent.StrategyLevel.HARD && ai.lateGame() && owner.getPlayerScore() >= 7) {
+                        score += diceValue * weight * 2; // Threat multiplier
+                    }
+                }
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestTile = tile;
+                }
+            }
+
+            chosenTile = bestTile != null ? bestTile : validTargets.get(0);
+            catanBoardGameView.logToGameLog("AI " + ai.getPlayerId() + " (" + level + ") placed robber on tile with score: " + bestScore);
+        }
+
+        // ---------- Place Robber on Tile ----------
+        boardGroup.getChildren().remove(this.robberCircle); //  Remove old circle before drawing new one
+        moveTo(chosenTile);
+        this.robberCircle = drawOrDisplay.drawRobberCircle(chosenTile.getCenter(), boardGroup);
+        robberHasMoved();
+
+        // ---------- Determine valid victims ----------
+        List<Player> victims = showPotentialVictims(chosenTile, ai).stream()
+                .filter(p -> p.getTotalResourceCount() > 0)
+                .toList();
+
+        if (!victims.isEmpty()) {
+            Player target;
+
+            if (level == AIOpponent.StrategyLevel.HARD) {
+                target = ai.chooseBestRobberyTargetForHardAI(ai, victims);
+            } else {
+                target = victims.stream()
+                        .max(Comparator.comparingInt(Player::getTotalResourceCount))
+                        .orElse(victims.get(0));
+            }
+
+            if (target != null) {
+                stealResourceFrom(target);
+            }
+        }
+
+        catanBoardGameView.refreshSidebar();
+        catanBoardGameView.getNextTurnButton().setDisable(false);
+    }
 
     private List<Player> showPotentialVictims(Tile tile, Player currentPlayer) {
         Set<Player> victims = new HashSet<>();
@@ -108,8 +197,16 @@ public class Robber {
         for (Player p : gameplay.getPlayerList()) {
             int total = p.getResources().values().stream().mapToInt(Integer::intValue).sum();
             if (total > 7) {
-                Map<String, Integer> discarded = showDiscardDialog(p, gameplay);
-                if (discarded != null) discardResourcesForPlayer(p, discarded);
+                Map<String, Integer> discarded;
+                if (p instanceof AIOpponent ai) {
+                    discarded = ai.chooseDiscardCards(); // Implement this in AIOpponent
+                } else {
+                    discarded = showDiscardDialog(p, gameplay);
+                }
+                if (discarded != null) {
+                    discardResourcesForPlayer(p, discarded);
+                }
+
             }
         }
     }

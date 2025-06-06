@@ -114,4 +114,9 @@ public class Player {
                 '}';
         */
     }
+
+    public int getTotalResourceCount() {
+        return resources.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
 }

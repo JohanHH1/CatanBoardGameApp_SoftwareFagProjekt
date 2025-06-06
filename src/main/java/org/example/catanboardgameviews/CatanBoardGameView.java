@@ -494,6 +494,7 @@ public class CatanBoardGameView {
 
 
     public void logToGameLog(String message) {
+        System.out.println(message);
         Platform.runLater(() -> {
             gameLogArea.appendText(message + "\n");
 

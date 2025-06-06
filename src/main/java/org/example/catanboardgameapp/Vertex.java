@@ -107,4 +107,5 @@ public class Vertex {
         return String.format("(%.2f, %.2f)", getX(), getY());
     }
 
+
 }
