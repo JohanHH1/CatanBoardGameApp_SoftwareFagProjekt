@@ -1,5 +1,6 @@
 package org.example.catanboardgameviews;
 
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -14,7 +15,11 @@ import javafx.stage.Stage;
 import org.example.catanboardgameapp.Gameplay;
 import org.example.controller.GameController;
 
+import java.awt.*;
+import java.io.InputStream;
 import java.util.List;
+import javafx.scene.image.Image;
+
 
 public class MenuView {
 
@@ -50,15 +55,28 @@ public class MenuView {
     private VBox createMenuLayout() {
         VBox menuLayout = new VBox(25);
         menuLayout.setAlignment(Pos.CENTER);
-        menuLayout.setStyle(
-                "-fx-padding: 40;" +
-                        "-fx-background-color: linear-gradient(to bottom, #1e1e2f, #3a3a5f);" +
-                        "-fx-alignment: center;"
+        menuLayout.setPadding(new Insets(40));
+
+        String filename = "/backgrounds/menuViewBackG.png";
+        InputStream stream = getClass().getResourceAsStream(filename);
+
+        Image backgroundImage = new Image(stream);
+
+        BackgroundImage bgImage = new BackgroundImage(
+                backgroundImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.DEFAULT,
+                new BackgroundSize(
+                        1, 1, true, true, false, false
+                )
         );
 
+        menuLayout.setBackground(new Background(bgImage));
+
         Label titleLabel = new Label("CATAN BOARD GAME");
-        titleLabel.setFont(new Font("Arial Black", 36));
-        titleLabel.setTextFill(Color.LIGHTGRAY);
+        titleLabel.setFont(Font.font("Georgia", FontWeight.BOLD, 52));
+        titleLabel.setTextFill(Color.web("#F9D849"));
         titleLabel.setEffect(new DropShadow());
 
         Button playButton = createMenuButton("Start New Game", 220, 60);
@@ -341,18 +359,19 @@ public class MenuView {
         button.setPrefSize(width, height);
         button.setFont(new Font("Arial", 20));
         button.setStyle(
-                "-fx-background-color: #4CAF50;" +
+                "-fx-background-color: #6E2C00;" +
                         "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;" +
                         "-fx-background-radius: 10;" +
                         "-fx-cursor: hand;"
         );
         button.setOnMouseEntered(e -> button.setStyle(
-                "-fx-background-color: #45a049;" +
+                "-fx-background-color: #873600;" +
                         "-fx-text-fill: white;" +
                         "-fx-background-radius: 10;"
         ));
         button.setOnMouseExited(e -> button.setStyle(
-                "-fx-background-color: #4CAF50;" +
+                "-fx-background-color: #6E2C00;" +
                         "-fx-text-fill: white;" +
                         "-fx-background-radius: 10;"
         ));
