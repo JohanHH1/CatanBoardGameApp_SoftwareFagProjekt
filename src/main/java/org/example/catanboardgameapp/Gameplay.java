@@ -410,6 +410,13 @@ public class Gameplay {
             if (neighbor.hasSettlement()) return false;
         }
 
+        // In main phase: require an adjacent road that belongs to the current player
+        if (!isInInitialPhase()) {
+            boolean hasOwnAdjacentRoad = getCurrentPlayer().getRoads().stream()
+                    .anyMatch(edge -> edge.isConnectedTo(vertex));
+            if (!hasOwnAdjacentRoad) return false;
+        }
+
         return true;
     }
     public boolean isValidRoadPlacement(Edge edge) {
