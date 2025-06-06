@@ -361,7 +361,6 @@ public class MenuView {
         button.setStyle(
                 "-fx-background-color: #6E2C00;" +
                         "-fx-text-fill: white;" +
-                        "-fx-font-weight: bold;" +
                         "-fx-background-radius: 10;" +
                         "-fx-cursor: hand;"
         );
