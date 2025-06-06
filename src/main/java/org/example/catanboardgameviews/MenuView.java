@@ -83,21 +83,42 @@ public class MenuView {
         return menuLayout;
     }
 
-
     private void startGame() {
         System.out.println("NEW GAME IS STARTING");
-        gameController.startGame(playerCount, boardSize, AIOpponentsCountEASY, AIOpponentsCountMEDIUM, AIOpponentsCountHARD);
+
+        // Ensure previous game state and threads are reset
+        gameController.resetGame();  // Add this method if not already present
+
+        gameController.startGame(
+                playerCount,
+                boardSize,
+                AIOpponentsCountEASY,
+                AIOpponentsCountMEDIUM,
+                AIOpponentsCountHARD
+        );
     }
+
     private void startAITestMatch() {
         System.out.println("AI VS AI TEST MATCH IS STARTING");
-        playerCount = 0;              // No human players
-        boardSize = 3;                // Small board for quick testing
+
+        // Set up AI-only test configuration
+        playerCount = 0;
+        boardSize = 3;
         AIOpponentsCountEASY = 1;
         AIOpponentsCountMEDIUM = 1;
         AIOpponentsCountHARD = 1;
-        gameController.startGame(playerCount, boardSize, AIOpponentsCountEASY, AIOpponentsCountMEDIUM, AIOpponentsCountHARD);
-    }
 
+        // Ensure any running threads and state are cleared
+        gameController.resetGame();
+
+        gameController.startGame(
+                playerCount,
+                boardSize,
+                AIOpponentsCountEASY,
+                AIOpponentsCountMEDIUM,
+                AIOpponentsCountHARD
+        );
+    }
 
     public void showOptionsMenu(Stage primaryStage) {
         VBox optionsLayout = new VBox(20);

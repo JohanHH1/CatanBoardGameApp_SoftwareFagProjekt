@@ -3,6 +3,7 @@ package org.example.catanboardgameapp;
 import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
@@ -33,6 +34,8 @@ public class Gameplay {
     private boolean hasRolledThisTurn = false;
     private boolean waitingForInitialRoad = false;
     private int turnCounter = 0;
+    private volatile boolean gamePaused = false;
+    private Thread activeAIThread;
 
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
@@ -60,7 +63,6 @@ public class Gameplay {
     }
 
     //________________________INITIALIZE_______________________________//
-
     public void initializeDevelopmentCards(){
         List<String> shuffledDevCards = new ArrayList<>(Arrays.asList(developmentCardsTypes));
         Collections.shuffle(shuffledDevCards);
@@ -95,29 +97,29 @@ public class Gameplay {
     }
 
     //____________________________TURN MANAGEMENT______________________________//
-
     public void nextPlayerTurn() {
-        startOfTurnEffects();
+//        stopAllAIThreads(); // stop any ongoing AI moves
+//        if (getCurrentPlayer() instanceof AIOpponent ai) {
+//            startAIThread(ai); // continue current AI's turn
+//        }
         turnCounter++;
-        int MAX_TURNS = 100;
-        if (turnCounter > MAX_TURNS) {
-            catanBoardGameView.logToGameLog("Maximum (100) turns reached. Ending test match.");
-            Platform.runLater(() -> menuView.showMainMenu());
-            return;
-        }
+        crashGameIfMaxTurnsExceeded(200, turnCounter);
+        startOfTurnEffects();
+
         // ------------------- INITIAL PLACEMENT PHASE -------------------
         if (initialPhase) {
             if (waitingForInitialRoad) {
                 catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " must place a road.");
                 return;
             }
+
             currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
 
             if (forwardOrder && currentPlayerIndex >= playerList.size()) {
                 currentPlayerIndex = playerList.size() - 1;
                 forwardOrder = false;
             } else if (!forwardOrder && currentPlayerIndex < 0) {
-                // Initial placement done, switch to normal phase
+                // Transition from initial to main phase
                 initialPhase = false;
                 forwardOrder = true;
                 currentPlayerIndex = 0;
@@ -125,14 +127,13 @@ public class Gameplay {
                 waitingForInitialRoad = false;
                 lastInitialSettlement = null;
 
-                // START PLAYER 1 TURN without skipping
+                // Now safe to start turn
                 Platform.runLater(() -> {
                     catanBoardGameView.logToGameLog("All initial placements complete. Starting first turn...");
-
                     if (currentPlayer instanceof AIOpponent ai) {
-                        new Thread(() -> ai.makeMoveAI(this)).start();
+                        startAIThread(ai);
                     } else {
-                        catanBoardGameView.showDiceButton(); // For human player
+                        catanBoardGameView.showDiceButton();
                     }
                 });
                 return;
@@ -142,9 +143,9 @@ public class Gameplay {
             waitingForInitialRoad = false;
             lastInitialSettlement = null;
 
-            if (initialPhase && currentPlayer instanceof AIOpponent ai) {
+            if (currentPlayer instanceof AIOpponent ai) {
                 ai.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
-            } else if (initialPhase) {
+            } else {
                 System.out.println("HUMAN TURN NOW");
                 catanBoardGameView.prepareForHumanInitialPlacement(currentPlayer);
             }
@@ -161,21 +162,49 @@ public class Gameplay {
             catanBoardGameView.showDiceButton();
         }
     }
+
     // Helper function for nextPlayerTurn function above
     private void startOfTurnEffects() {
-        if(!initialPhase) {
+        if (!initialPhase) {
+            // Rotate player index only in main game phase
             currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
             currentPlayer = playerList.get(currentPlayerIndex);
         }
+
+        // UI refresh applies in both phases
         catanBoardGameView.refreshSidebar();
-        catanBoardGameView.showDiceButton();
+        catanBoardGameView.showDiceButton();      // Safe even in initial phase
         catanBoardGameView.hideTurnButton();
         setHasRolledThisTurn(false);
+
         catanBoardGameView.centerBoard(
                 catanBoardGameView.getBoardGroup(),
                 catanBoardGameView.getGAME_WIDTH(),
                 catanBoardGameView.getGAME_HEIGHT()
         );
+    }
+
+    public void crashGameIfMaxTurnsExceeded(int MAX_TURNS, int turnCounter) {
+        if (turnCounter > MAX_TURNS) {
+            String error = "Fatal error: MAX_TURNS (" + MAX_TURNS + ") exceeded. Possible infinite loop or thread leak.";
+            System.err.println(error);
+
+            // Stop all running threads gracefully
+            stopAllAIThreads();
+
+            // Optional: alert the user before killing the app
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR, error, ButtonType.OK);
+                alert.setTitle("Game Crash");
+                alert.setHeaderText("Too many turns! Game is terminating.");
+                alert.showAndWait();
+
+                // Now forcefully exit
+                System.exit(1);
+            });
+
+            return;
+        }
     }
 
     //_____________________________DICE________________________________//
@@ -236,7 +265,24 @@ public class Gameplay {
         }
     }
 
-    //_________________________BUY AND PLAY DEVELOPMENT CARDS____________________________________________//
+    //_________________________________________ AI THREAD _____________________________________________//
+    public void startAIThread(AIOpponent ai) {
+        // Avoid starting if already running
+        if (activeAIThread != null && activeAIThread.isAlive()) return;
+
+        activeAIThread = new Thread(() -> ai.makeMoveAI(this));
+        activeAIThread.setDaemon(true);
+        activeAIThread.start();
+    }
+
+    public void stopAllAIThreads() {
+        if (activeAIThread != null && activeAIThread.isAlive()) {
+            activeAIThread.interrupt();
+        }
+        activeAIThread = null;
+    }
+
+    //_________________________________BUY AND PLAY DEVELOPMENT CARDS_____________________________________//
     public void buyDevelopmentCard() {
         if (shuffledDevelopmentCards.isEmpty()){
             drawOrDisplay.showNoMoreDevelopmentCardToBuyPopup();
@@ -568,5 +614,16 @@ public class Gameplay {
         return catanBoardGameView;
     }
 
+    public boolean isGamePaused() {
+        return gamePaused;
+    }
 
+    public void pauseGame() {
+        gamePaused = true;
+        stopAllAIThreads();  // Safely interrupt the current AI thread if one is running
+    }
+
+    public void resumeGame() {
+        gamePaused = false;
+    }
 }

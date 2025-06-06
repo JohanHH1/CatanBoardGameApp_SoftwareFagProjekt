@@ -58,6 +58,18 @@ public class GameController {
             }
         }
     }
+    public void resetGame() {
+        if (gameplay != null) {
+            gameplay.stopAllAIThreads();  // Stop any active AI threads
+            gameplay = null;
+        }
+
+        if (gameView != null) {
+            gameView = null;
+        }
+
+        // Optionally reset buildController, tradeController, etc.
+    }
 
     public void returnToMenu(MenuView menuView) {
         if (menuView != null) {
@@ -67,11 +79,12 @@ public class GameController {
 
     public void resumeGame() {
         if (gameplay == null || gameView == null) return;
-
-        // Reconnect view and logic
+        gameplay.resumeGame();
+        // Resume AI turn if current player is AI
+        if (gameplay.getCurrentPlayer() instanceof AIOpponent ai) {
+            gameplay.startAIThread(ai);  //Single-threaded safe AI resume
+        }
         gameplay.setCatanBoardGameView(gameView);
-
-        // Restore scene
         primaryStage.setScene(gameView.getScene());
     }
 
@@ -81,9 +94,6 @@ public class GameController {
             gameplay.setMenuView(menuView);
         }
     }
-
-
-
 
     public void setBuildController(BuildController buildController) {
         this.buildController = buildController;
@@ -105,5 +115,6 @@ public class GameController {
     public boolean hasSavedSession() {
         return gameplay != null;
     }
+
 
 }
