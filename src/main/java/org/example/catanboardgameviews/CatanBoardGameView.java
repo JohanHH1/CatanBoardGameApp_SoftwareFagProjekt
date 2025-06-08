@@ -221,10 +221,13 @@ public class CatanBoardGameView {
         new TradeController(gameController, boardRadius).setupTradeButton(tradeButton);
         showCostsButton.setOnAction(e -> drawOrDisplay.showBuildingCostsPopup());
         exitButton.setOnAction(e -> {
+            gameplay.pauseGame(); // ensure game is paused before showing alert
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.YES) {
                 gameController.returnToMenu(gameplay.getMenuView());
+            } else {
+                gameController.resumeGame(); // resume only if staying in game
             }
         });
 
@@ -375,7 +378,6 @@ public class CatanBoardGameView {
         return null;
     }
 
-
     //__________________________INPUT HANDLING_____________________________//
 
     private void setupInputHandlers(Pane boardWrapper) {
@@ -388,15 +390,12 @@ public class CatanBoardGameView {
                 case D -> boardGroup.setTranslateX(boardGroup.getTranslateX() + step);
                 case R, C -> centerBoard(boardGroup, GAME_WIDTH, GAME_HEIGHT);
                 case SPACE -> {
-                    if (!gameplay.isGamePaused()) {
-                        gameplay.pauseGame();
-                        Alert pauseAlert = new Alert(Alert.AlertType.INFORMATION, "Game is paused. Press OK to resume.", ButtonType.OK);
-                        pauseAlert.setTitle("Game Paused");
-                        pauseAlert.setHeaderText(null);
-
-                        pauseAlert.showAndWait(); // Wait for user to press OK
-                        gameController.resumeGame(); // Always resume after OK
-                    }
+                    gameplay.pauseGame();
+                    Alert pauseAlert = new Alert(Alert.AlertType.INFORMATION, "Game is paused. Press OK to resume.", ButtonType.OK);
+                    pauseAlert.setTitle("Game Paused");
+                    pauseAlert.setHeaderText(null);
+                    pauseAlert.showAndWait(); // wait for input
+                    gameController.resumeGame(); // only resume after dialog is confirmed
                 }
                 case ESCAPE -> {
                     gameplay.pauseGame();
@@ -404,10 +403,11 @@ public class CatanBoardGameView {
                     Optional<ButtonType> result = alert.showAndWait();
                     if (result.isPresent() && result.get() == ButtonType.YES) {
                         gameController.returnToMenu(gameplay.getMenuView());
-                    } else if (result.isPresent() && result.get() == ButtonType.NO) {
-                        gameController.resumeGame();  // Only resume if they cancel the exit
+                    } else {
+                        gameController.resumeGame(); // resume only if they cancel the exit
                     }
                 }
+
             }
         });
 

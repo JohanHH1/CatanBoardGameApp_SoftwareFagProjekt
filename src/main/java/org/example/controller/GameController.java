@@ -28,14 +28,11 @@ public class GameController {
         // Initialize core game logic and data
         gameplay = new Gameplay(primaryStage, boardSize - 1, this);
 
-        // Set up the menu reference (for returnToMenu use)
-        //MenuView menuView = new MenuView(primaryStage, this);
-        //gameplay.setMenuView(menuView);
         gameplay.setMenuView(this.menuView);
         // Add all players (And AI players if chosen)
         gameplay.initializeAllPlayers(playerCount, easyAI, medAI, hardAI);
         gameplay.resetCounters();
-                // Create the game UI and logic
+        // Create the game UI and logic
         gameView = new CatanBoardGameView(primaryStage, gameplay, this, boardSize - 1); // scene is initialized inside constructor
 
         // Register game view back into gameplay (after it's fully constructed)
@@ -61,6 +58,7 @@ public class GameController {
     public void resetGame() {
         if (gameplay != null) {
             gameplay.stopAllAIThreads();  // Stop any active AI threads
+            gameplay.resetCounters();
             gameplay = null;
         }
 
@@ -68,10 +66,13 @@ public class GameController {
             gameView = null;
         }
 
-        // Optionally reset buildController, tradeController, etc.
+        // Reset other stuff, buildController, tradeController, etc. if needed
     }
 
     public void returnToMenu(MenuView menuView) {
+        if (gameplay != null) {
+            gameplay.pauseGame(); // ensures all threads and state are halted
+        }
         if (menuView != null) {
             menuView.showMainMenu();
         }
@@ -79,13 +80,9 @@ public class GameController {
 
     public void resumeGame() {
         if (gameplay == null || gameView == null) return;
-        gameplay.resumeGame();
-        // Resume AI turn if current player is AI
-        if (gameplay.getCurrentPlayer() instanceof AIOpponent ai) {
-            gameplay.startAIThread(ai);  //Single-threaded safe AI resume
-        }
-        gameplay.setCatanBoardGameView(gameView);
-        primaryStage.setScene(gameView.getScene());
+        gameplay.resumeGame(); // handles AI restart / treads
+        gameplay.setCatanBoardGameView(gameView); // restore view reference
+        primaryStage.setScene(gameView.getScene()); // bring game view back
     }
 
     public void setMenuView(MenuView menuView) {

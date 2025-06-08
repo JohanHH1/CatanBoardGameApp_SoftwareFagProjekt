@@ -130,8 +130,7 @@ public class Robber {
                 for (Vertex v : tile.getVertices()) {
                     Player owner = v.getOwner();
                     if (owner == null || owner == ai) continue;
-
-                    int weight = v.getTypeOf().equals("City") ? 2 : 1;
+                    int weight = v.isCity() ? 2 : 1;
                     int diceValue = ai.getSettlementDiceValue(v, gameplay);
                     score += diceValue * weight;
 

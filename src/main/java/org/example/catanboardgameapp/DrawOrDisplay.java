@@ -80,6 +80,33 @@ public class DrawOrDisplay {
         }
 
     }
+    public void drawCity(Vertex vertex, Group boardGroup) {
+        double radius = 24.0 / boardRadius;
+        Polygon cityShape = new Polygon();
+        double x = vertex.getX();
+        double y = vertex.getY();
+
+        // Example shape: a hexagon to represent a city
+        cityShape.getPoints().addAll(
+                x - radius, y,
+                x - radius / 2, y - radius,
+                x + radius / 2, y - radius,
+                x + radius, y,
+                x + radius / 2, y + radius / 2,
+                x - radius / 2, y + radius / 2
+        );
+
+        if (vertex.getOwner() != null) {
+            cityShape.setFill(vertex.getOwner().getColor());
+        } else {
+            cityShape.setFill(Color.GRAY);
+        }
+
+        cityShape.setStroke(Color.BLACK);
+        cityShape.setStrokeWidth(1.0);
+        boardGroup.getChildren().add(cityShape);
+    }
+
 
     // -------------------- Click Initialization (Build Phase) -------------------- //
 

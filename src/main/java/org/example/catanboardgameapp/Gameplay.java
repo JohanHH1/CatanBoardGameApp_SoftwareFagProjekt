@@ -107,10 +107,8 @@ public class Gameplay {
 
     //____________________________TURN MANAGEMENT______________________________//
     public void nextPlayerTurn() {
-//        stopAllAIThreads(); // stop any ongoing AI moves
-//        if (getCurrentPlayer() instanceof AIOpponent ai) {
-//            startAIThread(ai); // continue current AI's turn
-//        }
+        stopAllAIThreads(); // Stop any in-progress AI thread before advancing
+
         turnCounter++;
         crashGameIfMaxTurnsExceeded(200, turnCounter);
         startOfTurnEffects();
@@ -136,11 +134,11 @@ public class Gameplay {
                 waitingForInitialRoad = false;
                 lastInitialSettlement = null;
 
-                // Now safe to start turn
+                // Safe to start turn
                 Platform.runLater(() -> {
                     catanBoardGameView.logToGameLog("All initial placements complete. Starting first turn...");
                     if (currentPlayer instanceof AIOpponent ai) {
-                        startAIThread(ai);
+                        startAIThread(ai); // ✅ Safe AI startup
                     } else {
                         catanBoardGameView.showDiceButton();
                     }
@@ -166,7 +164,7 @@ public class Gameplay {
         lastInitialSettlement = null;
 
         if (currentPlayer instanceof AIOpponent ai) {
-            new Thread(() -> ai.makeMoveAI(this)).start();
+            startAIThread(ai); // Safe thread init
         } else {
             catanBoardGameView.showDiceButton();
         }
@@ -195,6 +193,7 @@ public class Gameplay {
 
     public void crashGameIfMaxTurnsExceeded(int MAX_TURNS, int turnCounter) {
         if (turnCounter > MAX_TURNS) {
+            pauseGame();
             String error = "Fatal error: MAX_TURNS (" + MAX_TURNS + ") exceeded. Possible infinite loop or thread leak.";
             System.err.println(error);
 
@@ -265,7 +264,7 @@ public class Gameplay {
                     Player owner = vertex.getOwner();
                     if (owner != null) {
                         String res = type.getName();
-                        int amount = vertex.getTypeOf().equals("City") ? 2 : 1;
+                        int amount = vertex.isCity() ? 2 : 1;
                         owner.getResources().merge(res, amount, Integer::sum);
                         catanBoardGameView.logToGameLog("Player " + owner.getPlayerId() + " gets " + res);
                     }
@@ -276,14 +275,25 @@ public class Gameplay {
 
     //_________________________________________ AI THREAD _____________________________________________//
     public void startAIThread(AIOpponent ai) {
-        // Avoid starting if already running
+        // Don't start if already running or game is over
         if (activeAIThread != null && activeAIThread.isAlive()) return;
+        if (isGameOver()) return;
+        activeAIThread = new Thread(() -> {
+            // Wait if game is paused
+            while (isGamePaused()) {
+                try {
+                    Thread.sleep(100); // Poll pause state
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+            ai.makeMoveAI(this);
+        });
 
-        activeAIThread = new Thread(() -> ai.makeMoveAI(this));
         activeAIThread.setDaemon(true);
         activeAIThread.start();
     }
-
     public void stopAllAIThreads() {
         if (activeAIThread != null && activeAIThread.isAlive()) {
             activeAIThread.interrupt();
@@ -338,13 +348,29 @@ public class Gameplay {
                 currentPlayer.getResources().getOrDefault(resource, 0) + amount);
     }
 
-    public boolean tradeWithBank(String give, String receive) {
-        if (!canRemoveResource(give, 4)) return false;
-        removeResource(give, 4);
-        addResource(receive, 1);
-        catanBoardGameView.logToGameLog("Traded 4 " + give + " for 1 " + receive);
-        return true;
+    public int getBestTradeRatio(String resource, Player player) {
+        int bestRatio = 4;
+        for (Harbor harbor : board.getHarbors()) {
+            if (harbor.usableBy(player)) {
+                if (harbor.getType() == Harbor.HarborType.GENERIC) {
+                    bestRatio = Math.min(bestRatio, 3);
+                } else if (harbor.getType().specific.getName().equals(resource)) {
+                    bestRatio = Math.min(bestRatio, 2);
+                }
+            }
+        }
+        return bestRatio;
     }
+
+    public int tradeWithBank(String give, String receive, Player player) {
+        int ratio = getBestTradeRatio(give, player);
+        if (player.getResources().getOrDefault(give, 0) < ratio) return -1;
+
+        player.getResources().put(give, player.getResources().get(give) - ratio);
+        player.getResources().put(receive, player.getResources().getOrDefault(receive, 0) + 1);
+        return ratio; // success, return ratio used
+    }
+
 
     //_____________________________BUILDING FUNCTIONS____________________________//
 
@@ -442,14 +468,18 @@ public class Gameplay {
             currentPlayer.getSettlements().remove(vertex);
             currentPlayer.getCities().add(vertex);
             vertex.setOwner(currentPlayer);
-            increasePlayerScore();
             vertex.makeCity();
-            System.out.println(currentPlayer.getPlayerScore());
+            increasePlayerScore();
+
+            // Draw visual city after game state update
+            drawOrDisplay.drawCity(vertex, catanBoardGameView.getBoardGroup());
+
             return BuildResult.UPGRADED_TO_CITY;
         }
 
         return BuildResult.INSUFFICIENT_RESOURCES;
     }
+
 
     //______________________VALID BUILD CHECKS___________________________//
     public boolean isValidSettlementPlacement(Vertex vertex) {
@@ -474,6 +504,7 @@ public class Gameplay {
 
         return true;
     }
+
     public boolean isValidRoadPlacement(Edge edge) {
         // Reject edges where either end is sea-only
         boolean vertex1HasLand = edge.getVertex1().getAdjacentTiles().stream().anyMatch(t -> !t.isSea());
@@ -513,33 +544,12 @@ public class Gameplay {
 
 
     //___________________________SCORE MANAGEMENT_____________________________//
-
     public void increasePlayerScore() {
         currentPlayer.increasePlayerScore();
 
         if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
-            Platform.runLater(() -> {
-                // Build scoreboard message
-                StringBuilder scoreboard = new StringBuilder("Final Scores:\n\n");
-                playerList.stream()
-                        .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
-                        .forEach(player -> {
-                            String name = (player instanceof AIOpponent ai)
-                                    ? "AI Player " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
-                                    : "Player " + player.getPlayerId();
-                            scoreboard.append(String.format("%-25s : %d points%n", name, player.getPlayerScore()));
-                        });
-
-                // Show winner + scoreboard
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Game Over");
-                alert.setHeaderText("We have a winner!");
-                alert.setContentText("Player " + currentPlayer.getPlayerId() + " has won the game!\n\n" + scoreboard);
-                alert.setResizable(true);
-                alert.getDialogPane().setPrefWidth(400);
-                alert.setOnHidden(e -> menuView.showMainMenu());
-                alert.show();
-            });
+            if (isGamePaused()) return;
+            handleEndOfGame();
         }
     }
 
@@ -551,8 +561,42 @@ public class Gameplay {
 
     //___________________________HELPER FUNCTIONS_____________________________//
 
-        public int getTotalSelectedCards(Map<String, Integer> selection) {
+    public int getTotalSelectedCards(Map<String, Integer> selection) {
         return selection.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    private void handleEndOfGame() {
+        Platform.runLater(() -> {
+            StringBuilder scoreboard = new StringBuilder("Final Scores:\n\n");
+
+            playerList.stream()
+                    .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
+                    .forEach(player -> {
+                        if (player instanceof AIOpponent ai) {
+                            String name = "AI Player " + ai.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")";
+                            int noneCount = ai.getNoneStrategyCount();
+                            scoreboard.append(String.format(
+                                    "%-25s : %d points (Strategy.NONE: %d times)%n",
+                                    name, ai.getPlayerScore(), noneCount
+                            ));
+                        } else {
+                            String name = "Player " + player.getPlayerId();
+                            scoreboard.append(String.format("%-25s : %d points%n", name, player.getPlayerScore()));
+                        }
+                    });
+
+            scoreboard.append("\nTotal Turns Played: ").append(turnCounter);
+
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Game Over");
+            alert.setHeaderText("We have a winner!");
+            alert.setContentText("Player " + currentPlayer.getPlayerId() +
+                    " has won the game!\n\n" + scoreboard);
+            alert.setResizable(true);
+            alert.getDialogPane().setPrefWidth(400);
+            alert.setOnHidden(e -> menuView.showMainMenu());
+            alert.show();
+        });
     }
 
     //__________________________SETTERS________________________//
@@ -628,11 +672,24 @@ public class Gameplay {
     }
 
     public void pauseGame() {
-        gamePaused = true;
-        stopAllAIThreads();  // Safely interrupt the current AI thread if one is running
+        if (!gamePaused) {
+            System.out.println("Game paused.");
+            gamePaused = true;
+            stopAllAIThreads();  // interrupt AI thread cleanly
+        }
     }
 
     public void resumeGame() {
+        if (!gamePaused) return; // prevent spamming or double-starting
+        System.out.println("Game resumed.");
         gamePaused = false;
+        if (currentPlayer instanceof AIOpponent ai) {
+            startAIThread(ai);
+        }
     }
+
+    public boolean isGameOver() {
+        return playerList.stream().anyMatch(p -> p.getPlayerScore() >= menuView.getMaxVictoryPoints());
+    }
+
 }

@@ -105,7 +105,7 @@ public class MenuView {
         System.out.println("NEW GAME IS STARTING");
 
         // Ensure previous game state and threads are reset
-        gameController.resetGame();  // Add this method if not already present
+        gameController.resetGame();
 
         gameController.startGame(
                 playerCount,
@@ -122,9 +122,9 @@ public class MenuView {
         // Set up AI-only test configuration
         playerCount = 0;
         boardSize = 3;
-        AIOpponentsCountEASY = 1;
-        AIOpponentsCountMEDIUM = 1;
-        AIOpponentsCountHARD = 1;
+        AIOpponentsCountEASY = 3;
+        AIOpponentsCountMEDIUM = 0;
+        AIOpponentsCountHARD = 0;
 
         // Ensure any running threads and state are cleared
         gameController.resetGame();
