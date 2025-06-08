@@ -12,6 +12,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import org.example.catanboardgameapp.AIOpponent;
 import org.example.catanboardgameapp.Gameplay;
 import org.example.controller.GameController;
 
@@ -19,10 +20,12 @@ import java.awt.*;
 import java.io.InputStream;
 import java.util.List;
 import javafx.scene.image.Image;
-
+import javafx.scene.control.ComboBox;
 
 public class MenuView {
 
+    private final double GAME_WIDTH = 1050;
+    private final double GAME_HEIGHT = 700;
     private int playerCount = 3;
     private int boardSize = 3;
     private int AIOpponentsCountEASY = 0;
@@ -32,8 +35,7 @@ public class MenuView {
     private int maxSettlements = 5;
     private int maxCities = 4;
     private int maxVictoryPoints = 10;
-
-
+    private AIOpponent.ThinkingSpeed aiSpeed = AIOpponent.ThinkingSpeed.MEDIUM;
 
     private final GameController gameController;
     private Gameplay gameplay;
@@ -80,7 +82,7 @@ public class MenuView {
         titleLabel.setEffect(new DropShadow());
 
         Button playButton = createMenuButton("Start New Game", 220, 60);
-        Button aiTestButton = createMenuButton("Start AI vs AI Test Match", 220, 60); // <-- New button
+        Button aiTestButton = createMenuButton("Start AI vs AI Test Match", 220, 60);
         Button optionsButton = createMenuButton("Options", 220, 60);
         Button creditsButton = createMenuButton("Credits", 220, 60);
         Button quitButton = createMenuButton("Quit Game", 220, 60);
@@ -122,9 +124,9 @@ public class MenuView {
         // Set up AI-only test configuration
         playerCount = 0;
         boardSize = 3;
-        AIOpponentsCountEASY = 3;
-        AIOpponentsCountMEDIUM = 0;
-        AIOpponentsCountHARD = 0;
+        AIOpponentsCountEASY = 1;
+        AIOpponentsCountMEDIUM = 1;
+        AIOpponentsCountHARD = 1;
 
         // Ensure any running threads and state are cleared
         gameController.resetGame();
@@ -141,10 +143,7 @@ public class MenuView {
     public void showOptionsMenu(Stage primaryStage) {
         VBox optionsLayout = new VBox(20);
         optionsLayout.setAlignment(Pos.CENTER);
-        optionsLayout.setStyle(
-                "-fx-padding: 40;" +
-                        "-fx-background-color: linear-gradient(to bottom, #2c2c3f, #505080);"
-        );
+        optionsLayout.setStyle("-fx-padding: 40; -fx-background-color: linear-gradient(to bottom, #2c2c3f, #505080);");
 
         Label optionsTitle = new Label("Game Options");
         optionsTitle.setFont(new Font("Arial Black", 28));
@@ -155,7 +154,7 @@ public class MenuView {
         totalNote.setTextFill(Color.LIGHTGRAY);
 
         int[] humanPlayers = {3}, boardSizeVal = {3}, easyAI = {0}, mediumAI = {0}, hardAI = {0},
-        maxRoadsVal = {15}, maxSettlementsVal = {5}, maxCitiesVal = {4}, maxVictoryPointsVal = {10};;
+                maxRoadsVal = {15}, maxSettlementsVal = {5}, maxCitiesVal = {4}, maxVictoryPointsVal = {10};
 
         Font labelFont = Font.font("Arial", FontWeight.BOLD, 14);
         Color fontColor = Color.WHITE;
@@ -169,8 +168,9 @@ public class MenuView {
                 new Label("Max Roads per Player:"),
                 new Label("Max Settlements per Player:"),
                 new Label("Max Cities per Player:"),
-                new Label("Max Victory Points per Player:"),
+                new Label("Max Victory Points per Player:")
         };
+
         Label[] values = {
                 new Label(String.valueOf(humanPlayers[0])),
                 new Label(String.valueOf(easyAI[0])),
@@ -180,14 +180,27 @@ public class MenuView {
                 new Label(String.valueOf(maxRoadsVal[0])),
                 new Label(String.valueOf(maxSettlementsVal[0])),
                 new Label(String.valueOf(maxCitiesVal[0])),
-                new Label(String.valueOf(maxVictoryPointsVal[0])),
+                new Label(String.valueOf(maxVictoryPointsVal[0]))
         };
+
         for (int i = 0; i < labels.length; i++) {
             labels[i].setFont(labelFont);
             labels[i].setTextFill(fontColor);
             values[i].setFont(labelFont);
             values[i].setTextFill(fontColor);
         }
+
+        ComboBox<AIOpponent.ThinkingSpeed> aiSpeedDropdown = new ComboBox<>();
+        aiSpeedDropdown.getItems().addAll(AIOpponent.ThinkingSpeed.values());
+        aiSpeedDropdown.setValue(aiSpeed);
+        aiSpeedDropdown.setStyle("-fx-font-size: 14px;");
+
+        aiSpeedDropdown.setOnAction(e -> {
+            AIOpponent.ThinkingSpeed selected = aiSpeedDropdown.getValue();
+            if (selected != null) {
+                aiSpeed = selected;
+            }
+        });
 
         Runnable updateCounts = () -> {
             values[0].setText(String.valueOf(humanPlayers[0]));
@@ -209,82 +222,24 @@ public class MenuView {
             controls[i][1].setMinWidth(35);
         }
 
-        controls[0][1].setOnAction(e -> {
-            if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) humanPlayers[0]++;
-            updateCounts.run();
-        });
-        controls[0][0].setOnAction(e -> {
-            if (humanPlayers[0] > 0) humanPlayers[0]--;
-            updateCounts.run();
-        });
-
-        controls[1][1].setOnAction(e -> {
-            if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) easyAI[0]++;
-            updateCounts.run();
-        });
-        controls[1][0].setOnAction(e -> {
-            if (easyAI[0] > 0) easyAI[0]--;
-            updateCounts.run();
-        });
-
-        controls[2][1].setOnAction(e -> {
-            if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) mediumAI[0]++;
-            updateCounts.run();
-        });
-        controls[2][0].setOnAction(e -> {
-            if (mediumAI[0] > 0) mediumAI[0]--;
-            updateCounts.run();
-        });
-
-        controls[3][1].setOnAction(e -> {
-            if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) hardAI[0]++;
-            updateCounts.run();
-        });
-        controls[3][0].setOnAction(e -> {
-            if (hardAI[0] > 0) hardAI[0]--;
-            updateCounts.run();
-        });
-
-        controls[4][1].setOnAction(e -> {
-            if (boardSizeVal[0] < 10) boardSizeVal[0]++;
-            updateCounts.run();
-        });
-        controls[4][0].setOnAction(e -> {
-            if (boardSizeVal[0] > 3) boardSizeVal[0]--;
-            updateCounts.run();
-        });
-        controls[5][1].setOnAction(e -> {
-            if (maxRoadsVal[0] < 20) maxRoadsVal[0]++;
-            updateCounts.run();
-        });
-        controls[5][0].setOnAction(e -> {
-            if (maxRoadsVal[0] > 1) maxRoadsVal[0]--;
-            updateCounts.run();
-        });
-        controls[6][1].setOnAction(e -> {
-            if (maxSettlementsVal[0] < 10) maxSettlementsVal[0]++;
-            updateCounts.run();
-        });
-        controls[6][0].setOnAction(e -> {
-            if (maxSettlementsVal[0] > 1) maxSettlementsVal[0]--;
-            updateCounts.run();
-        });
-        controls[7][1].setOnAction(e -> {
-            if (maxCitiesVal[0] < 6) maxCitiesVal[0]++;
-            updateCounts.run();
-        });
-        controls[7][0].setOnAction(e -> {
-            if (maxCitiesVal[0] > 1) maxCitiesVal[0]--;
-            updateCounts.run();
-        });
-        controls[8][1].setOnAction(e -> {
-            if (maxVictoryPointsVal[0] < 10) maxVictoryPointsVal[0]++;
-            updateCounts.run();
-        });
-        controls[8][0].setOnAction(e -> {
-            if (maxVictoryPointsVal[0] > 1) maxVictoryPointsVal[0]--;
-            updateCounts.run();
-        });
+        controls[0][1].setOnAction(e -> { if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) humanPlayers[0]++; updateCounts.run(); });
+        controls[0][0].setOnAction(e -> { if (humanPlayers[0] > 0) humanPlayers[0]--; updateCounts.run(); });
+        controls[1][1].setOnAction(e -> { if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) easyAI[0]++; updateCounts.run(); });
+        controls[1][0].setOnAction(e -> { if (easyAI[0] > 0) easyAI[0]--; updateCounts.run(); });
+        controls[2][1].setOnAction(e -> { if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) mediumAI[0]++; updateCounts.run(); });
+        controls[2][0].setOnAction(e -> { if (mediumAI[0] > 0) mediumAI[0]--; updateCounts.run(); });
+        controls[3][1].setOnAction(e -> { if (humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0] < 6) hardAI[0]++; updateCounts.run(); });
+        controls[3][0].setOnAction(e -> { if (hardAI[0] > 0) hardAI[0]--; updateCounts.run(); });
+        controls[4][1].setOnAction(e -> { if (boardSizeVal[0] < 10) boardSizeVal[0]++; updateCounts.run(); });
+        controls[4][0].setOnAction(e -> { if (boardSizeVal[0] > 3) boardSizeVal[0]--; updateCounts.run(); });
+        controls[5][1].setOnAction(e -> { if (maxRoadsVal[0] < 20) maxRoadsVal[0]++; updateCounts.run(); });
+        controls[5][0].setOnAction(e -> { if (maxRoadsVal[0] > 1) maxRoadsVal[0]--; updateCounts.run(); });
+        controls[6][1].setOnAction(e -> { if (maxSettlementsVal[0] < 10) maxSettlementsVal[0]++; updateCounts.run(); });
+        controls[6][0].setOnAction(e -> { if (maxSettlementsVal[0] > 1) maxSettlementsVal[0]--; updateCounts.run(); });
+        controls[7][1].setOnAction(e -> { if (maxCitiesVal[0] < 6) maxCitiesVal[0]++; updateCounts.run(); });
+        controls[7][0].setOnAction(e -> { if (maxCitiesVal[0] > 1) maxCitiesVal[0]--; updateCounts.run(); });
+        controls[8][1].setOnAction(e -> { if (maxVictoryPointsVal[0] < 10) maxVictoryPointsVal[0]++; updateCounts.run(); });
+        controls[8][0].setOnAction(e -> { if (maxVictoryPointsVal[0] > 1) maxVictoryPointsVal[0]--; updateCounts.run(); });
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -296,6 +251,12 @@ public class MenuView {
             grid.add(values[i], 2, i);
             grid.add(controls[i][1], 3, i);
         }
+
+        Label aiSpeedLabel = new Label("AI Thinking Speed:");
+        aiSpeedLabel.setFont(labelFont);
+        aiSpeedLabel.setTextFill(fontColor);
+        grid.add(aiSpeedLabel, 0, labels.length);
+        grid.add(aiSpeedDropdown, 2, labels.length);
 
         Button accept = new Button("Accept Changes");
         accept.setStyle("-fx-font-size: 18px; -fx-background-color: #28a745; -fx-text-fill: white; -fx-padding: 10 20 10 20;");
@@ -314,13 +275,15 @@ public class MenuView {
             maxSettlements = maxSettlementsVal[0];
             maxCities = maxCitiesVal[0];
             maxVictoryPoints = maxVictoryPointsVal[0];
+            aiSpeed = aiSpeedDropdown.getValue();
             showMainMenu();
         });
 
         optionsLayout.getChildren().addAll(optionsTitle, totalNote, grid, accept);
-        Scene scene = new Scene(optionsLayout, 850, 600);
+        Scene scene = new Scene(optionsLayout, GAME_WIDTH, GAME_HEIGHT);
         primaryStage.setScene(scene);
     }
+
 
     public void showCreditsScreen(Stage primaryStage) {
         VBox creditsLayout = new VBox(15);
@@ -350,7 +313,7 @@ public class MenuView {
         backButton.setOnAction(e -> showMainMenu());
 
         creditsLayout.getChildren().addAll(title, name1, name2, name3, name4, backButton);
-        Scene creditsScene = new Scene(creditsLayout, 850, 600);
+        Scene creditsScene = new Scene(creditsLayout, GAME_WIDTH, GAME_HEIGHT);
         primaryStage.setScene(creditsScene);
     }
 
@@ -378,6 +341,18 @@ public class MenuView {
     }
 
     // getters
+    public AIOpponent.ThinkingSpeed getSelectedAISpeed() {
+        return aiSpeed;
+    }
+
+    public double getGAME_WIDTH() {
+        return GAME_WIDTH;
+    }
+
+    public double getGAME_HEIGHT() {
+        return GAME_HEIGHT;
+    }
+
     public int getMaxRoads() {
         return maxRoads;
     }

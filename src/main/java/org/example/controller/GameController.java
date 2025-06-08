@@ -1,6 +1,5 @@
 package org.example.controller;
 
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.example.catanboardgameapp.AIOpponent;
 import org.example.catanboardgameapp.Gameplay;
@@ -55,6 +54,7 @@ public class GameController {
             }
         }
     }
+
     public void resetGame() {
         if (gameplay != null) {
             gameplay.stopAllAIThreads();  // Stop any active AI threads
@@ -102,6 +102,10 @@ public class GameController {
 
     public CatanBoardGameView getGameView() {
         return gameView;
+    }
+
+    public MenuView getMenuView() {
+        return menuView;
     }
 
     public BuildController getBuildController() {

@@ -41,8 +41,6 @@ public class AIOpponent extends Player {
     //___________________________________INITIAL PHASE_________________________________________//
     public void placeInitialSettlementAndRoad(Gameplay gameplay, Group boardGroup) {
         pauseBeforeMove();
-        //System.out.println("placeInitialSettlementAndRoad");
-
         List<Vertex> candidates = new ArrayList<>(gameplay.getBoard().getVertices());
 
         // STEP 1: Pick a settlement vertex
@@ -161,7 +159,6 @@ public class AIOpponent extends Player {
                 return;
             }
         }
-
         // Simulate thinking delay (interruptible)
         pauseBeforeMove();
 
@@ -183,12 +180,12 @@ public class AIOpponent extends Player {
                     makeEasyLevelMove(gameplay);
                 }
                 case MEDIUM -> {
-                    gameplay.getCatanBoardGameView().logToGameLog("Strategy: MEDIUM (EASY FOR NOW)");
-                    makeEasyLevelMove(gameplay);
+                    gameplay.getCatanBoardGameView().logToGameLog("Strategy: MEDIUM");
+                    makeMediumLevelMove(gameplay);
                 }
                 case HARD -> {
-                    gameplay.getCatanBoardGameView().logToGameLog("Strategy: HARD (EASY FOR NOW)");
-                    makeEasyLevelMove(gameplay);
+                    gameplay.getCatanBoardGameView().logToGameLog("Strategy: HARD");
+                    makeHardLevelMove(gameplay);
                 }
             }
         });
@@ -264,12 +261,52 @@ public class AIOpponent extends Player {
 
 
     private Strategy determineMediumStrategy(Gameplay gameplay) {
-        // NOT YET IMPLEMENTED
+        // 1. City upgrade (only if has upgradeable settlement)
+        boolean hasCityResources = hasResources("Ore", 3) && hasResources("Grain", 2);
+        boolean canUpgrade = getSettlements().stream().anyMatch(v -> !v.isCity());
+        if (hasCityResources && canUpgrade) {
+            return Strategy.CITYUPGRADER;
+        }
+
+        // 2. Settlement
+        if (!getValidSettlementSpots(gameplay).isEmpty()) {
+            return Strategy.SETTLEMENTPLACER;
+        }
+
+        // 3. Road
+        boolean hasValidRoadSpots = gameplay.getBoard().getEdges().stream()
+                .anyMatch(e -> gameplay.isValidRoadPlacement(e));
+        if (hasValidRoadSpots) {
+            return Strategy.ROADBUILDER;
+        }
+
+        // 4. No good option
+        System.out.println("AI Player " + getPlayerId() + " (EASY): No effective strategy available.");
         return Strategy.NONE;
     }
 
     private Strategy determineHardStrategy(Gameplay gameplay) {
-        // NOT YET IMPLEMENTED
+        // 1. City upgrade (only if has upgradeable settlement)
+        boolean hasCityResources = hasResources("Ore", 3) && hasResources("Grain", 2);
+        boolean canUpgrade = getSettlements().stream().anyMatch(v -> !v.isCity());
+        if (hasCityResources && canUpgrade) {
+            return Strategy.CITYUPGRADER;
+        }
+
+        // 2. Settlement
+        if (!getValidSettlementSpots(gameplay).isEmpty()) {
+            return Strategy.SETTLEMENTPLACER;
+        }
+
+        // 3. Road
+        boolean hasValidRoadSpots = gameplay.getBoard().getEdges().stream()
+                .anyMatch(e -> gameplay.isValidRoadPlacement(e));
+        if (hasValidRoadSpots) {
+            return Strategy.ROADBUILDER;
+        }
+
+        // 4. No good option
+        System.out.println("AI Player " + getPlayerId() + " (EASY): No effective strategy available.");
         return Strategy.NONE;
     }
 
@@ -299,13 +336,67 @@ public class AIOpponent extends Player {
     }
 
     private void makeMediumLevelMove(Gameplay gameplay) {
-        tryBuildCity(gameplay);
-        tryBuildSettlement(gameplay);
-        tryBuildRoad(gameplay);
+        boolean moveMade;
+        int safetyLimit = 10; // prevent infinite loops (try max 10 times to make a move)
+
+        do {
+            Strategy strategy = determineStrategy();
+            gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " is using strategy: " + strategy);
+            moveMade = false;
+
+            switch (strategy) {
+                case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
+                case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
+                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                default -> {} // No valid move
+            }
+
+            if (!moveMade) {
+                moveMade = tryBankTrade(gameplay, strategy); // try trading towards that goal
+                if (moveMade) {
+                    // Retry build immediately after successful trade
+                    switch (strategy) {
+                        case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
+                        case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
+                        case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                    }
+                }
+            }
+        } while (moveMade && --safetyLimit > 0);
+        gameplay.nextPlayerTurn();
+        gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " has ended its turn.");
     }
 
     private void makeHardLevelMove(Gameplay gameplay) {
-        //check makeEASY move for implementation
+        boolean moveMade;
+        int safetyLimit = 10; // prevent infinite loops (try max 10 times to make a move)
+
+        do {
+            Strategy strategy = determineStrategy();
+            gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " is using strategy: " + strategy);
+            moveMade = false;
+
+            switch (strategy) {
+                case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
+                case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
+                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                default -> {} // No valid move
+            }
+
+            if (!moveMade) {
+                moveMade = tryBankTrade(gameplay, strategy); // try trading towards that goal
+                if (moveMade) {
+                    // Retry build immediately after successful trade
+                    switch (strategy) {
+                        case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
+                        case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
+                        case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                    }
+                }
+            }
+        } while (moveMade && --safetyLimit > 0);
+        gameplay.nextPlayerTurn();
+        gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " has ended its turn.");
     }
 
     private boolean tryBuildCity(Gameplay gameplay) {

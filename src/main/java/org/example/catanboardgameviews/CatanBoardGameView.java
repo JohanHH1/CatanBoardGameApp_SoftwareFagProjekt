@@ -35,8 +35,6 @@ import java.util.Optional;
 public class CatanBoardGameView {
 
     //---------------------------- Dimensions ----------------------------//
-    private final double GAME_WIDTH = 1050;
-    private final double GAME_HEIGHT = 700;
     private final int boardRadius;
 
     //---------------------------- Game Components ----------------------------//
@@ -110,11 +108,11 @@ public class CatanBoardGameView {
         this.diceImage2 = new ImageView(drawOrDisplay.loadDiceImage(1));
 
         // Create and assign game board
-        this.board = new Board(boardRadius, GAME_WIDTH, GAME_HEIGHT);
+        this.board = new Board(boardRadius, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
         this.gameplay.setBoard(this.board);
 
         // Build main scene
-        this.scene = new Scene(root, GAME_WIDTH, GAME_HEIGHT);
+        this.scene = new Scene(root, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
 
         // Find desert tile and place Robber on it
         Tile desertTile = board.getTiles().stream()
@@ -141,7 +139,7 @@ public class CatanBoardGameView {
         Pane boardWrapper = createBoardWrapperWithBackground(boardGroup);
         VBox boardOnly = new VBox(boardWrapper);
         VBox.setVgrow(boardWrapper, Priority.ALWAYS);
-        centerBoard(boardGroup, GAME_WIDTH, GAME_HEIGHT);
+        centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
         splitPane = new SplitPane(boardOnly, gameLogPanel);
         splitPane.setOrientation(Orientation.VERTICAL);
         splitPane.setDividerPositions(0.85);
@@ -214,7 +212,7 @@ public class CatanBoardGameView {
         TurnController turnController = new TurnController(gameController, rollDiceButton, nextTurnButton);
         nextTurnButton.setOnAction(turnController::handleNextTurnButtonPressed);
 
-        centerButton.setOnAction(e -> centerBoard(boardGroup, GAME_WIDTH, GAME_HEIGHT));
+        centerButton.setOnAction(e -> centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT()));
         zoomInButton.setOnAction(e -> zoom(boardGroup, 1.1));
         zoomOutButton.setOnAction(e -> zoom(boardGroup, 0.9));
 
@@ -388,7 +386,7 @@ public class CatanBoardGameView {
                 case A -> boardGroup.setTranslateX(boardGroup.getTranslateX() - step);
                 case S -> boardGroup.setTranslateY(boardGroup.getTranslateY() + step);
                 case D -> boardGroup.setTranslateX(boardGroup.getTranslateX() + step);
-                case R, C -> centerBoard(boardGroup, GAME_WIDTH, GAME_HEIGHT);
+                case R, C -> centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
                 case SPACE -> {
                     gameplay.pauseGame();
                     Alert pauseAlert = new Alert(Alert.AlertType.INFORMATION, "Game is paused. Press OK to resume.", ButtonType.OK);
@@ -439,7 +437,7 @@ public class CatanBoardGameView {
 
     private Pane createBoardWrapperWithBackground(Group boardGroup) {
         Pane boardWrapper = new Pane(boardGroup);
-        boardWrapper.setPrefSize(GAME_WIDTH, GAME_HEIGHT);
+        boardWrapper.setPrefSize(gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
 
         Image backgroundImage = new Image(
                 getClass().getResource("/backgrounds/boardBackground.png").toExternalForm()
@@ -608,12 +606,6 @@ public class CatanBoardGameView {
     }
     public Stage getPrimaryStage() {
         return primaryStage;
-    }
-    public double getGAME_WIDTH() {
-        return GAME_WIDTH;
-    }
-    public double getGAME_HEIGHT() {
-        return GAME_HEIGHT;
     }
 
 }

@@ -89,14 +89,23 @@ public class Gameplay {
         for (int i = 0; i < humanCount && !colors.isEmpty(); i++) {
             playerList.add(new Player(idCounter++, colors.remove(0), this));
         }
+
+        AIOpponent.ThinkingSpeed selectedSpeed = menuView.getSelectedAISpeed(); // <- retrieve selected speed
+
         for (int i = 0; i < aiEasy && !colors.isEmpty(); i++) {
-            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.EASY, this));
+            AIOpponent ai = new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.EASY, this);
+            ai.setThinkingSpeed(selectedSpeed);
+            playerList.add(ai);
         }
         for (int i = 0; i < aiMedium && !colors.isEmpty(); i++) {
-            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.MEDIUM, this));
+            AIOpponent ai = new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.MEDIUM, this);
+            ai.setThinkingSpeed(selectedSpeed);
+            playerList.add(ai);
         }
         for (int i = 0; i < aiHard && !colors.isEmpty(); i++) {
-            playerList.add(new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.HARD, this));
+            AIOpponent ai = new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.HARD, this);
+            ai.setThinkingSpeed(selectedSpeed);
+            playerList.add(ai);
         }
 
         if (!playerList.isEmpty()) {
@@ -110,7 +119,7 @@ public class Gameplay {
         stopAllAIThreads(); // Stop any in-progress AI thread before advancing
 
         turnCounter++;
-        crashGameIfMaxTurnsExceeded(200, turnCounter);
+        crashGameIfMaxTurnsExceeded(500, turnCounter);
         startOfTurnEffects();
 
         // ------------------- INITIAL PLACEMENT PHASE -------------------
@@ -186,8 +195,8 @@ public class Gameplay {
 
         catanBoardGameView.centerBoard(
                 catanBoardGameView.getBoardGroup(),
-                catanBoardGameView.getGAME_WIDTH(),
-                catanBoardGameView.getGAME_HEIGHT()
+                menuView.getGAME_WIDTH(),
+                menuView.getGAME_HEIGHT()
         );
     }
 
@@ -549,9 +558,12 @@ public class Gameplay {
 
         if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
             if (isGamePaused()) return;
-            handleEndOfGame();
+
+            Player winner = currentPlayer; // <- Freeze the winning player here
+            handleEndOfGame(winner);       // <- pass it down
         }
     }
+
 
     // SKAL BRUGES TIL LONGEST ROAD BIGGEST ARMY
     public void decreasePlayerScore() {
@@ -565,7 +577,7 @@ public class Gameplay {
         return selection.values().stream().mapToInt(Integer::intValue).sum();
     }
 
-    private void handleEndOfGame() {
+    private void handleEndOfGame(Player winner) {
         Platform.runLater(() -> {
             StringBuilder scoreboard = new StringBuilder("Final Scores:\n\n");
 
@@ -590,8 +602,7 @@ public class Gameplay {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Game Over");
             alert.setHeaderText("We have a winner!");
-            alert.setContentText("Player " + currentPlayer.getPlayerId() +
-                    " has won the game!\n\n" + scoreboard);
+            alert.setContentText("Player " + winner.getPlayerId() + " has won the game!\n\n" + scoreboard);
             alert.setResizable(true);
             alert.getDialogPane().setPrefWidth(400);
             alert.setOnHidden(e -> menuView.showMainMenu());
