@@ -25,6 +25,10 @@ public class TurnController {
             drawOrDisplay.showMustPlaceTwoRoadsPopup();
             return;
         }
+        if (gameController.getGameplay().isRobberMoveRequired()) {
+            drawOrDisplay.showMustPlaceRobberPopup();
+            return;
+        }
         var gameplay = gameController.getGameplay();
         gameplay.nextPlayerTurn();
     }

@@ -51,6 +51,10 @@ public class BuildController {
                 }
                 return;
             }
+            if (gameController.getGameplay().isRobberMoveRequired()) {
+                drawOrDisplay.showMustPlaceRobberPopup();
+                return;
+            }
             // Enforce dice roll in main phase
             if (!gameController.getGameplay().isInInitialPhase() && !gameController.getGameplay().hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
@@ -82,10 +86,8 @@ public class BuildController {
                             && !gameController.getGameplay().isWaitingForInitialRoad()) {
                         gameController.getGameplay().nextPlayerTurn();
                     }
-
                     gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                 }
-
 
                 case TOO_MANY_ROADS -> drawOrDisplay.showMaxRoadsReachedPopup();
 
@@ -108,6 +110,11 @@ public class BuildController {
                 drawOrDisplay.showMustPlaceTwoRoadsPopup();
                 return;
             }
+            if (gameController.getGameplay().isRobberMoveRequired()) {
+                drawOrDisplay.showMustPlaceRobberPopup();
+                return;
+            }
+
             // Enforce dice roll in main phase
             if (!gameController.getGameplay().isInInitialPhase() && !gameController.getGameplay().hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");

@@ -36,16 +36,19 @@ public class Gameplay {
     private int turnCounter = 0;
     private volatile boolean gamePaused = false;
     private Thread activeAIThread;
+    private boolean isRobberMoveRequired = false;
 
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
     private DevelopmentCard developmentCard;
     private final String[] developmentCardsTypes =
-            { "Monopoly","Monopoly","Road Building","Road Building","Year Of Plenty","Year Of Plenty",
-              "Victory Point", "Victory Point", "Victory Point", "Victory Point", "Victory Point",
-              "Knight", "Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight",
-              "Knight","Knight", "Knight","Knight","Knight"};
+            { "Knight"};
+   // private final String[] developmentCardsTypes =
+         //   { "Monopoly","Monopoly","Road Building","Road Building","Year Of Plenty","Year Of Plenty",
+           //   "Victory Point", "Victory Point", "Victory Point", "Victory Point", "Victory Point",
+             // "Knight", "Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight",
+              //"Knight","Knight", "Knight","Knight","Knight"};
     private List<String> shuffledDevelopmentCards;
     private LongestRoadManager longestRoadManager = new LongestRoadManager();
 
@@ -252,6 +255,7 @@ public class Gameplay {
             catanBoardGameView.getNextTurnButton().setDisable(true);
             catanBoardGameView.getRobber().requireRobberMove();
             catanBoardGameView.getRobber().showRobberTargets(boardGroup);
+            setRobberMoveRequired(true);
         } else {
             distributeResources(roll);
         }
@@ -335,6 +339,10 @@ public class Gameplay {
         type.play(player, developmentCard);
 
         player.getDevelopmentCards().merge(cardName, -1, Integer::sum);
+
+        if (type == DevelopmentCard.DevelopmentCardType.KNIGHT) {
+            setRobberMoveRequired(true);
+        }
         catanBoardGameView.refreshSidebar();
     }
     public DevelopmentCard getDevelopmentCard() {
@@ -645,6 +653,14 @@ public class Gameplay {
     }
 
 //__________________________GETTERS________________________//
+
+    public boolean isRobberMoveRequired() {
+        return isRobberMoveRequired;
+    }
+
+    public void setRobberMoveRequired(boolean required) {
+        isRobberMoveRequired = required;
+    }
 
     public Player getCurrentPlayer() {
         return currentPlayer;

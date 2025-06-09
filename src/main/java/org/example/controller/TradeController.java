@@ -26,6 +26,10 @@ public class TradeController {
                 drawOrDisplay.showMustPlaceTwoRoadsPopup();
                 return;
             }
+            if (gameController.getGameplay().isRobberMoveRequired()) {
+                drawOrDisplay.showMustPlaceRobberPopup();
+                return;
+            }
             Gameplay gameplay = gameController.getGameplay();
 
             // Enforce dice roll before trading during main phase

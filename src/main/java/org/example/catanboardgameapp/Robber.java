@@ -28,7 +28,7 @@ public class Robber {
     private final CatanBoardGameView catanBoardGameView;
     private final Board board;
     private Circle robberCircle;
-
+    private final List<Circle> activeRobberHighlights = new ArrayList<>();
 
     //____________________CONSTRUCTOR__________________________
 
@@ -52,6 +52,7 @@ public class Robber {
         boardGroup.getChildren().remove(this.robberCircle); // remove old robber
 
         List<Circle> highlightCircles = new ArrayList<>();
+        activeRobberHighlights.clear();
 
         for (Tile tile : board.getTiles()) {
             if (tile == this.currentTile) continue;
@@ -61,8 +62,11 @@ public class Robber {
             Circle highlight = drawOrDisplay.drawRobberCircle(center, boardGroup); // already added inside
 
             highlight.setOnMouseClicked(e -> {
+                activeRobberHighlights.forEach(boardGroup.getChildren()::remove);
+                activeRobberHighlights.clear();
                 highlightCircles.forEach(boardGroup.getChildren()::remove);
-                highlightCircles.clear();
+                System.out.println("is here");
+                gameplay.setRobberMoveRequired(false);
                 this.robberCircle = drawOrDisplay.drawRobberCircle(center, boardGroup);
                 this.moveTo(tile);
                 robberHasMoved();
@@ -89,6 +93,8 @@ public class Robber {
                     catanBoardGameView.refreshSidebar();
                     catanBoardGameView.getNextTurnButton().setDisable(false);
                 });
+                activeRobberHighlights.clear();
+
             });
 
             highlightCircles.add(highlight); // now safe to track
@@ -188,7 +194,7 @@ public class Robber {
         }
         return new ArrayList<>(victims);
     }
-    
+
     //____________________CARD DISCARD HANDLER__________________________
 
     public void requireRobberMove() {

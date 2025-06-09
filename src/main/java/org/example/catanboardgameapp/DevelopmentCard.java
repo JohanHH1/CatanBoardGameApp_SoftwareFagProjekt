@@ -15,6 +15,7 @@ public class DevelopmentCard {
     private final TradeController tradeController;
 
     private boolean placingFreeRoads = false;
+    private boolean movingKnight = false;
     private int freeRoadsLeft = 0;
 
     public DevelopmentCard(List<Player> playerList, CatanBoardGameView view, TradeController tradeController) {
@@ -38,6 +39,7 @@ public class DevelopmentCard {
                 handler.view.showTurnButton();
                 Group boardGroup = handler.view.getBoardGroup();
                 handler.view.getNextTurnButton().setDisable(true);
+                handler.startMovingKnight();
                 handler.view.getRobber().showRobberTargets(boardGroup);
                 handler.log("Player " + player.getPlayerId() + " played a knight development card");
             }
@@ -95,7 +97,17 @@ public class DevelopmentCard {
             System.err.println("LOG FAIL (view=null): " + message); // optional fallback
         }
     }
+    public void startMovingKnight() {
+        this.movingKnight = true;
+    }
 
+    public void finishMovingKnight() {
+        this.movingKnight = false;
+    }
+
+    public boolean isMovingKnight() {
+        return movingKnight;
+    }
 
     public void startPlacingFreeRoads(int count) {
         this.placingFreeRoads = true;

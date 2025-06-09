@@ -399,6 +399,15 @@ public class DrawOrDisplay {
             alert.showAndWait();
         });
     }
+    public void showMustPlaceRobberPopup() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Robber move in progress");
+            alert.setHeaderText("You must move robber before continuing.");
+            alert.setContentText("Complete your knight card action by moving the robber. Other actions are temporarily disabled.");
+            alert.showAndWait();
+        });
+    }
     public void showMustPlaceTwoRoadsPopup() {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.WARNING);
