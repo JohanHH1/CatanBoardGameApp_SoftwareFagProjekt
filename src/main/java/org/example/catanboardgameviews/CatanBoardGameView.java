@@ -257,10 +257,12 @@ public class CatanBoardGameView {
         });
 
         new TradeController(gameController, boardRadius).setupTradeButton(tradeButton);
-        tradeButton.setOnAction(e -> {
+        //tradeButton.setOnAction(e -> {
             // TradeController should handle this but in case it doesn't:
-            tradeButton.getScene().getRoot().requestFocus(); // clear focus
-        });
+          //  tradeButton.getScene().getRoot().requestFocus(); // clear focus
+        //});
+        TradeController tradeController = new TradeController(gameController, boardRadius);
+        tradeController.setupTradeButton(tradeButton);
 
         showCostsButton.setOnAction(e -> {
             drawOrDisplay.showBuildingCostsPopup();

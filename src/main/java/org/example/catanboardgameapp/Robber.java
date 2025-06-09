@@ -60,7 +60,21 @@ public class Robber {
 
             Point2D center = tile.getCenter();
             Circle highlight = drawOrDisplay.drawRobberCircle(center, boardGroup); // already added inside
+            highlight.setOnMouseClicked(e -> {
+                activeRobberHighlights.forEach(boardGroup.getChildren()::remove);
+                activeRobberHighlights.clear();
+                highlightCircles.forEach(boardGroup.getChildren()::remove);
 
+                System.out.println("is here");
+                gameplay.setRobberMoveRequired(false);
+
+                // ✅ Remove the old robber circle
+                boardGroup.getChildren().remove(this.robberCircle);
+
+                // ✅ Draw the new robber circle
+                this.robberCircle = drawOrDisplay.drawRobberCircle(center, boardGroup);
+                this.moveTo(tile);
+                /*
             highlight.setOnMouseClicked(e -> {
                 activeRobberHighlights.forEach(boardGroup.getChildren()::remove);
                 activeRobberHighlights.clear();
@@ -70,7 +84,8 @@ public class Robber {
                 this.robberCircle = drawOrDisplay.drawRobberCircle(center, boardGroup);
                 this.moveTo(tile);
                 robberHasMoved();
-
+                gameplay.getDevelopmentCard().finishMovingKnight();
+*/
                 // Proceed with potential steal
                 List<Player> victims = showPotentialVictims(tile, this.gameplay.getCurrentPlayer());
                 if (victims.isEmpty()) {

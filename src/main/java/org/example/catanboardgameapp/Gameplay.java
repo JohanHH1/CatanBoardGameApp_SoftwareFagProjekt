@@ -241,13 +241,6 @@ public class Gameplay {
 
             Group boardGroup = catanBoardGameView.getBoardGroup();
 
-            if (roll == 7) {
-                catanBoardGameView.getNextTurnButton().setDisable(true);
-                catanBoardGameView.getRobber().requireRobberMove();
-                catanBoardGameView.getRobber().showRobberTargets(boardGroup);
-            } else {
-                distributeResources(roll); // optional move out, if it touches UI inside
-            }
         // Handle robber or distribute resources
         if (roll == 7) {
             catanBoardGameView.getNextTurnButton().setDisable(true);
