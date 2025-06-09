@@ -43,18 +43,18 @@ public class AIOpponent extends Player {
     public void placeInitialSettlementAndRoad(Gameplay gameplay, Group boardGroup) {
         CatanBoardGameView view = gameplay.getCatanBoardGameView();
 
-        // STEP 1: Show overlay on FX thread
-        if (gameplay.hasHumanPlayers()) {
+        // STEP 1: Show overlay if any human player exists
+        boolean showOverlay = gameplay.hasHumanPlayers();
+        if (showOverlay) {
             view.runOnFX(() -> view.showAITurnOverlay(this));
         }
 
-        // STEP 2: Run AI logic on a background thread
-        new Thread(() -> {
-            pauseBeforeMove();
+        // STEP 2: Make sure this logic is inside a background thread — so wrap all logic here:
+        Runnable logic = () -> {
+            pauseBeforeMove();  // ← will now be safe
 
             List<Vertex> candidates = new ArrayList<>(gameplay.getBoard().getVertices());
             Vertex chosenSettlement = null;
-            int chosenSettlementScore = 0;
 
             if (strategyLevel == StrategyLevel.EASY) {
                 Collections.shuffle(candidates);
@@ -72,7 +72,6 @@ public class AIOpponent extends Player {
                     if (score > bestScore) {
                         bestScore = score;
                         chosenSettlement = v;
-                        chosenSettlementScore = score;
                     }
                 }
             }
@@ -102,9 +101,8 @@ public class AIOpponent extends Player {
                 drawOrDisplay.drawSettlement(circle, finalSettlement, boardGroup);
             });
 
-            // Pick road
+            // Select road
             Edge chosenEdge = null;
-            int chosenRoadScore = 0;
             List<Edge> edges = gameplay.getBoard().getEdges();
 
             if (strategyLevel == StrategyLevel.EASY) {
@@ -119,12 +117,10 @@ public class AIOpponent extends Player {
                 int bestEdgeScore = Integer.MIN_VALUE;
                 for (Edge edge : edges) {
                     if (!edge.isConnectedTo(chosenSettlement) || !gameplay.isValidRoadPlacement(edge)) continue;
-
                     int score = getSmartRoadScore(edge, chosenSettlement, gameplay);
                     if (score > bestEdgeScore) {
                         bestEdgeScore = score;
                         chosenEdge = edge;
-                        chosenRoadScore = score;
                     }
                 }
             }
@@ -147,7 +143,20 @@ public class AIOpponent extends Player {
                     return;
                 }
             }
-        }).start(); // background thread launched
+
+            // fallback error
+            view.runOnFX(() -> {
+                view.logToGameLog("AI " + getPlayerId() + " failed to place road.");
+                view.hideAITurnOverlay();
+            });
+        };
+
+        // Execute AI logic in a background thread if not already on one
+        if (Platform.isFxApplicationThread()) {
+            new Thread(logic).start();
+        } else {
+            logic.run();  // already on background thread from startAIThread()
+        }
     }
 
     //__________________________________MAKE MOVE LOGIC________________________________________//

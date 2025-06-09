@@ -212,48 +212,76 @@ public class CatanBoardGameView {
         Button exitButton = new Button("Exit");
         ToggleButton toggleConfirmBtn = new ToggleButton("Confirm: OFF");
         toggleConfirmBtn.setSelected(false);
+
         toggleConfirmBtn.setOnAction(e -> {
             boolean enabled = toggleConfirmBtn.isSelected();
             toggleConfirmBtn.setText(enabled ? "Confirm: ON" : "Confirm: OFF");
             gameController.getBuildController().toggleConfirmBeforeBuild();
+            toggleConfirmBtn.getScene().getRoot().requestFocus(); // clear focus
         });
+
         rollDiceButton.setOnAction(e -> {
             gameplay.rollDice();
+            rollDiceButton.getScene().getRoot().requestFocus(); // clear focus
         });
-        developmentCardButton.setOnAction(e-> {
+
+        developmentCardButton.setOnAction(e -> {
             if (gameplay.isBlockedByAITurn()) return;
-            else if (!gameplay.hasRolledDice()) {
+            if (!gameplay.hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before buying Development Cards!");
                 return;
             }
-            else {
-                gameplay.buyDevelopmentCard();
-            }
+            gameplay.buyDevelopmentCard();
+            developmentCardButton.getScene().getRoot().requestFocus(); // clear focus
         });
 
         TurnController turnController = new TurnController(gameController, rollDiceButton, nextTurnButton);
-        nextTurnButton.setOnAction(turnController::handleNextTurnButtonPressed);
+        nextTurnButton.setOnAction(e -> {
+            turnController.handleNextTurnButtonPressed(e);
+            nextTurnButton.getScene().getRoot().requestFocus(); // clear focus
+        });
 
-        centerButton.setOnAction(e -> centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT()));
-        zoomInButton.setOnAction(e -> zoom(boardGroup, 1.1));
-        zoomOutButton.setOnAction(e -> zoom(boardGroup, 0.9));
+        centerButton.setOnAction(e -> {
+            centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
+            centerButton.getScene().getRoot().requestFocus(); // clear focus
+        });
+
+        zoomInButton.setOnAction(e -> {
+            zoom(boardGroup, 1.1);
+            zoomInButton.getScene().getRoot().requestFocus(); // clear focus
+        });
+
+        zoomOutButton.setOnAction(e -> {
+            zoom(boardGroup, 0.9);
+            zoomOutButton.getScene().getRoot().requestFocus(); // clear focus
+        });
 
         new TradeController(gameController, boardRadius).setupTradeButton(tradeButton);
-        showCostsButton.setOnAction(e -> drawOrDisplay.showBuildingCostsPopup());
+        tradeButton.setOnAction(e -> {
+            // TradeController should handle this but in case it doesn't:
+            tradeButton.getScene().getRoot().requestFocus(); // clear focus
+        });
+
+        showCostsButton.setOnAction(e -> {
+            drawOrDisplay.showBuildingCostsPopup();
+            showCostsButton.getScene().getRoot().requestFocus(); // clear focus
+        });
+
         exitButton.setOnAction(e -> {
-            gameplay.pauseGame(); // ensure game is paused before showing alert
+            gameplay.pauseGame();
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.YES) {
                 gameController.returnToMenu(gameplay.getMenuView());
             } else {
-                gameController.resumeGame(); // resume only if staying in game
+                gameController.resumeGame();
             }
+            exitButton.getScene().getRoot().requestFocus(); // clear focus
         });
 
         List<ButtonBase> allButtons = List.of(
                 rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton,
-                tradeButton,developmentCardButton, showCostsButton, toggleConfirmBtn, exitButton
+                tradeButton, developmentCardButton, showCostsButton, toggleConfirmBtn, exitButton
         );
 
         String style = "-fx-background-color: linear-gradient(to bottom, #f9f9f9, #e0e0e0); -fx-background-radius: 8;" +
@@ -364,6 +392,7 @@ public class CatanBoardGameView {
 
         return playerBox;
     }
+
     public VBox createLeftMenu(Boolean hasBeenInitialized) {
         if (playerListVBox == null) {
             playerListVBox = new VBox(10);
@@ -416,6 +445,11 @@ public class CatanBoardGameView {
                     pauseAlert.setHeaderText(null);
                     pauseAlert.showAndWait(); // wait for input
                     gameController.resumeGame(); // only resume after dialog is confirmed
+
+                    // Reset focus to scene root
+                    if (scene.getRoot() != null) {
+                        scene.getRoot().requestFocus();
+                    }
                 }
                 case ESCAPE -> {
                     gameplay.pauseGame();
@@ -425,9 +459,13 @@ public class CatanBoardGameView {
                         gameController.returnToMenu(gameplay.getMenuView());
                     } else {
                         gameController.resumeGame(); // resume only if they cancel the exit
+
+                        // Reset focus to scene root
+                        if (scene.getRoot() != null) {
+                            scene.getRoot().requestFocus();
+                        }
                     }
                 }
-
             }
         });
 
