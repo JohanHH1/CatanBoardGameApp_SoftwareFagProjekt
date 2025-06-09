@@ -106,6 +106,7 @@ public class Player {
         return resources.values().stream().mapToInt(Integer::intValue).sum();
     }
 
+
     //_____________________________Getters_____________________________//
 
     public int getPlayerId() {

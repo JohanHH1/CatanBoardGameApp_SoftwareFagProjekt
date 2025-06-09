@@ -47,6 +47,8 @@ public class Gameplay {
               "Knight", "Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight",
               "Knight","Knight", "Knight","Knight","Knight"};
     private List<String> shuffledDevelopmentCards;
+    private LongestRoadManager longestRoadManager = new LongestRoadManager();
+
 
     //__________________________DICE ROLL TRACKING_____________________________//
     private int lastRolledDie1;
@@ -417,6 +419,11 @@ public class Gameplay {
             currentPlayer.getRoads().add(edge);
             waitingForInitialRoad = false;
             lastInitialSettlement = null;
+
+            // update longest road for currentPlayer
+            longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer, playerList);
+
+
             return BuildResult.SUCCESS;
         }
 
@@ -432,6 +439,11 @@ public class Gameplay {
             removeResource("Brick", 1);
             removeResource("Wood", 1);
             currentPlayer.getRoads().add(edge);
+
+            // update longest road for currentPlayer
+            longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer, playerList);
+
+
             return BuildResult.SUCCESS;
         }
 
