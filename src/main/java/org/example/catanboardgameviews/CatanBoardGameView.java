@@ -48,6 +48,7 @@ public class CatanBoardGameView {
     //---------------------------- JavaFX Root Scene ----------------------------//
     private final Scene scene;
     private final BorderPane root;
+    private final StackPane aiTurnOverlay = new StackPane();
 
     //---------------------------- Render Layers ----------------------------//
     private final Group edgeBaseLayer;
@@ -120,6 +121,19 @@ public class CatanBoardGameView {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No desert tile found"));
         this.robber = new Robber(desertTile, gameplay, this, boardGroup);
+        // Create overlay to block user input during AI turn
+        Label aiLabel = new Label(); // start empty
+        aiLabel.setStyle("-fx-font-size: 24px; -fx-text-fill: white;");
+
+        aiTurnOverlay.getChildren().add(aiLabel);
+        aiTurnOverlay.setAlignment(Pos.CENTER);
+        aiTurnOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5);");
+        aiTurnOverlay.setVisible(false);
+        aiTurnOverlay.setMouseTransparent(true); // by default: no input block
+
+        // Wrap root layout and overlay in a StackPane
+        StackPane layeredRoot = new StackPane(root, aiTurnOverlay);
+        this.scene.setRoot(layeredRoot); // replace root scene node
     }
 
 
@@ -147,7 +161,12 @@ public class CatanBoardGameView {
         root.setTop(createTopButtonBar());
         root.setLeft(createLeftMenu(false));
 
-        // Setup KEY buttons clickable ESC, SPACE, ASDW, R for reset board etc
+        // Overlay for when AI is making a move (thinking)
+        StackPane aiTurnOverlay = drawOrDisplay.buildFancyAIOverlay();
+        StackPane layeredRoot = new StackPane(root, aiTurnOverlay);
+        scene.setRoot(layeredRoot);
+
+        // Setup KEY buttons clickable ESC, SPACE, ASDW, R,C for reset board etc
         setupInputHandlers(boardWrapper);
         // Ensure focus so key events work
         root.setFocusTraversable(true);
@@ -202,11 +221,14 @@ public class CatanBoardGameView {
             gameplay.rollDice();
         });
         developmentCardButton.setOnAction(e-> {
-            if (!gameplay.hasRolledDice()) {
+            if (gameplay.isBlockedByAITurn()) return;
+            else if (!gameplay.hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before buying Development Cards!");
                 return;
             }
-            gameplay.buyDevelopmentCard();
+            else {
+                gameplay.buyDevelopmentCard();
+            }
         });
 
         TurnController turnController = new TurnController(gameController, rollDiceButton, nextTurnButton);
@@ -522,7 +544,7 @@ public class CatanBoardGameView {
 
     public void prepareForHumanInitialPlacement(Player currentPlayer) {
         logToGameLog("Player " + currentPlayer.getPlayerId() + ", place your initial settlement.");
-        System.out.println("HIDING BUTTONS FOR HUMAN IN INITIAL PHASE");
+        refreshSidebar();
         hideTurnButton();
         hideDiceButton();
     }
@@ -554,6 +576,34 @@ public class CatanBoardGameView {
         });
     }
 
+    public void showAITurnOverlay(Player aiPlayer) {
+        Platform.runLater(() -> {
+            if (aiPlayer instanceof AIOpponent ai) {
+                drawOrDisplay.setThinkingMessage("AI Player " + ai.getPlayerId() + " (" + ai.getStrategyLevel().name() + ") is thinking...");
+            } else {
+                drawOrDisplay.setThinkingMessage("Opponent is thinking...");
+            }
+            drawOrDisplay.getOverlayPane().setVisible(true);
+            drawOrDisplay.getOverlayPane().setMouseTransparent(false);
+            drawOrDisplay.startThinkingAnimation();
+        });
+    }
+
+    public void hideAITurnOverlay() {
+        Platform.runLater(() -> {
+            drawOrDisplay.getOverlayPane().setVisible(false);
+            drawOrDisplay.getOverlayPane().setMouseTransparent(true);
+            drawOrDisplay.stopThinkingAnimation();
+        });
+    }
+
+    public void runOnFX(Runnable action) {
+        if (Platform.isFxApplicationThread()) {
+            action.run();
+        } else {
+            Platform.runLater(action);
+        }
+    }
 
     //________________________SHOW/HIDE BUTTONS____________________________________//
 
@@ -569,6 +619,7 @@ public class CatanBoardGameView {
     public void hideTurnButton() {
         nextTurnButton.setVisible(false);
     }
+
 
     //__________________________GETTERS_____________________________//
     public ImageView getDiceImage1() {

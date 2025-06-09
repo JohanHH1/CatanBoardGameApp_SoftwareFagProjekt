@@ -56,9 +56,9 @@ public class BuildController {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
                 return;
             }
-
             Player currentPlayer = gameController.getGameplay().getCurrentPlayer();
-
+            // Enforce dont build Road while its AI turn
+            if (gameController.getGameplay().isBlockedByAITurn()) return;
             // Confirm action
             if (isConfirmBeforeBuildEnabled()) {
                 Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -114,6 +114,7 @@ public class BuildController {
                 return;
             }
             Player currentPlayer = gameController.getGameplay().getCurrentPlayer();
+            if (gameController.getGameplay().isBlockedByAITurn()) return;
 
             // Confirm action first
             if (isConfirmBeforeBuildEnabled()) {
@@ -127,7 +128,6 @@ public class BuildController {
                     return; // Player cancelled
                 }
             }
-
 
             BuildResult result;
 
@@ -150,22 +150,17 @@ public class BuildController {
                     if (cityResult == BuildResult.TOO_MANY_CITIES) {
                             drawOrDisplay.showMaxCitiesReachedPopup();
                             drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
-
                     }
                     if (cityResult == BuildResult.UPGRADED_TO_CITY) {
                         vertex.setOwner(currentPlayer);
                         gameController.getGameView().getSettlementLayer().getChildren().remove(circle);
-                        // Remove any existing Circle (settlement) on that vertex
-                        gameController.getGameView().getSettlementLayer().getChildren().remove(circle);
-                        // Call the standard city drawing logic
-                        drawOrDisplay.drawCity(vertex, gameController.getGameView().getSettlementLayer());
+                        drawOrDisplay.drawCity(vertex, gameController.getGameplay().getCatanBoardGameView().getBoardGroup());
                         gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                         gameController.getGameView().logToGameLog("City built by player " + currentPlayer.getPlayerId());
 
                     } else {
                         // Neither worked
                         drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
-
                     }
                 }
                 case TOO_MANY_SETTLEMENTS -> {

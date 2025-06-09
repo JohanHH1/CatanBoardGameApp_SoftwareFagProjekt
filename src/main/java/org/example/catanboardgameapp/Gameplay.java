@@ -149,7 +149,7 @@ public class Gameplay {
                 Platform.runLater(() -> {
                     catanBoardGameView.logToGameLog("All initial placements complete. Starting first turn...");
                     if (currentPlayer instanceof AIOpponent ai) {
-                        startAIThread(ai); // ✅ Safe AI startup
+                        startAIThread(ai); // Safe AI startup
                     } else {
                         catanBoardGameView.showDiceButton();
                     }
@@ -162,9 +162,8 @@ public class Gameplay {
             lastInitialSettlement = null;
 
             if (currentPlayer instanceof AIOpponent ai) {
-                ai.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
+                startAIThread(ai); //always call through here
             } else {
-                System.out.println("HUMAN TURN NOW");
                 catanBoardGameView.prepareForHumanInitialPlacement(currentPlayer);
             }
             return;
@@ -191,7 +190,6 @@ public class Gameplay {
 
         // UI refresh applies in both phases
         catanBoardGameView.refreshSidebar();
-        catanBoardGameView.showDiceButton();      // Safe even in initial phase
         catanBoardGameView.hideTurnButton();
         setHasRolledThisTurn(false);
 
@@ -221,44 +219,37 @@ public class Gameplay {
                 // Now forcefully exit
                 System.exit(1);
             });
-
-            return;
         }
     }
 
     //_____________________________DICE________________________________//
-    public int rollDice() {
-        // Mark dice as rolled this turn
+    public void rollDice() {
         setHasRolledThisTurn(true);
-        // Roll the dice
+
+        // Logic part (no FX)
         Random rand = new Random();
         lastRolledDie1 = rand.nextInt(6) + 1;
         lastRolledDie2 = rand.nextInt(6) + 1;
         int roll = lastRolledDie1 + lastRolledDie2;
 
-        // UPDATE DICES AFTER ROLL
-        catanBoardGameView.updateDiceImages(lastRolledDie1, lastRolledDie2);
+        catanBoardGameView.runOnFX(() -> {
+            catanBoardGameView.updateDiceImages(lastRolledDie1, lastRolledDie2);
+            catanBoardGameView.logToGameLog("Dice rolled: " + lastRolledDie1 + " + " + lastRolledDie2 + " = " + roll);
+            catanBoardGameView.hideDiceButton();
+            catanBoardGameView.showTurnButton();
 
-        // Log the result
-        catanBoardGameView.logToGameLog("Dice rolled: " + lastRolledDie1 + " + " + lastRolledDie2 + " = " + roll);
+            Group boardGroup = catanBoardGameView.getBoardGroup();
 
-        // Hide/Show relevant UI
-        catanBoardGameView.hideDiceButton();
-        catanBoardGameView.showTurnButton();
-        Group boardGroup = catanBoardGameView.getBoardGroup();
+            if (roll == 7) {
+                catanBoardGameView.getNextTurnButton().setDisable(true);
+                catanBoardGameView.getRobber().requireRobberMove();
+                catanBoardGameView.getRobber().showRobberTargets(boardGroup);
+            } else {
+                distributeResources(roll); // optional move out, if it touches UI inside
+            }
 
-        // Handle robber or distribute resources
-        if (roll == 7) {
-            catanBoardGameView.getNextTurnButton().setDisable(true);
-            catanBoardGameView.getRobber().requireRobberMove();
-            catanBoardGameView.getRobber().showRobberTargets(boardGroup);
-        } else {
-            distributeResources(roll);
-        }
-
-        // Refresh UI
-        catanBoardGameView.refreshSidebar();
-        return roll;
+            catanBoardGameView.refreshSidebar();
+        });
     }
 
     public void distributeResources(int diceRoll) {
@@ -268,7 +259,6 @@ public class Gameplay {
             if (tile.getTileDiceNumber() == diceRoll) {
                 Resource.ResourceType type = tile.getResourcetype();
 
-                // Skip tiles that are not supposed to produce anything
                 if (type == Resource.ResourceType.SEA || type == Resource.ResourceType.DESERT) continue;
 
                 for (Vertex vertex : tile.getVertices()) {
@@ -277,34 +267,42 @@ public class Gameplay {
                         String res = type.getName();
                         int amount = vertex.isCity() ? 2 : 1;
                         owner.getResources().merge(res, amount, Integer::sum);
-                        catanBoardGameView.logToGameLog("Player " + owner.getPlayerId() + " gets " + res);
+
+                        String logMsg = "Player " + owner.getPlayerId() + " gets " + res;
+                        catanBoardGameView.runOnFX(() -> catanBoardGameView.logToGameLog(logMsg));
                     }
                 }
             }
         }
     }
 
+
     //_________________________________________ AI THREAD _____________________________________________//
     public void startAIThread(AIOpponent ai) {
-        // Don't start if already running or game is over
         if (activeAIThread != null && activeAIThread.isAlive()) return;
         if (isGameOver()) return;
+
         activeAIThread = new Thread(() -> {
-            // Wait if game is paused
             while (isGamePaused()) {
                 try {
-                    Thread.sleep(100); // Poll pause state
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return;
                 }
             }
-            ai.makeMoveAI(this);
+
+            if (initialPhase) {
+                ai.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
+            } else {
+                ai.makeMoveAI(this);
+            }
         });
 
         activeAIThread.setDaemon(true);
         activeAIThread.start();
     }
+
     public void stopAllAIThreads() {
         if (activeAIThread != null && activeAIThread.isAlive()) {
             activeAIThread.interrupt();
@@ -314,29 +312,36 @@ public class Gameplay {
 
     //_________________________________BUY AND PLAY DEVELOPMENT CARDS_____________________________________//
     public void buyDevelopmentCard() {
-        if (shuffledDevelopmentCards.isEmpty()){
-            drawOrDisplay.showNoMoreDevelopmentCardToBuyPopup();
+        if (shuffledDevelopmentCards.isEmpty()) {
+            catanBoardGameView.runOnFX(drawOrDisplay::showNoMoreDevelopmentCardToBuyPopup);
         } else if (canRemoveResource("Wool", 1) && canRemoveResource("Ore", 1) && canRemoveResource("Grain", 1)) {
             removeResource("Wool", 1);
             removeResource("Ore", 1);
             removeResource("Grain", 1);
+
             String cardType = shuffledDevelopmentCards.remove(0);
-            currentPlayer.getDevelopmentCards().put(cardType,currentPlayer.getDevelopmentCards().getOrDefault(cardType, 0) + 1);
-            catanBoardGameView.logToGameLog(currentPlayer.toString() +" bought a development card");
-            catanBoardGameView.refreshSidebar();
+            currentPlayer.getDevelopmentCards().put(cardType, currentPlayer.getDevelopmentCards().getOrDefault(cardType, 0) + 1);
+
+            String log = currentPlayer + " bought a development card";
+            catanBoardGameView.runOnFX(() -> {
+                catanBoardGameView.logToGameLog(log);
+                catanBoardGameView.refreshSidebar();
+            });
         } else {
-            drawOrDisplay.showFailToBuyDevelopmentCardPopup();
+            catanBoardGameView.runOnFX(drawOrDisplay::showFailToBuyDevelopmentCardPopup);
         }
     }
+
     public void playDevelopmentCard(Player player, String cardName) {
         DevelopmentCard.DevelopmentCardType type =
                 DevelopmentCard.DevelopmentCardType.fromName(cardName);
 
         type.play(player, developmentCard);
-
         player.getDevelopmentCards().merge(cardName, -1, Integer::sum);
-        catanBoardGameView.refreshSidebar();
+
+        catanBoardGameView.runOnFX(catanBoardGameView::refreshSidebar);
     }
+
     public DevelopmentCard getDevelopmentCard() {
         return developmentCard;
     }
@@ -384,7 +389,6 @@ public class Gameplay {
 
 
     //_____________________________BUILDING FUNCTIONS____________________________//
-
     public BuildResult buildInitialSettlement(Vertex vertex) {
         if (vertex == null || !isValidSettlementPlacement(vertex)) return BuildResult.INVALID_VERTEX;
         if (currentPlayer.getSettlements().contains(vertex)) return BuildResult.INVALID_VERTEX;
@@ -491,10 +495,6 @@ public class Gameplay {
             vertex.setOwner(currentPlayer);
             vertex.makeCity();
             increasePlayerScore();
-
-            // Draw visual city after game state update
-            drawOrDisplay.drawCity(vertex, catanBoardGameView.getBoardGroup());
-
             return BuildResult.UPGRADED_TO_CITY;
         }
         drawOrDisplay.notEnoughResources("Not enough resources to build a city");
@@ -714,5 +714,17 @@ public class Gameplay {
     public boolean isGameOver() {
         return playerList.stream().anyMatch(p -> p.getPlayerScore() >= menuView.getMaxVictoryPoints());
     }
+
+    public boolean isBlockedByAITurn() {
+        if (gameController.getGameplay().getCurrentPlayer() instanceof AIOpponent) {
+            drawOrDisplay.showAITurnPopup();
+            return true;
+        }
+        return false;
+    }
+    public boolean hasHumanPlayers() {
+        return playerList.stream().anyMatch(p -> !(p instanceof AIOpponent));
+    }
+
 
 }
