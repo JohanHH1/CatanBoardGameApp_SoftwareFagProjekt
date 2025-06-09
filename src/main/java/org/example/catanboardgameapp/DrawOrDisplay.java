@@ -66,6 +66,7 @@ public class DrawOrDisplay {
         boardGroup.getChildren().add(circle);
 
         // 2. Add label *after* road is drawn, and ensure it’s last
+        /*
         if (SHOW_SETTLEMENT_ORDER && vertex.getOwner() != null) {
             settlementCounter++;
             Text label = new Text(String.valueOf(settlementCounter));
@@ -77,7 +78,7 @@ public class DrawOrDisplay {
 
             // Add *after* all game objects
             Platform.runLater(() -> boardGroup.getChildren().add(label));
-        }
+        }*/
 
     }
     public void drawCity(Vertex vertex, Group boardGroup) {
@@ -87,13 +88,17 @@ public class DrawOrDisplay {
         double y = vertex.getY();
 
         // Example shape: a hexagon to represent a city
+        double height = radius * Math.sqrt(3) / 2;
+
+        double yOffset = 0.0; // pixels downward
+
         cityShape.getPoints().addAll(
-                x - radius, y,
-                x - radius / 2, y - radius,
-                x + radius / 2, y - radius,
-                x + radius, y,
-                x + radius / 2, y + radius / 2,
-                x - radius / 2, y + radius / 2
+                x,             y - radius + yOffset,
+                x + height,    y - radius / 2 + yOffset,
+                x + height,    y + radius / 2 + yOffset,
+                x,             y + radius + yOffset,
+                x - height,    y + radius / 2 + yOffset,
+                x - height,    y - radius / 2 + yOffset
         );
 
         if (vertex.getOwner() != null) {
@@ -293,6 +298,27 @@ public class DrawOrDisplay {
         PauseTransition delay = new PauseTransition(Duration.seconds(1));
         delay.setOnFinished(e -> boardGroup.getChildren().remove(error));
         delay.play();
+    }
+
+    public void notEnoughResources(String message) {
+        Platform.runLater(() -> {
+            Stage popup = new Stage();
+            popup.initModality(Modality.APPLICATION_MODAL);
+            popup.setTitle("Not enough resources");
+
+            VBox box = new VBox(10);
+            box.setPadding(new Insets(20));
+            box.setAlignment(Pos.CENTER);
+
+            Label label = new Label(message);
+            Button closeButton = new Button("OK");
+            closeButton.setOnAction(e -> popup.close());
+
+            box.getChildren().addAll(label, closeButton);
+            Scene scene = new Scene(box);
+            popup.setScene(scene);
+            popup.showAndWait();
+        });
     }
 
     public void rollDiceBeforeActionPopup(String message) {

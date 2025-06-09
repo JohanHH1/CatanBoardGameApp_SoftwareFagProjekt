@@ -485,7 +485,7 @@ public class Gameplay {
 
             return BuildResult.UPGRADED_TO_CITY;
         }
-
+        drawOrDisplay.notEnoughResources("Not enough resources to build a city");
         return BuildResult.INSUFFICIENT_RESOURCES;
     }
 

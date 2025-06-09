@@ -103,6 +103,7 @@ public class BuildController {
     // Handles mouse click on a vertex (for building settlement or upgrading to city)
     public EventHandler<MouseEvent> createSettlementClickHandler(Circle circle, Vertex vertex, BorderPane root) {
         return event -> {
+            if (vertex.isCity()) return; // Don't allow clicking on cities
             if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
                 drawOrDisplay.showMustPlaceTwoRoadsPopup();
                 return;
@@ -139,6 +140,7 @@ public class BuildController {
                 case SUCCESS -> {
                     vertex.setOwner(currentPlayer);
                     drawOrDisplay.drawSettlement(circle, vertex, boardGroup);
+                    circle.setOnMouseClicked(createSettlementClickHandler(circle, vertex, root));
                     gameController.getGameView().logToGameLog("Settlement built by player " + currentPlayer.getPlayerId());
                     gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                 }
@@ -153,10 +155,10 @@ public class BuildController {
                     if (cityResult == BuildResult.UPGRADED_TO_CITY) {
                         vertex.setOwner(currentPlayer);
                         gameController.getGameView().getSettlementLayer().getChildren().remove(circle);
-                        Rectangle citySquare = new Rectangle(vertex.getX() - 6, vertex.getY() - 6, 12, 12);
-                        citySquare.setFill(currentPlayer.getColor());
-                        citySquare.setStroke(Color.BLACK);
-                        gameController.getGameView().getSettlementLayer().getChildren().add(citySquare);
+                        // Remove any existing Circle (settlement) on that vertex
+                        gameController.getGameView().getSettlementLayer().getChildren().remove(circle);
+                        // Call the standard city drawing logic
+                        drawOrDisplay.drawCity(vertex, gameController.getGameView().getSettlementLayer());
                         gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                         gameController.getGameView().logToGameLog("City built by player " + currentPlayer.getPlayerId());
 
