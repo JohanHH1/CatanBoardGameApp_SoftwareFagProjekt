@@ -1,6 +1,9 @@
 package org.example.catanboardgameapp;
 
+import javafx.animation.Animation;
+import javafx.animation.Interpolator;
 import javafx.animation.PauseTransition;
+import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
@@ -12,10 +15,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.text.Font;
@@ -29,6 +29,7 @@ import javafx.util.Duration;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.controller.BuildController;
 
+import javax.swing.*;
 import java.io.InputStream;
 import java.util.*;
 
@@ -39,6 +40,10 @@ public class DrawOrDisplay {
     private final List<Line> edgeClickHighlights = new ArrayList<>();
     private static int settlementCounter = 0;
     private static final boolean SHOW_SETTLEMENT_ORDER = true;
+    private StackPane aiOverlayPane;
+    private Label thinkingLabel;
+    private ImageView thinkingImage;
+    private RotateTransition rotateAnimation;
 
     public DrawOrDisplay(int boardRadius) {
         this.boardRadius = boardRadius;
@@ -342,6 +347,42 @@ public class DrawOrDisplay {
         });
     }
 
+    public void showAITurnPopup() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("AI Turn in Progress");
+        alert.setHeaderText(null);
+        alert.setContentText("Wait for AI to finish turn before making moves");
+        alert.showAndWait();
+    }
+
+    public StackPane buildFancyAIOverlay() {
+        thinkingLabel = new Label("Waiting for AI...");
+        thinkingLabel.setStyle("-fx-font-size: 26px; -fx-text-fill: white; -fx-font-weight: bold;");
+        thinkingLabel.setOpacity(0.85);
+
+        Image img = new Image(getClass().getResource("/icons/robot_think.png").toExternalForm());
+        thinkingImage = new ImageView(img);
+        thinkingImage.setFitWidth(120);
+        thinkingImage.setFitHeight(120);
+
+        // Rotate animation
+        rotateAnimation = new RotateTransition(Duration.seconds(4), thinkingImage);
+        rotateAnimation.setByAngle(360);
+        rotateAnimation.setCycleCount(Animation.INDEFINITE);
+        rotateAnimation.setInterpolator(Interpolator.LINEAR);
+
+        VBox content = new VBox(20, thinkingImage, thinkingLabel);
+        content.setAlignment(Pos.CENTER);
+
+        aiOverlayPane = new StackPane(content);
+        aiOverlayPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.6);");
+        aiOverlayPane.setVisible(false);
+        aiOverlayPane.setMouseTransparent(true);
+
+        return aiOverlayPane;
+    }
+
+
     public void showTradeError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Trade Error");
@@ -497,6 +538,29 @@ public class DrawOrDisplay {
     public void resetCounters() {
         settlementCounter = 0;
     }
+
+    public Label getThinkingLabel() {
+        return thinkingLabel;
+    }
+
+    // AI THINKING OVERLAY FUNCTIONS:
+    public void setThinkingMessage(String text) {
+        thinkingLabel.setText(text);
+    }
+
+    public StackPane getOverlayPane() {
+        return aiOverlayPane;
+    }
+
+    public void startThinkingAnimation() {
+        rotateAnimation.playFromStart();
+    }
+
+    public void stopThinkingAnimation() {
+        rotateAnimation.stop();
+    }
+
+
 
     // ------------------------- Getter ------------------------- //
 

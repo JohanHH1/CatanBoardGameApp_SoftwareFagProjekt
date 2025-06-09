@@ -48,6 +48,7 @@ public class CatanBoardGameView {
     //---------------------------- JavaFX Root Scene ----------------------------//
     private final Scene scene;
     private final BorderPane root;
+    private final StackPane aiTurnOverlay = new StackPane();
 
     //---------------------------- Render Layers ----------------------------//
     private final Group edgeBaseLayer;
@@ -120,6 +121,19 @@ public class CatanBoardGameView {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No desert tile found"));
         this.robber = new Robber(desertTile, gameplay, this, boardGroup);
+        // Create overlay to block user input during AI turn
+        Label aiLabel = new Label(); // start empty
+        aiLabel.setStyle("-fx-font-size: 24px; -fx-text-fill: white;");
+
+        aiTurnOverlay.getChildren().add(aiLabel);
+        aiTurnOverlay.setAlignment(Pos.CENTER);
+        aiTurnOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5);");
+        aiTurnOverlay.setVisible(false);
+        aiTurnOverlay.setMouseTransparent(true); // by default: no input block
+
+        // Wrap root layout and overlay in a StackPane
+        StackPane layeredRoot = new StackPane(root, aiTurnOverlay);
+        this.scene.setRoot(layeredRoot); // replace root scene node
     }
 
 
@@ -147,7 +161,12 @@ public class CatanBoardGameView {
         root.setTop(createTopButtonBar());
         root.setLeft(createLeftMenu(false));
 
-        // Setup KEY buttons clickable ESC, SPACE, ASDW, R for reset board etc
+        // Overlay for when AI is making a move (thinking)
+        StackPane aiTurnOverlay = drawOrDisplay.buildFancyAIOverlay();
+        StackPane layeredRoot = new StackPane(root, aiTurnOverlay);
+        scene.setRoot(layeredRoot);
+
+        // Setup KEY buttons clickable ESC, SPACE, ASDW, R,C for reset board etc
         setupInputHandlers(boardWrapper);
         // Ensure focus so key events work
         root.setFocusTraversable(true);
@@ -193,45 +212,76 @@ public class CatanBoardGameView {
         Button exitButton = new Button("Exit");
         ToggleButton toggleConfirmBtn = new ToggleButton("Confirm: OFF");
         toggleConfirmBtn.setSelected(false);
+
         toggleConfirmBtn.setOnAction(e -> {
             boolean enabled = toggleConfirmBtn.isSelected();
             toggleConfirmBtn.setText(enabled ? "Confirm: ON" : "Confirm: OFF");
             gameController.getBuildController().toggleConfirmBeforeBuild();
+            toggleConfirmBtn.getScene().getRoot().requestFocus(); // clear focus
         });
+
         rollDiceButton.setOnAction(e -> {
             gameplay.rollDice();
+            rollDiceButton.getScene().getRoot().requestFocus(); // clear focus
         });
-        developmentCardButton.setOnAction(e-> {
+
+        developmentCardButton.setOnAction(e -> {
+            if (gameplay.isBlockedByAITurn()) return;
             if (!gameplay.hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before buying Development Cards!");
                 return;
             }
             gameplay.buyDevelopmentCard();
+            developmentCardButton.getScene().getRoot().requestFocus(); // clear focus
         });
 
         TurnController turnController = new TurnController(gameController, rollDiceButton, nextTurnButton);
-        nextTurnButton.setOnAction(turnController::handleNextTurnButtonPressed);
+        nextTurnButton.setOnAction(e -> {
+            turnController.handleNextTurnButtonPressed(e);
+            nextTurnButton.getScene().getRoot().requestFocus(); // clear focus
+        });
 
-        centerButton.setOnAction(e -> centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT()));
-        zoomInButton.setOnAction(e -> zoom(boardGroup, 1.1));
-        zoomOutButton.setOnAction(e -> zoom(boardGroup, 0.9));
+        centerButton.setOnAction(e -> {
+            centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
+            centerButton.getScene().getRoot().requestFocus(); // clear focus
+        });
+
+        zoomInButton.setOnAction(e -> {
+            zoom(boardGroup, 1.1);
+            zoomInButton.getScene().getRoot().requestFocus(); // clear focus
+        });
+
+        zoomOutButton.setOnAction(e -> {
+            zoom(boardGroup, 0.9);
+            zoomOutButton.getScene().getRoot().requestFocus(); // clear focus
+        });
 
         new TradeController(gameController, boardRadius).setupTradeButton(tradeButton);
-        showCostsButton.setOnAction(e -> drawOrDisplay.showBuildingCostsPopup());
+        tradeButton.setOnAction(e -> {
+            // TradeController should handle this but in case it doesn't:
+            tradeButton.getScene().getRoot().requestFocus(); // clear focus
+        });
+
+        showCostsButton.setOnAction(e -> {
+            drawOrDisplay.showBuildingCostsPopup();
+            showCostsButton.getScene().getRoot().requestFocus(); // clear focus
+        });
+
         exitButton.setOnAction(e -> {
-            gameplay.pauseGame(); // ensure game is paused before showing alert
+            gameplay.pauseGame();
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.YES) {
                 gameController.returnToMenu(gameplay.getMenuView());
             } else {
-                gameController.resumeGame(); // resume only if staying in game
+                gameController.resumeGame();
             }
+            exitButton.getScene().getRoot().requestFocus(); // clear focus
         });
 
         List<ButtonBase> allButtons = List.of(
                 rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton,
-                tradeButton,developmentCardButton, showCostsButton, toggleConfirmBtn, exitButton
+                tradeButton, developmentCardButton, showCostsButton, toggleConfirmBtn, exitButton
         );
 
         String style = "-fx-background-color: linear-gradient(to bottom, #f9f9f9, #e0e0e0); -fx-background-radius: 8;" +
@@ -342,6 +392,7 @@ public class CatanBoardGameView {
 
         return playerBox;
     }
+
     public VBox createLeftMenu(Boolean hasBeenInitialized) {
         if (playerListVBox == null) {
             playerListVBox = new VBox(10);
@@ -394,6 +445,11 @@ public class CatanBoardGameView {
                     pauseAlert.setHeaderText(null);
                     pauseAlert.showAndWait(); // wait for input
                     gameController.resumeGame(); // only resume after dialog is confirmed
+
+                    // Reset focus to scene root
+                    if (scene.getRoot() != null) {
+                        scene.getRoot().requestFocus();
+                    }
                 }
                 case ESCAPE -> {
                     gameplay.pauseGame();
@@ -403,9 +459,13 @@ public class CatanBoardGameView {
                         gameController.returnToMenu(gameplay.getMenuView());
                     } else {
                         gameController.resumeGame(); // resume only if they cancel the exit
+
+                        // Reset focus to scene root
+                        if (scene.getRoot() != null) {
+                            scene.getRoot().requestFocus();
+                        }
                     }
                 }
-
             }
         });
 
@@ -522,7 +582,7 @@ public class CatanBoardGameView {
 
     public void prepareForHumanInitialPlacement(Player currentPlayer) {
         logToGameLog("Player " + currentPlayer.getPlayerId() + ", place your initial settlement.");
-        System.out.println("HIDING BUTTONS FOR HUMAN IN INITIAL PHASE");
+        refreshSidebar();
         hideTurnButton();
         hideDiceButton();
     }
@@ -554,6 +614,34 @@ public class CatanBoardGameView {
         });
     }
 
+    public void showAITurnOverlay(Player aiPlayer) {
+        Platform.runLater(() -> {
+            if (aiPlayer instanceof AIOpponent ai) {
+                drawOrDisplay.setThinkingMessage("AI Player " + ai.getPlayerId() + " (" + ai.getStrategyLevel().name() + ") is thinking...");
+            } else {
+                drawOrDisplay.setThinkingMessage("Opponent is thinking...");
+            }
+            drawOrDisplay.getOverlayPane().setVisible(true);
+            drawOrDisplay.getOverlayPane().setMouseTransparent(false);
+            drawOrDisplay.startThinkingAnimation();
+        });
+    }
+
+    public void hideAITurnOverlay() {
+        Platform.runLater(() -> {
+            drawOrDisplay.getOverlayPane().setVisible(false);
+            drawOrDisplay.getOverlayPane().setMouseTransparent(true);
+            drawOrDisplay.stopThinkingAnimation();
+        });
+    }
+
+    public void runOnFX(Runnable action) {
+        if (Platform.isFxApplicationThread()) {
+            action.run();
+        } else {
+            Platform.runLater(action);
+        }
+    }
 
     //________________________SHOW/HIDE BUTTONS____________________________________//
 
@@ -569,6 +657,7 @@ public class CatanBoardGameView {
     public void hideTurnButton() {
         nextTurnButton.setVisible(false);
     }
+
 
     //__________________________GETTERS_____________________________//
     public ImageView getDiceImage1() {
