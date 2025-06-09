@@ -66,7 +66,7 @@ public class DrawOrDisplay {
         boardGroup.getChildren().add(circle);
 
         // 2. Add label *after* road is drawn, and ensure it’s last
-        /*
+
         if (SHOW_SETTLEMENT_ORDER && vertex.getOwner() != null) {
             settlementCounter++;
             Text label = new Text(String.valueOf(settlementCounter));
@@ -78,7 +78,7 @@ public class DrawOrDisplay {
 
             // Add *after* all game objects
             Platform.runLater(() -> boardGroup.getChildren().add(label));
-        }*/
+        }
 
     }
     public void drawCity(Vertex vertex, Group boardGroup) {
