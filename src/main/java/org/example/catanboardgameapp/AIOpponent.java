@@ -231,7 +231,6 @@ public class AIOpponent extends Player {
         }
 
         // 4. No good option
-        System.out.println("AI Player " + getPlayerId() + " (EASY): No effective strategy available.");
         noneStrategyCount++;
         return Strategy.NONE;
     }
@@ -257,7 +256,6 @@ public class AIOpponent extends Player {
         }
 
         // 4. No good option
-        System.out.println("AI Player " + getPlayerId() + " (EASY): No effective strategy available.");
         noneStrategyCount++;
         return Strategy.NONE;
     }
@@ -283,7 +281,6 @@ public class AIOpponent extends Player {
         }
 
         // 4. No good option
-        System.out.println("AI Player " + getPlayerId() + " (EASY): No effective strategy available.");
         noneStrategyCount++;
         return Strategy.NONE;
     }

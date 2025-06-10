@@ -735,7 +735,7 @@ public class Gameplay {
     public void pauseGame() {
         if (!gamePaused) {
             this.drawOrDisplay.pauseThinkingAnimation(this.drawOrDisplay);
-            System.out.println("Game paused.");
+            catanBoardGameView.logToGameLog("Game paused.");
             gamePaused = true;
             stopAllAIThreads();  // interrupt AI thread cleanly
         }
@@ -744,7 +744,7 @@ public class Gameplay {
     public void resumeGame() {
         if (!gamePaused) return; // prevent spamming or double-starting
         this.drawOrDisplay.resumeThinkingAnimation(this.drawOrDisplay);
-        System.out.println("Game resumed.");
+        catanBoardGameView.logToGameLog("Game resumed.");
         gamePaused = false;
         if (currentPlayer instanceof AIOpponent ai) {
             startAIThread(ai);

@@ -555,14 +555,12 @@ public class DrawOrDisplay {
         if (rotateAnimation != null) {
             draw.rotateAnimation.pause();
         }
-        System.out.println("WRONG DRAW_OR_DISPLAY, CANT PAUSE ANIMATION");
     }
 
     public void resumeThinkingAnimation(DrawOrDisplay draw) {
         if (rotateAnimation != null) {
             draw.rotateAnimation.play();
         }
-        System.out.println("WRONG DRAW_OR_DISPLAY, CANT UN-PAUSE ANIMATION");
     }
 
 

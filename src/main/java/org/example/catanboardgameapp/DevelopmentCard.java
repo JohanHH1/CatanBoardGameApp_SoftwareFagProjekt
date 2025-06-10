@@ -101,16 +101,13 @@ public class DevelopmentCard {
     }
     public void startPlayingCard() {
         this.playingCard = true;
-        //System.out.println("is in start playing card");
     }
 
     public void finishPlayingCard() {
-       // System.out.println("is in finish playing card");
         this.playingCard = false;
     }
 
     public boolean isPlayingCard() {
-       // System.out.println("is in playing card");
         return playingCard;
     }
 
