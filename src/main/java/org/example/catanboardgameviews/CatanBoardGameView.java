@@ -407,6 +407,14 @@ public class CatanBoardGameView {
         pointsText.setFont(Font.font("Arial", infoFontSize));
         playerBox.getChildren().add(pointsText);
 
+        LongestRoadManager longestRoadManager = gameplay.getLongestRoadManager();
+        System.out.println("Current holder: " + longestRoadManager.getCurrentHolder());
+        if (player == longestRoadManager.getCurrentHolder()) {
+            Text longestRoadText = new Text("Longest road");
+            pointsText.setFont(Font.font("Arial", infoFontSize));
+            playerBox.getChildren().add(longestRoadText);
+        }
+
         return playerBox;
     }
 
