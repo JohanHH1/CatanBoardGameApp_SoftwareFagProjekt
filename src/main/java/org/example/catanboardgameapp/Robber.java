@@ -65,8 +65,6 @@ public class Robber {
                 activeRobberHighlights.clear();
                 highlightCircles.forEach(boardGroup.getChildren()::remove);
 
-                //System.out.println("is here");
-                System.out.println(gameplay.isActionBlockedByDevelopmentCard());
 
                 if (gameplay.isActionBlockedByDevelopmentCard()) {
                     gameplay.getDevelopmentCard().finishPlayingCard();
@@ -79,18 +77,6 @@ public class Robber {
                 // ✅ Draw the new robber circle
                 this.robberCircle = drawOrDisplay.drawRobberCircle(center, boardGroup);
                 this.moveTo(tile);
-                /*
-            highlight.setOnMouseClicked(e -> {
-                activeRobberHighlights.forEach(boardGroup.getChildren()::remove);
-                activeRobberHighlights.clear();
-                highlightCircles.forEach(boardGroup.getChildren()::remove);
-                System.out.println("is here");
-                gameplay.setRobberMoveRequired(false);
-                this.robberCircle = drawOrDisplay.drawRobberCircle(center, boardGroup);
-                this.moveTo(tile);
-                robberHasMoved();
-                gameplay.getDevelopmentCard().finishMovingKnight();
-*/
 
 
                 if(gameplay.hasRolledDice()){
