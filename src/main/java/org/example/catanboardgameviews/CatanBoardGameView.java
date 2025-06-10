@@ -45,6 +45,8 @@ public class CatanBoardGameView {
     private final Stage primaryStage;
     private final Gameplay gameplay;
     private final GameController gameController;
+    private final TurnController turnController;
+    private final TradeController tradeController;
 
     //---------------------------- JavaFX Root Scene ----------------------------//
     private final Scene scene;
@@ -78,6 +80,8 @@ public class CatanBoardGameView {
         this.gameplay = gameplay;
         this.gameController = gameController;
         this.boardRadius = boardRadius;
+        this.turnController = gameController.getTurnController();
+        this.tradeController = gameController.getTradeController();
 
         // Layout root
         this.root = new BorderPane();
@@ -230,7 +234,6 @@ public class CatanBoardGameView {
             developmentCardButton.getScene().getRoot().requestFocus(); // clear focus
         });
 
-        TurnController turnController = new TurnController(gameController, rollDiceButton, nextTurnButton);
         nextTurnButton.setOnAction(e -> {
             turnController.handleNextTurnButtonPressed(e);
             nextTurnButton.getScene().getRoot().requestFocus(); // clear focus
@@ -251,12 +254,6 @@ public class CatanBoardGameView {
             zoomOutButton.getScene().getRoot().requestFocus(); // clear focus
         });
 
-        new TradeController(gameController, boardRadius).setupTradeButton(tradeButton);
-        //tradeButton.setOnAction(e -> {
-            // TradeController should handle this but in case it doesn't:
-          //  tradeButton.getScene().getRoot().requestFocus(); // clear focus
-        //});
-        TradeController tradeController = new TradeController(gameController, boardRadius);
         tradeController.setupTradeButton(tradeButton);
 
         showCostsButton.setOnAction(e -> {
@@ -616,7 +613,6 @@ public class CatanBoardGameView {
             playerListVBox.requestLayout(); // ensure JavaFX re-renders it
         }
     }
-
 
     public void logToGameLog(String message) {
         System.out.println(message);

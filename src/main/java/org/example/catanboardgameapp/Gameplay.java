@@ -1,5 +1,7 @@
 package org.example.catanboardgameapp;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -11,6 +13,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import java.util.*;
 import org.example.catanboardgameviews.MenuView;
@@ -20,7 +23,7 @@ import org.example.controller.TradeController;
 public class Gameplay {
 
     //__________________________CONFIG & VIEWS_____________________________//
-    private GameController gameController;
+    private final GameController gameController;
     private final int boardRadius;
     private DrawOrDisplay drawOrDisplay;
     private CatanBoardGameView catanBoardGameView;
@@ -84,7 +87,7 @@ public class Gameplay {
         this.developmentCard = new DevelopmentCard(
                 playerList,
                 catanBoardGameView,
-                new TradeController(gameController, boardRadius)
+                gameController.getTradeController()
         );
         // Shuffle the development card deck
         List<String> shuffledDevCards = new ArrayList<>(Arrays.asList(developmentCardsTypes));
@@ -248,12 +251,17 @@ public class Gameplay {
         int roll = lastRolledDie1 + lastRolledDie2;
 
         catanBoardGameView.runOnFX(() -> {
+            // Step 1: update visuals
             catanBoardGameView.updateDiceImages(lastRolledDie1, lastRolledDie2);
-            catanBoardGameView.logToGameLog("Dice rolled: " + lastRolledDie1 + " + " + lastRolledDie2 + " = " + roll);
+            catanBoardGameView.logToGameLog(currentPlayer + " ROLLED A" + roll + "!");
             catanBoardGameView.hideDiceButton();
             catanBoardGameView.showTurnButton();
 
-            Group boardGroup = catanBoardGameView.getBoardGroup();
+            catanBoardGameView.refreshSidebar();
+
+            // Step 2: delay AI logic slightly so rendering completes
+            Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100), ev -> {
+                Group boardGroup = catanBoardGameView.getBoardGroup();
 
         // Handle robber or distribute resources
         if (roll == 7) {
@@ -264,10 +272,22 @@ public class Gameplay {
         } else {
             distributeResources(roll);
         }
+                if (roll == 7) {
+                    catanBoardGameView.getNextTurnButton().setDisable(true);
+                    catanBoardGameView.getRobber().requireRobberMove();
+                    catanBoardGameView.getRobber().showRobberTargets(boardGroup);
+                    setRobberMoveRequired(true);
+                } else {
+                    distributeResources(roll);
+                }
 
-            catanBoardGameView.refreshSidebar();
+                catanBoardGameView.refreshSidebar();
+            }));
+            timeline.setCycleCount(1);
+            timeline.play();
         });
     }
+
 
     public void distributeResources(int diceRoll) {
         if (diceRoll == 7) return;
@@ -378,7 +398,6 @@ public class Gameplay {
 
         type.play(player, developmentCard);
         player.getDevelopmentCards().merge(cardName, -1, Integer::sum);
-
         catanBoardGameView.runOnFX(catanBoardGameView::refreshSidebar);
 
         if (type == DevelopmentCard.DevelopmentCardType.KNIGHT) {
@@ -623,7 +642,6 @@ public class Gameplay {
             handleEndOfGame(winner);       // <- pass it down
         }
     }
-
 
     // SKAL BRUGES TIL LONGEST ROAD BIGGEST ARMY
     public void decreasePlayerScore() {

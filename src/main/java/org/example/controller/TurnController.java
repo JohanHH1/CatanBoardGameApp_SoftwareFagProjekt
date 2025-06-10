@@ -14,7 +14,7 @@ public class TurnController {
     private final DrawOrDisplay drawOrDisplay;
 
     //___________________________CONTROLLER__________________________________//
-    public TurnController(GameController gameController, Button rollDiceButton, Button nextTurnButton) {
+    public TurnController(GameController gameController) {
         this.gameController = gameController;
         this.drawOrDisplay = gameController.getGameplay().getDrawOrDisplay();
     }
