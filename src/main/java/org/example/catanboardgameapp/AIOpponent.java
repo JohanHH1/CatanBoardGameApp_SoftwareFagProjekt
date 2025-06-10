@@ -276,8 +276,9 @@ public class AIOpponent extends Player {
         // 3. development card
         boolean hasDevcardResources = hasResources("Ore", 1) && hasResources("Grain", 1) && hasResources("Wool", 1);
         if (hasDevcardResources && (!gameplay.getShuffledDevelopmentCards().isEmpty())){
+            System.out.println("IS IN DEV CARDS STRATEGY");
+            noneStrategyCount++;
             return Strategy.DEVELOPMENTCARDBYER;
-
         }
         // 4. Road
         boolean hasValidRoadSpots = gameplay.getBoard().getEdges().stream()
@@ -287,7 +288,7 @@ public class AIOpponent extends Player {
         }
 
         // 4. No good option
-        noneStrategyCount++;
+        //noneStrategyCount++;
         return Strategy.NONE;
     }
 
@@ -377,7 +378,7 @@ public class AIOpponent extends Player {
                 case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
                 case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
                 case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
-                case DEVELOPMENTCARDBYER -> moveMade = tryBuyDevCard(gameplay, boardGroup);
+                case DEVELOPMENTCARDBYER -> moveMade = tryBuyDevCard(gameplay);
             }
 
             if (!moveMade) {
@@ -387,12 +388,14 @@ public class AIOpponent extends Player {
                         case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
                         case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
                         case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
-                        case DEVELOPMENTCARDBYER -> moveMade = tryBuyDevCard(gameplay, boardGroup);
+                        case DEVELOPMENTCARDBYER -> moveMade = tryBuyDevCard(gameplay);
                     }
                 }
             }
         } while (moveMade && --safetyLimit > 0);
+        tryPlayDevCard(gameplay,boardGroup);
 
+        //play dev card here in if statment
         view.runOnFX(() -> {
             gameplay.nextPlayerTurn();
             view.logToGameLog("AI Player " + getPlayerId() + " has ended its turn.");
@@ -473,11 +476,27 @@ public class AIOpponent extends Player {
 
         return false;
     }
-    private boolean tryBuyDevCard(Gameplay gameplay,  Group boardGroup) {
+    private boolean tryBuyDevCard(Gameplay gameplay) {
         if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1)) {return false;}
             gameplay.buyDevelopmentCard();
             gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " has bought a development card");
         return true;
+    }
+
+    private boolean tryPlayDevCard(Gameplay gameplay, Group boardGroup){
+        if (hasNoDevelopmentCards()) {
+            return false;
+        } else {
+            DevelopmentCard.DevelopmentCardType devCard = removeFirstDevelopmentCard();
+            if (devCard != null) {
+                System.out.println(getDevelopmentCards().toString());
+                gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " has played a development card !!!!!!!!!!!!!!!!!!!!!!!!!");
+                //devCard.play(this, gameplay.getDevelopmentCard());
+                getDevelopmentCards().computeIfPresent(devCard, (k, v) -> (v > 1) ? v - 1 : null);
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean tryBuildRoad(Gameplay gameplay, Group boardGroup) {

@@ -128,6 +128,21 @@ public class Player {
     public Map<DevelopmentCardType, Integer> getDevelopmentCards() {
         return developmentCards;
     }
+    public DevelopmentCardType removeFirstDevelopmentCard() {
+        for (Map.Entry<DevelopmentCardType, Integer> entry : developmentCards.entrySet()) {
+            DevelopmentCardType type = entry.getKey();
+            int count = entry.getValue();
+
+            if (count > 1) {
+                developmentCards.put(type, count - 1);
+            } else {
+                developmentCards.remove(type);
+            }
+
+            return type;
+        }
+        return null; // or throw an exception if the map is empty
+    }
 
     public List<Vertex> getSettlements() {
         return settlements;
@@ -148,6 +163,15 @@ public class Player {
     public Vertex getSecondSettlement() {
         return secondSettlement;
     }
+
+    public boolean hasNoDevelopmentCards() {
+        if (developmentCards == null || developmentCards.isEmpty()) {
+            return true;
+        }
+        return developmentCards.values().stream()
+                .allMatch(count -> count == 0);
+    }
+
 
     //_________________________toString method_________________________________//
 

@@ -88,6 +88,10 @@ public class DevelopmentCard {
 
     }
 
+    public void playingCard(Player player, DevelopmentCardType cardType){
+        cardType.play(player,this);
+    }
+
 
     // ------------------------
     // Utility Methods
@@ -149,4 +153,5 @@ public class DevelopmentCard {
         player.getResources().merge(resource, totalTaken, Integer::sum);
         return totalTaken;
     }
+
 }
