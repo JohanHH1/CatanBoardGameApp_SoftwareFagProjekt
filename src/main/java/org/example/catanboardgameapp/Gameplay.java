@@ -759,7 +759,7 @@ public class Gameplay {
         return catanBoardGameView;
     }
 
-    public List<String> getShuffledDevelopmentCards() {
+    public List<DevelopmentCard.DevelopmentCardType> getShuffledDevelopmentCards() {
         return shuffledDevelopmentCards;
     }
 
