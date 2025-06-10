@@ -15,7 +15,7 @@ public class DevelopmentCard {
     private final TradeController tradeController;
 
     private boolean placingFreeRoads = false;
-    private boolean movingKnight = false;
+    private boolean playingCard = false;
     private int freeRoadsLeft = 0;
 
     public DevelopmentCard(List<Player> playerList, CatanBoardGameView view, TradeController tradeController) {
@@ -28,6 +28,7 @@ public class DevelopmentCard {
         MONOPOLY("Monopoly") {
             @Override
             public void play(Player player, DevelopmentCard handler) {
+                handler.startPlayingCard();
                 handler.tradeController.playMonopolyCardFromButton();
                 handler.log("Player " + player.getPlayerId() + " played a monopoly development card");
             }
@@ -39,7 +40,7 @@ public class DevelopmentCard {
                 handler.view.showTurnButton();
                 Group boardGroup = handler.view.getBoardGroup();
                 handler.view.getNextTurnButton().setDisable(true);
-                handler.startMovingKnight();
+                handler.startPlayingCard();
                 handler.view.getRobber().showRobberTargets(boardGroup);
                 handler.log("Player " + player.getPlayerId() + " played a knight development card");
             }
@@ -54,6 +55,7 @@ public class DevelopmentCard {
         YEAROFPLENTY("Year Of Plenty") {
             @Override
             public void play(Player player, DevelopmentCard handler) {
+                handler.startPlayingCard();
                 handler.tradeController.playYearOfPlentyCardFromButton();
                 handler.log("Player " + player.getPlayerId() + " played a year of plenty development card");
             }
@@ -97,35 +99,32 @@ public class DevelopmentCard {
             System.err.println("LOG FAIL (view=null): " + message); // optional fallback
         }
     }
-    public void startMovingKnight() {
-        this.movingKnight = true;
+    public void startPlayingCard() {
+        this.playingCard = true;
+        //System.out.println("is in start playing card");
     }
 
-    public void finishMovingKnight() {
-        this.movingKnight = false;
+    public void finishPlayingCard() {
+       // System.out.println("is in finish playing card");
+        this.playingCard = false;
     }
 
-    public boolean isMovingKnight() {
-        return movingKnight;
+    public boolean isPlayingCard() {
+       // System.out.println("is in playing card");
+        return playingCard;
     }
 
     public void startPlacingFreeRoads(int count) {
+        startPlayingCard();
         this.placingFreeRoads = true;
         this.freeRoadsLeft = count;
-    }
-
-    public void finishFreeRoadPlacement() {
-        this.placingFreeRoads = false;
-        this.freeRoadsLeft = 0;
     }
 
     public boolean isPlacingFreeRoads() {
         return placingFreeRoads;
     }
 
-    public int getFreeRoadsLeft() {
-        return freeRoadsLeft;
-    }
+
 
     public void decrementFreeRoads() {
         if (freeRoadsLeft > 0) freeRoadsLeft--;

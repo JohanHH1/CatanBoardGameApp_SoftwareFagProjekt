@@ -21,8 +21,8 @@ public class TurnController {
 
     //___________________________FUNCTIONS__________________________________//
     public void handleNextTurnButtonPressed(ActionEvent event) {
-        if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
-            drawOrDisplay.showMustPlaceTwoRoadsPopup();
+        if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
+            drawOrDisplay.showMustPlaceRobberPopup();
             return;
         }
         var gameplay = gameController.getGameplay();
