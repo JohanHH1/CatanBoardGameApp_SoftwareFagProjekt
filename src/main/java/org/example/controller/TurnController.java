@@ -16,7 +16,7 @@ public class TurnController {
     //___________________________CONTROLLER__________________________________//
     public TurnController(GameController gameController, Button rollDiceButton, Button nextTurnButton) {
         this.gameController = gameController;
-        this.drawOrDisplay = new DrawOrDisplay(gameController.getGameplay().getBoardRadius());
+        this.drawOrDisplay = gameController.getGameplay().getDrawOrDisplay();
     }
 
     //___________________________FUNCTIONS__________________________________//

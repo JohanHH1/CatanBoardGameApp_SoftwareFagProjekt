@@ -24,7 +24,7 @@ public class BuildController {
     //___________________________CONTROLLER__________________________________//
     public BuildController(GameController gameController) {
         this.gameController = gameController;
-        this.drawOrDisplay = new DrawOrDisplay(gameController.getGameplay().getBoardRadius());
+        this.drawOrDisplay = gameController.getGameplay().getDrawOrDisplay();
         this.boardGroup = gameController.getGameView().getBoardGroup(); // or pass in if needed
     }
 

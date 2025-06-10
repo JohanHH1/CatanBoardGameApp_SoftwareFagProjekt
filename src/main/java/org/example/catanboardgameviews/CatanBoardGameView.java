@@ -90,49 +90,36 @@ public class CatanBoardGameView {
         // Combine layers into one render-able board group
         this.boardGroup = new Group(edgeBaseLayer, roadLayer, settlementLayer, edgeClickLayer);
 
-        // Main game control buttons
+        // Buttons
         this.rollDiceButton = new Button("Roll Dice");
         this.nextTurnButton = new Button("Next Turn");
 
-        // Game log text area setup
+        // Game log
         this.gameLogArea = new TextArea();
         gameLogArea.setEditable(false);
         gameLogArea.setWrapText(true);
         gameLogArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12;");
 
-        // Drawing utility for rendering tiles, dice, etc.
-        this.drawOrDisplay = new DrawOrDisplay(boardRadius);
+        // Drawing/rendering utility
+        this.drawOrDisplay = gameplay.getDrawOrDisplay(); // Get shared instance
 
-        // Dice visuals (default to 1)
+        // Dice visuals
         this.diceImage1 = new ImageView(drawOrDisplay.loadDiceImage(1));
         this.diceImage2 = new ImageView(drawOrDisplay.loadDiceImage(1));
 
-        // Create and assign game board
-        this.board = new Board(boardRadius, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
-        this.gameplay.setBoard(this.board);
+        // Create board and register it with gameplay
+        this.board = new Board(gameplay, boardRadius, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
+        gameplay.setBoard(this.board);
 
-        // Build main scene
+        // Scene root container — initially just root
         this.scene = new Scene(root, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
 
-        // Find desert tile and place Robber on it
+        // Place Robber
         Tile desertTile = board.getTiles().stream()
                 .filter(t -> t.getTileDiceNumber() == 7)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No desert tile found"));
         this.robber = new Robber(desertTile, gameplay, this, boardGroup);
-        // Create overlay to block user input during AI turn
-        Label aiLabel = new Label(); // start empty
-        aiLabel.setStyle("-fx-font-size: 24px; -fx-text-fill: white;");
-
-        aiTurnOverlay.getChildren().add(aiLabel);
-        aiTurnOverlay.setAlignment(Pos.CENTER);
-        aiTurnOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5);");
-        aiTurnOverlay.setVisible(false);
-        aiTurnOverlay.setMouseTransparent(true); // by default: no input block
-
-        // Wrap root layout and overlay in a StackPane
-        StackPane layeredRoot = new StackPane(root, aiTurnOverlay);
-        this.scene.setRoot(layeredRoot); // replace root scene node
     }
 
     //__________________________UI SETUP METHODS_____________________________//
@@ -160,6 +147,7 @@ public class CatanBoardGameView {
         root.setLeft(createLeftMenu(false));
 
         // Overlay for when AI is making a move (thinking)
+        drawOrDisplay.buildFancyAIOverlay();
         StackPane aiTurnOverlay = drawOrDisplay.buildFancyAIOverlay();
         StackPane layeredRoot = new StackPane(root, aiTurnOverlay);
         scene.setRoot(layeredRoot);

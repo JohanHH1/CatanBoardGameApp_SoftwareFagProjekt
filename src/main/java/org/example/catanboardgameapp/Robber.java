@@ -31,11 +31,10 @@ public class Robber {
     private final List<Circle> activeRobberHighlights = new ArrayList<>();
 
     //____________________CONSTRUCTOR__________________________
-
     public Robber(Tile startingTile, Gameplay gameplay, CatanBoardGameView catanBoardGameView, Group boardGroup) {
         this.currentTile = startingTile;
         this.gameplay = gameplay;
-        this.drawOrDisplay = new DrawOrDisplay(gameplay.getBoardRadius());
+        this.drawOrDisplay = gameplay.getDrawOrDisplay();
         this.catanBoardGameView = catanBoardGameView;
         this.board = gameplay.getBoard();
         Point2D center = startingTile.getCenter();
@@ -196,7 +195,6 @@ public class Robber {
                 stealResourceFrom(target);
             }
         }
-
         catanBoardGameView.refreshSidebar();
         catanBoardGameView.getNextTurnButton().setDisable(false);
     }
