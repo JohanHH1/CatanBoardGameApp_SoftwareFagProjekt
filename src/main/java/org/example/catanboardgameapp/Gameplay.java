@@ -49,6 +49,7 @@ public class Gameplay {
               "Knight","Knight", "Knight","Knight","Knight"};
     private List<String> shuffledDevelopmentCards;
     private LongestRoadManager longestRoadManager = new LongestRoadManager();
+    private BiggestArmy biggestArmy;
 
 
     //__________________________DICE ROLL TRACKING_____________________________//
@@ -61,6 +62,7 @@ public class Gameplay {
         this.drawOrDisplay = new DrawOrDisplay(boardRadius);
         this.boardRadius = boardRadius;
         this.gameController = gameController;
+        this.biggestArmy = new BiggestArmy();
     }
 
     //________________________INITIALIZE_______________________________//
@@ -347,6 +349,8 @@ public class Gameplay {
 
         if (type == DevelopmentCard.DevelopmentCardType.KNIGHT) {
             setRobberMoveRequired(true);
+            currentPlayer.increasePlayedKnights();
+            biggestArmy.calculateAndUpdateBiggestArmy(currentPlayer);
         }
         catanBoardGameView.refreshSidebar();
     }

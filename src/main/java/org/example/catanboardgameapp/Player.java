@@ -7,7 +7,7 @@ import org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType;
 public class Player {
 
     //private static final boolean DEBUG_MODE = true; // Set to false for normal game
-    private static final boolean DEBUG_MODE = false; // Set to true for testgame with many resources
+    private static final boolean DEBUG_MODE = true; // Set to true for testgame with many resources
 
     private final Gameplay gameplay;
     private final int playerId;
@@ -19,6 +19,7 @@ public class Player {
     private final List<Vertex> cities;
     private Vertex secondSettlement; // Used to validate the second free road connection
     private int playerScore;
+    private int playedKnights;
 
     //_____________________________Constructor_____________________________//
     public Player(int playerId, Color color, Gameplay gameplay) {
@@ -31,6 +32,7 @@ public class Player {
         this.roads = new ArrayList<>();
         this.cities = new ArrayList<>();
         this.playerScore = 0;
+        this.playedKnights = 0;
 
         initializeResources();
         initializeDevelopmentCards();
@@ -98,6 +100,8 @@ public class Player {
         playerScore -= 1;
     }
 
+    public void increasePlayedKnights() { playedKnights += 1; }
+
     public void setSecondSettlement(Vertex secondSettlement) {
         this.secondSettlement = secondSettlement;
     }
@@ -137,9 +141,9 @@ public class Player {
         return cities;
     }
 
-    public int getPlayerScore() {
-        return playerScore;
-    }
+    public int getPlayerScore() { return playerScore; }
+
+    public int getPlayedKnights() { return playedKnights; }
 
     public Vertex getSecondSettlement() {
         return secondSettlement;

@@ -1,4 +1,5 @@
 package org.example.catanboardgameapp;
+import org.example.catanboardgameviews.CatanBoardGameView;
 
 import java.util.*;
 
@@ -6,6 +7,7 @@ public class LongestRoadManager {
 
     private Player currentHolder;
     private final int MIN_LENGTH_FOR_LONGEST = 5;
+    private CatanBoardGameView catanBoardGameView;
 
     public void calculateAndUpdateLongestRoad(Player player, List<Player> allPlayers) {
         int roadLength = calculateLongestRoad(player, allPlayers);
@@ -22,6 +24,8 @@ public class LongestRoadManager {
                 // New holder for Longest Road (+2 VP)
                 currentHolder.increasePlayerScore();
                 currentHolder.increasePlayerScore();
+
+                catanBoardGameView.logToGameLog("Player " + currentHolder.getPlayerId() + " ");
             }
         }
     }
