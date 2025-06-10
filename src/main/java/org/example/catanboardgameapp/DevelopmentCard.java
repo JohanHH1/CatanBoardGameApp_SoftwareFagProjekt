@@ -28,49 +28,49 @@ public class DevelopmentCard {
     public enum DevelopmentCardType {
         MONOPOLY("Monopoly") {
             @Override
-            public void play(Player player, DevelopmentCard handler) {
-                handler.startPlayingCard();
-                handler.tradeController.playMonopolyCardFromButton();
-                handler.log("Player " + player.getPlayerId() + " played a monopoly development card");
+            public void play(Player player, DevelopmentCard devCard) {
+                devCard.startPlayingCard();
+                devCard.tradeController.playMonopolyCardFromButton();
+                devCard.log("Player " + player.getPlayerId() + " played a monopoly development card");
             }
         },
         KNIGHT("Knight") {
             @Override
-            public void play(Player player, DevelopmentCard handler) {
-                handler.view.hideDiceButton();
-                handler.view.showTurnButton();
-                handler.view.hideTurnButton();
+            public void play(Player player, DevelopmentCard devCard) {
+                devCard.view.hideDiceButton();
+                devCard.view.showTurnButton();
+                devCard.view.hideTurnButton();
 
-                Group boardGroup = handler.view.getBoardGroup();
-                handler.startPlayingCard();
-                handler.view.getRobber().showRobberTargets(boardGroup);
-                handler.gameplay.setRobberMoveRequired(true);   // Moved here
+                Group boardGroup = devCard.view.getBoardGroup();
+                devCard.startPlayingCard();
+                devCard.view.getRobber().showRobberTargets(boardGroup);
+                devCard.gameplay.setRobberMoveRequired(true);   // Moved here
                 player.increasePlayedKnights();                 // Moved here
-                handler.gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(player); // Moved here
+                devCard.gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(player); // Moved here
 
-                handler.log("Player " + player.getPlayerId() + " played a knight development card");
+                devCard.log("Player " + player.getPlayerId() + " played a knight development card");
             }
         },
         ROADBUILDING("Road Building") {
             @Override
-            public void play(Player player, DevelopmentCard handler) {
-                handler.startPlacingFreeRoads(2);
-                handler.log("Player " + player.getPlayerId() + " played a road building development card");
+            public void play(Player player, DevelopmentCard devCard) {
+                devCard.startPlacingFreeRoads(2);
+                devCard.log("Player " + player.getPlayerId() + " played a road building development card");
             }
         },
         YEAROFPLENTY("Year Of Plenty") {
             @Override
-            public void play(Player player, DevelopmentCard handler) {
-                handler.startPlayingCard();
-                handler.tradeController.playYearOfPlentyCardFromButton();
-                handler.log("Player " + player.getPlayerId() + " played a year of plenty development card");
+            public void play(Player player, DevelopmentCard devCard) {
+                devCard.startPlayingCard();
+                devCard.tradeController.playYearOfPlentyCardFromButton();
+                devCard.log("Player " + player.getPlayerId() + " played a year of plenty development card");
             }
         },
         VICTORYPOINT("Victory Point") {
             @Override
-            public void play(Player player, DevelopmentCard handler) {
+            public void play(Player player, DevelopmentCard devCard) {
                 player.increasePlayerScore();
-                handler.log("Player " + player.getPlayerId() + " played a victory point development card");
+                devCard.log("Player " + player.getPlayerId() + " played a victory point development card");
             }
         };
 
@@ -84,7 +84,7 @@ public class DevelopmentCard {
             return displayName;
         }
 
-        public abstract void play(Player player, DevelopmentCard handler);
+        public abstract void play(Player player, DevelopmentCard devCard);
 
     }
 
