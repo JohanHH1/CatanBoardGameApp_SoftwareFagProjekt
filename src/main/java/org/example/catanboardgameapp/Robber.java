@@ -211,7 +211,6 @@ public class Robber {
             }
         }
 
-
     private Map<String, Integer> discardCards(Player player, Gameplay gameplay) {
         Map<String, Integer> playerResources = new HashMap<>(player.getResources());
         int totalCards = playerResources.values().stream().mapToInt(Integer::intValue).sum();

@@ -5,15 +5,14 @@ import javafx.animation.Interpolator;
 import javafx.animation.PauseTransition;
 import javafx.animation.RotateTransition;
 import javafx.application.Platform;
+import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceDialog;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -32,6 +31,7 @@ import org.example.controller.BuildController;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class DrawOrDisplay {
 
@@ -45,12 +45,139 @@ public class DrawOrDisplay {
     private ImageView thinkingImage;
     private RotateTransition rotateAnimation;
 
+
+    //___________________________________________CONSTRUCTOR__________________________________________//
     public DrawOrDisplay(int boardRadius) {
         this.boardRadius = boardRadius;
     }
 
-    // ------------------------- Core Drawing ------------------------- //
+    //___________________________________________CLICK INITIALIZATION__________________________________________//
+    public void initEdgesClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
+        Group edgeBaseLayer = controller.getGameController().getGameView().getEdgeBaseLayer();
+        Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
 
+        for (Edge edge : board.getEdges()) {
+            if (edge.isSeaOnly()) continue;
+
+            Line visible = new Line(edge.getVertex1().getX(), edge.getVertex1().getY(),
+                    edge.getVertex2().getX(), edge.getVertex2().getY());
+            visible.setStroke(Color.WHITE);
+            visible.setStrokeWidth(0.8 * (10.0 / boardRadius));
+            edgeBaseLayer.getChildren().add(visible);
+
+            Line clickable = new Line(edge.getVertex1().getX(), edge.getVertex1().getY(),
+                    edge.getVertex2().getX(), edge.getVertex2().getY());
+            clickable.setStrokeWidth(1.2 * (10.0 / boardRadius));
+            clickable.setOpacity(0);
+            clickable.setPickOnBounds(false);
+            clickable.setMouseTransparent(false);
+            clickable.setOnMouseClicked(controller.createRoadClickHandler(edge, visible, root));
+            edgeClickLayer.getChildren().add(clickable);
+        }
+    }
+
+    public void initVerticeClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
+        Group settlementLayer = controller.getGameController().getGameView().getSettlementLayer();
+        Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
+
+        boolean DEBUG_VISUALIZE_CLICKS = true;
+
+        for (Vertex vertex : board.getVertices()) {
+            if (vertex.isSeaOnly()) continue;
+
+            double visibleRadius = 10.0 / boardRadius;
+            double clickableRadius = 20.0 / boardRadius;
+
+            Circle visible = new Circle(vertex.getX(), vertex.getY(), visibleRadius);
+            visible.setFill(Color.TRANSPARENT);
+            visible.setStroke(Color.TRANSPARENT);
+            settlementLayer.getChildren().add(visible);
+
+            Circle clickable = new Circle(vertex.getX(), vertex.getY(), clickableRadius);
+            clickable.setPickOnBounds(true);
+            clickable.setOnMouseClicked(controller.createSettlementClickHandler(visible, vertex, root));
+            clickable.setMouseTransparent(false);
+            vertexClickHighlights.add(clickable);
+
+            if (DEBUG_VISUALIZE_CLICKS) {
+                clickable.setFill(Color.rgb(0, 255, 0, 0.2));
+                clickable.setStroke(Color.BLACK);
+                clickable.setStrokeWidth(0.3);
+            } else {
+                clickable.setFill(Color.TRANSPARENT);
+                clickable.setStroke(Color.TRANSPARENT);
+            }
+
+            edgeClickLayer.getChildren().add(clickable);
+        }
+    }
+    //_____________________________________FUNCTIONS_________________________________________//
+    public Rectangle createBoxBehindDiceNumber(Text sample, double centerX, double centerY) {
+        double padding = 5.0 / boardRadius * 10;
+        double boxW = sample.getLayoutBounds().getWidth() + padding;
+        double boxH = sample.getLayoutBounds().getHeight() + padding;
+        Rectangle rectangle = new Rectangle(centerX - boxW / 2, centerY - boxH / 2, boxW, boxH);
+        rectangle.setFill(Color.BEIGE);
+        rectangle.setStroke(Color.BLACK);
+        rectangle.setArcWidth(5);
+        rectangle.setArcHeight(5);
+        return rectangle;
+    }
+    public Circle createRobberHighlight(Tile tile, Group boardGroup, Runnable onClick) {
+        Point2D center = tile.getCenter();
+        Circle highlight = drawRobberCircle(center, boardGroup);
+        highlight.setOnMouseClicked(e -> onClick.run());
+        return highlight;
+    }
+    public Polygon createTilePolygon(Tile tile) {
+        Polygon polygon = new Polygon();
+        for (Vertex v : tile.getVertices()) {
+            polygon.getPoints().addAll(v.getX(), v.getY());
+        }
+        return polygon;
+    }
+    public Image loadDiceImage(int number) {
+        String path = "/dice/dice" + number + ".png";
+        InputStream stream = CatanBoardGameView.class.getResourceAsStream(path);
+        if (stream == null) {
+            System.err.println("Could not load image: " + path);
+            return new Image("/Icons/error.png");
+        }
+        return new Image(stream);
+    }
+
+    public StackPane buildFancyAIOverlay() {
+        thinkingLabel = new Label("Waiting for AI...");
+        thinkingLabel.setStyle("-fx-font-size: 26px; -fx-text-fill: white; -fx-font-weight: bold;");
+        thinkingLabel.setOpacity(0.85);
+
+        Image img = new Image(getClass().getResource("/icons/robot_think.png").toExternalForm());
+        thinkingImage = new ImageView(img);
+        thinkingImage.setFitWidth(120);
+        thinkingImage.setFitHeight(120);
+
+        // Rotate animation
+        rotateAnimation = new RotateTransition(Duration.seconds(4), thinkingImage);
+        rotateAnimation.setByAngle(360);
+        rotateAnimation.setCycleCount(Animation.INDEFINITE);
+        rotateAnimation.setInterpolator(Interpolator.LINEAR);
+
+        VBox content = new VBox(20, thinkingImage, thinkingLabel);
+        content.setAlignment(Pos.CENTER);
+
+        aiOverlayPane = new StackPane(content);
+        aiOverlayPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.6);");
+        aiOverlayPane.setVisible(false);
+        aiOverlayPane.setMouseTransparent(true);
+
+        return aiOverlayPane;
+    }
+
+    public void resetCounters() {
+        settlementCounter = 0;
+    }
+
+    //_____________________________________DRAWING_________________________________________//
     public void drawRoad(Line line, Player player, Group boardGroup) {
         line.setStroke(player.getColor());
         line.setStrokeWidth(1.5 * (10.0 / boardRadius));
@@ -115,92 +242,6 @@ public class DrawOrDisplay {
         cityShape.setStrokeWidth(1.0);
         boardGroup.getChildren().add(cityShape);
     }
-
-
-    // -------------------- Click Initialization (Build Phase) -------------------- //
-
-    public void initEdgesClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
-        Group edgeBaseLayer = controller.getGameController().getGameView().getEdgeBaseLayer();
-        Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
-
-        for (Edge edge : board.getEdges()) {
-            if (edge.isSeaOnly()) continue;
-
-            Line visible = new Line(edge.getVertex1().getX(), edge.getVertex1().getY(),
-                    edge.getVertex2().getX(), edge.getVertex2().getY());
-            visible.setStroke(Color.WHITE);
-            visible.setStrokeWidth(0.8 * (10.0 / boardRadius));
-            edgeBaseLayer.getChildren().add(visible);
-
-            Line clickable = new Line(edge.getVertex1().getX(), edge.getVertex1().getY(),
-                    edge.getVertex2().getX(), edge.getVertex2().getY());
-            clickable.setStrokeWidth(1.2 * (10.0 / boardRadius));
-            clickable.setOpacity(0);
-            clickable.setPickOnBounds(false);
-            clickable.setMouseTransparent(false);
-            clickable.setOnMouseClicked(controller.createRoadClickHandler(edge, visible, root));
-            edgeClickLayer.getChildren().add(clickable);
-        }
-    }
-
-    public void initVerticeClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
-        Group settlementLayer = controller.getGameController().getGameView().getSettlementLayer();
-        Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
-
-        boolean DEBUG_VISUALIZE_CLICKS = true;
-
-        for (Vertex vertex : board.getVertices()) {
-            if (vertex.isSeaOnly()) continue;
-
-            double visibleRadius = 10.0 / boardRadius;
-            double clickableRadius = 20.0 / boardRadius;
-
-            Circle visible = new Circle(vertex.getX(), vertex.getY(), visibleRadius);
-            visible.setFill(Color.TRANSPARENT);
-            visible.setStroke(Color.TRANSPARENT);
-            settlementLayer.getChildren().add(visible);
-
-            Circle clickable = new Circle(vertex.getX(), vertex.getY(), clickableRadius);
-            clickable.setPickOnBounds(true);
-            clickable.setOnMouseClicked(controller.createSettlementClickHandler(visible, vertex, root));
-            clickable.setMouseTransparent(false);
-            vertexClickHighlights.add(clickable);
-
-            if (DEBUG_VISUALIZE_CLICKS) {
-                clickable.setFill(Color.rgb(0, 255, 0, 0.2));
-                clickable.setStroke(Color.BLACK);
-                clickable.setStrokeWidth(0.3);
-            } else {
-                clickable.setFill(Color.TRANSPARENT);
-                clickable.setStroke(Color.TRANSPARENT);
-            }
-
-            edgeClickLayer.getChildren().add(clickable);
-        }
-    }
-
-    // ------------------------- Utility Drawing ------------------------- //
-
-    public Polygon createTilePolygon(Tile tile) {
-        Polygon polygon = new Polygon();
-        for (Vertex v : tile.getVertices()) {
-            polygon.getPoints().addAll(v.getX(), v.getY());
-        }
-        return polygon;
-    }
-
-    public Rectangle createBoxBehindDiceNumber(Text sample, double centerX, double centerY) {
-        double padding = 5.0 / boardRadius * 10;
-        double boxW = sample.getLayoutBounds().getWidth() + padding;
-        double boxH = sample.getLayoutBounds().getHeight() + padding;
-        Rectangle background = new Rectangle(centerX - boxW / 2, centerY - boxH / 2, boxW, boxH);
-        background.setFill(Color.BEIGE);
-        background.setStroke(Color.BLACK);
-        background.setArcWidth(5);
-        background.setArcHeight(5);
-        return background;
-    }
-
     public Circle drawRobberCircle(Point2D center, Group boardGroup) {
         double radius = 40.0 / boardRadius;
         double strokeWidth = 12.0 / boardRadius;
@@ -210,13 +251,6 @@ public class DrawOrDisplay {
         circle.setStrokeWidth(strokeWidth);
         boardGroup.getChildren().add(circle);
         return circle;
-    }
-
-    public Circle createRobberHighlight(Tile tile, Group boardGroup, Runnable onClick) {
-        Point2D center = tile.getCenter();
-        Circle highlight = drawRobberCircle(center, boardGroup);
-        highlight.setOnMouseClicked(e -> onClick.run());
-        return highlight;
     }
 
     public void drawHarbors(List<Tile> tiles, Group boardGroup) {
@@ -259,18 +293,27 @@ public class DrawOrDisplay {
         }
     }
 
-    public Image loadDiceImage(int number) {
-        String path = "/dice/dice" + number + ".png";
-        InputStream stream = CatanBoardGameView.class.getResourceAsStream(path);
-        if (stream == null) {
-            System.err.println("Could not load image: " + path);
-            return new Image("/Icons/error.png");
-        }
-        return new Image(stream);
+    public void drawErrorCross(Group boardGroup, double x, double y) {
+        double size = 10.0 / boardRadius;
+
+        Line line1 = new Line(x - size, y - size, x + size, y + size);
+        Line line2 = new Line(x - size, y + size, x + size, y - size);
+
+        line1.setStroke(Color.RED);
+        line2.setStroke(Color.RED);
+        line1.setStrokeWidth(2);
+        line2.setStrokeWidth(2);
+
+        Group error = new Group(line1, line2);
+        boardGroup.getChildren().add(error);
+
+        PauseTransition delay = new PauseTransition(Duration.seconds(1));
+        delay.setOnFinished(e -> boardGroup.getChildren().remove(error));
+        delay.play();
     }
 
-    // ------------------------- ERRORS AND Popups ------------------------- //
-        public void showBuildingCostsPopup() {
+    //_____________________________________CREATE DIALOGS AND POPUPS_________________________________________//
+    public void showBuildingCostsPopup() {
         Stage popup = new Stage();
         popup.initModality(Modality.APPLICATION_MODAL);
         popup.setTitle("Building Costs");
@@ -292,186 +335,157 @@ public class DrawOrDisplay {
         popup.showAndWait();
     }
 
-    public void showErrorCross(Group boardGroup, double x, double y) {
-        double size = 10.0 / boardRadius;
-
-        Line line1 = new Line(x - size, y - size, x + size, y + size);
-        Line line2 = new Line(x - size, y + size, x + size, y - size);
-
-        line1.setStroke(Color.RED);
-        line2.setStroke(Color.RED);
-        line1.setStrokeWidth(2);
-        line2.setStrokeWidth(2);
-
-        Group error = new Group(line1, line2);
-        boardGroup.getChildren().add(error);
-
-        PauseTransition delay = new PauseTransition(Duration.seconds(1));
-        delay.setOnFinished(e -> boardGroup.getChildren().remove(error));
-        delay.play();
-    }
-
-    public void notEnoughResources(String message) {
-        Platform.runLater(() -> {
-            Stage popup = new Stage();
-            popup.initModality(Modality.APPLICATION_MODAL);
-            popup.setTitle("Not enough resources");
-
-            VBox box = new VBox(10);
-            box.setPadding(new Insets(20));
-            box.setAlignment(Pos.CENTER);
-
-            Label label = new Label(message);
-            Button closeButton = new Button("OK");
-            closeButton.setOnAction(e -> popup.close());
-
-            box.getChildren().addAll(label, closeButton);
-            Scene scene = new Scene(box);
-            popup.setScene(scene);
-            popup.showAndWait();
-        });
-    }
-
-    public void rollDiceBeforeActionPopup(String message) {
-        Platform.runLater(() -> {
-            Stage popup = new Stage();
-            popup.initModality(Modality.APPLICATION_MODAL);
-            popup.setTitle("Action Blocked");
-
-            VBox box = new VBox(10);
-            box.setPadding(new Insets(20));
-            box.setAlignment(Pos.CENTER);
-
-            Label label = new Label(message);
-            Button closeButton = new Button("OK");
-            closeButton.setOnAction(e -> popup.close());
-
-            box.getChildren().addAll(label, closeButton);
-            Scene scene = new Scene(box);
-            popup.setScene(scene);
-            popup.showAndWait();
-        });
-    }
-
-    public void showAITurnPopup() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("AI Turn in Progress");
-        alert.setHeaderText(null);
-        alert.setContentText("Wait for AI to finish turn before making moves");
-        alert.showAndWait();
-    }
-
-    public StackPane buildFancyAIOverlay() {
-        thinkingLabel = new Label("Waiting for AI...");
-        thinkingLabel.setStyle("-fx-font-size: 26px; -fx-text-fill: white; -fx-font-weight: bold;");
-        thinkingLabel.setOpacity(0.85);
-
-        Image img = new Image(getClass().getResource("/icons/robot_think.png").toExternalForm());
-        thinkingImage = new ImageView(img);
-        thinkingImage.setFitWidth(120);
-        thinkingImage.setFitHeight(120);
-
-        // Rotate animation
-        rotateAnimation = new RotateTransition(Duration.seconds(4), thinkingImage);
-        rotateAnimation.setByAngle(360);
-        rotateAnimation.setCycleCount(Animation.INDEFINITE);
-        rotateAnimation.setInterpolator(Interpolator.LINEAR);
-
-        VBox content = new VBox(20, thinkingImage, thinkingLabel);
-        content.setAlignment(Pos.CENTER);
-
-        aiOverlayPane = new StackPane(content);
-        aiOverlayPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.6);");
-        aiOverlayPane.setVisible(false);
-        aiOverlayPane.setMouseTransparent(true);
-
-        return aiOverlayPane;
-    }
-
-
-    public void showTradeError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Trade Error");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    public void showMaxRoadsReachedPopup() {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Max Roads Reached");
-            alert.setHeaderText("You already built 15 roads");
-            alert.setContentText("You cannot build more than 15 roads in the game.");
-            alert.showAndWait();
-        });
-    }
-
-    public void showMaxSettlementsReachedPopup() {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Max Settlements Reached");
-            alert.setHeaderText("You already built 5 settlements");
-            alert.setContentText("You cannot build more than 5 settlements in the game.");
-            alert.showAndWait();
-        });
-    }
-
-    public void showMaxCitiesReachedPopup() {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Max Cities Reached");
-            alert.setHeaderText("You already built 4 cities");
-            alert.setContentText("You cannot build more than 4 roads in the game.");
-            alert.showAndWait();
-        });
-    }
-
-    public void showFailToBuyDevelopmentCardPopup() {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Insufficient Resources");
-            alert.setHeaderText("You do not have enough resources to buy a development card");
-            alert.setContentText("You need 1 grain, 1 wool, and 1 ore");
-            alert.showAndWait();
-        });
-    }
-
-    public void showNoMoreDevelopmentCardToBuyPopup() {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("No More Development Cards");
-            alert.setHeaderText("There are no more development cards left in the game.");
-            alert.setContentText("Buy something else.");
-            alert.showAndWait();
-        });
-    }
-    public void showFinishDevelopmentCardActionPopup() {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Action Required: Development Card");
-            alert.setHeaderText("Complete your development card action first.");
-            alert.setContentText("You must finish using your current development card before performing any other actions.");
-            alert.showAndWait();
-        });
-    }
-
     public Optional<Player> showRobberVictimDialog(List<Player> victims) {
         if (victims == null || victims.isEmpty()) return Optional.empty();
 
-        ChoiceDialog<Player> dialog = new ChoiceDialog<>(victims.get(0), victims);
+        Dialog<Player> dialog = new Dialog<>();
         dialog.setTitle("Choose a player to steal from");
         dialog.setHeaderText("Select a player with a city or settlement on this tile:");
-        dialog.setContentText("Player:");
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.UNDECORATED); // Optional: remove window decorations
 
-        return dialog.showAndWait();
+        // Disable default close behavior
+        Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(Event::consume);
+
+        // UI Setup
+        ComboBox<Player> comboBox = new ComboBox<>();
+        comboBox.getItems().addAll(victims);
+        comboBox.getSelectionModel().selectFirst();
+
+        dialog.getDialogPane().setContent(new VBox(10,
+                new Label("Player:"), comboBox
+        ));
+
+        ButtonType confirmType = new ButtonType("Steal", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().add(confirmType);
+
+        Node confirmButton = dialog.getDialogPane().lookupButton(confirmType);
+        confirmButton.setDisable(false); // Allow clicking, but we can add validation if needed
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == confirmType) {
+                return comboBox.getValue();
+            }
+            return null; // Not possible unless dialog is forcibly closed
+        });
+
+        Optional<Player> result = dialog.showAndWait();
+        return result;
     }
 
+    public void notEnoughResourcesPopup(String message) {
+        showCustomPopup("Not enough resources", message, true);
+    }
+    public void rollDiceBeforeActionPopup(String message) {
+        showCustomPopup("Action Blocked", message, true);
+    }
+
+    public void showAITurnPopup() {
+        showAlert(Alert.AlertType.INFORMATION,"AI Turn in Progress",null,"Wait for AI to finish turn before making moves");
+    }
+
+    public void showTradeError(String message) {
+        showAlert(Alert.AlertType.ERROR, "Trade Error", null, message);
+    }
+
+    public void showMaxRoadsReachedPopup() {
+        showAlert(Alert.AlertType.ERROR, "Max Roads Reached", "You already built 15 roads", "You cannot build more than 15 roads in the game.");
+    }
+    public void showMaxSettlementsReachedPopup() {
+        showAlert(Alert.AlertType.ERROR, "Max Settlements Reached", "You already built 5 settlements", "You cannot build more than 5 settlements in the game.");
+    }
+
+    public void showMaxCitiesReachedPopup() {
+        showAlert(Alert.AlertType.ERROR, "Max Cities Reached", "You already built 4 cities", "You cannot build more than 4 roads in the game.");
+    }
+
+    public void showFailToBuyDevelopmentCardPopup() {
+        showAlert(Alert.AlertType.ERROR, "Insufficient Resources", "You do not have enough resources to buy a development card", "You need 1 grain, 1 wool, and 1 ore");
+    }
+
+    public void showNoMoreDevelopmentCardToBuyPopup() {
+        showAlert(Alert.AlertType.ERROR, "No More Development Cards", "There are no more development cards left in the game.", "Buy something else.");
+    }
+
+    public void showFinishDevelopmentCardActionPopup() {
+        showAlert(Alert.AlertType.WARNING, "Action Required: Development Card", "Complete your development card action first.", "You must finish using your current development card before performing any other actions.");
+    }
     public Map<String, Integer> showDiscardDialog(Player player, int toDiscard, Map<String, Integer> playerResources, Gameplay gameplay) {
+        List<String> resources = new ArrayList<>(playerResources.keySet());
+
+        return showResourceSelectionDialog(
+                "Discard Resources",
+                player + ", you must discard " + toDiscard + " resource cards.",
+                resources,
+                toDiscard,
+                true,
+                player::chooseDiscardCards
+        );
+    }
+    public Map<String, Integer> showYearOfPlentyDialog() {
+        List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
+
+        return showResourceSelectionDialog(
+                "Year of Plenty",
+                "Select exactly 2 resources to gain from the bank:",
+                resources,
+                2,
+                false,
+                null
+        );
+    }
+
+    //___________________________________POPUP HELPER FUNCTIONS____________________________________//
+    public void showAlert(Alert.AlertType type, String title, String header, String content) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(type);
+            alert.setTitle(title);
+            alert.setHeaderText(header);
+            alert.setContentText(content);
+            alert.showAndWait();
+        });
+    }
+    public void showCustomPopup(String title, String message, boolean runLater) {
+        Runnable task = () -> {
+            Stage popup = new Stage();
+            popup.initModality(Modality.APPLICATION_MODAL);
+            popup.setTitle(title);
+
+            VBox box = new VBox(10);
+            box.setPadding(new Insets(20));
+            box.setAlignment(Pos.CENTER);
+
+            Label label = new Label(message);
+            Button closeButton = new Button("OK");
+            closeButton.setOnAction(e -> popup.close());
+
+            box.getChildren().addAll(label, closeButton);
+
+            Scene scene = new Scene(box);
+            popup.setScene(scene);
+            popup.showAndWait();
+        };
+
+        if (runLater) {
+            Platform.runLater(task);
+        } else {
+            task.run();
+        }
+    }
+    // Helper function to create NON-closable Dialog boxes
+    private Map<String, Integer> showResourceSelectionDialog(
+            String title,
+            String message,
+            List<String> resources,
+            int maxSelection,
+            boolean allowRandomSelection,
+            Supplier<Map<String, Integer>> randomSelectionSupplier
+    ) {
         Stage dialogStage = new Stage();
         dialogStage.initModality(Modality.APPLICATION_MODAL);
         dialogStage.initStyle(StageStyle.UNDECORATED);
-        dialogStage.setTitle("Discard Resources");
+        dialogStage.setTitle(title);
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -479,92 +493,9 @@ public class DrawOrDisplay {
         grid.setPadding(new Insets(10));
         grid.getColumnConstraints().addAll(new ColumnConstraints(100), new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints());
 
-        Map<String, Integer> discardSelection = new HashMap<>();
-        Map<String, Text> counterTexts = new HashMap<>();
-        Button discardButton = new Button("Discard");
-        discardButton.setDisable(true);
-
-        int row = 0;
-        for (Map.Entry<String, Integer> entry : playerResources.entrySet()) {
-            String resource = entry.getKey();
-            int count = entry.getValue();
-
-            Text label = new Text(resource + " (" + count + ")");
-            Button minus = new Button("-");
-            Button plus = new Button("+");
-            Text counter = new Text("0");
-
-            counter.setWrappingWidth(30);
-            counter.setTextAlignment(TextAlignment.CENTER);
-
-            discardSelection.put(resource, 0);
-            counterTexts.put(resource, counter);
-
-            plus.setOnAction(e -> {
-                if (discardSelection.get(resource) < count &&
-                        gameplay.getTotalSelectedCards(discardSelection) < toDiscard) {
-                    discardSelection.put(resource, discardSelection.get(resource) + 1);
-                    counter.setText(discardSelection.get(resource).toString());
-                    discardButton.setDisable(gameplay.getTotalSelectedCards(discardSelection) != toDiscard);
-                }
-            });
-            minus.setOnAction(e -> {
-                if (discardSelection.get(resource) > 0) {
-                    discardSelection.put(resource, discardSelection.get(resource) - 1);
-                    counter.setText(discardSelection.get(resource).toString());
-                    discardButton.setDisable(gameplay.getTotalSelectedCards(discardSelection) != toDiscard);
-                }
-            });
-
-            grid.addRow(row++, label, minus, counter, plus);
-        }
-        final Map<String, Integer>[] result = new Map[]{null};
-
-        discardButton.setOnAction(e -> {
-            result[0] = new HashMap<>(discardSelection);
-            dialogStage.close();
-        });
-
-        Button randomDiscardButton = new Button("Discard cards randomly");
-        randomDiscardButton.setOnAction(e -> {
-            result[0] = player.chooseDiscardCards();
-            dialogStage.close();
-        });
-
-        VBox container = new VBox(15,
-                new Text(player + " you must discard " + toDiscard + " resource cards."),
-                grid,
-                new HBox(10, discardButton, randomDiscardButton)
-        );
-        container.setPadding(new Insets(15));
-        container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
-
-        dialogStage.setScene(new Scene(container));
-        dialogStage.showAndWait();
-        return result[0];
-
-    }
-
-
-    public Map<String, Integer> showYearOfPlentyDialog() {
-        List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
-
-        Stage dialogStage = new Stage();
-        dialogStage.initModality(Modality.APPLICATION_MODAL);
-        dialogStage.initStyle(StageStyle.UNDECORATED);
-        dialogStage.setTitle("Year of Plenty");
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(10));
-        grid.getColumnConstraints().addAll(
-                new ColumnConstraints(100), new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints()
-        );
-
         Map<String, Integer> selection = new HashMap<>();
         Map<String, Text> counterTexts = new HashMap<>();
-        Button confirmButton = new Button("Take Resources");
+        Button confirmButton = new Button("Confirm");
         confirmButton.setDisable(true);
 
         int row = 0;
@@ -581,10 +512,10 @@ public class DrawOrDisplay {
             counterTexts.put(resource, counter);
 
             plus.setOnAction(e -> {
-                if (selection.get(resource) < 2 && getTotalSelected(selection) < 2) {
+                if (selection.get(resource) < maxSelection && getTotalSelected(selection) < maxSelection) {
                     selection.put(resource, selection.get(resource) + 1);
                     counter.setText(selection.get(resource).toString());
-                    confirmButton.setDisable(getTotalSelected(selection) != 2);
+                    confirmButton.setDisable(getTotalSelected(selection) != maxSelection);
                 }
             });
 
@@ -592,73 +523,69 @@ public class DrawOrDisplay {
                 if (selection.get(resource) > 0) {
                     selection.put(resource, selection.get(resource) - 1);
                     counter.setText(selection.get(resource).toString());
-                    confirmButton.setDisable(getTotalSelected(selection) != 2);
+                    confirmButton.setDisable(getTotalSelected(selection) != maxSelection);
                 }
             });
 
             grid.addRow(row++, label, minus, counter, plus);
         }
 
-        VBox container = new VBox(15,
-                new Text("Select exactly 2 resources to gain from the bank:"),
-                grid,
-                confirmButton
-        );
-        container.setPadding(new Insets(15));
-        container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
+        final Map<String, Integer>[] result = new Map[]{null};
 
-        final Map<String, Integer>[] selected = new Map[]{null};
         confirmButton.setOnAction(e -> {
-            selected[0] = new HashMap<>(selection);
+            result[0] = new HashMap<>(selection);
             dialogStage.close();
         });
 
+        VBox container = new VBox(15, new Text(message), grid);
+
+        HBox buttons = new HBox(10, confirmButton);
+        if (allowRandomSelection && randomSelectionSupplier != null) {
+            Button randomButton = new Button("Random Selection");
+            randomButton.setOnAction(e -> {
+                result[0] = randomSelectionSupplier.get();
+                dialogStage.close();
+            });
+            buttons.getChildren().add(randomButton);
+        }
+
+        container.getChildren().add(buttons);
+        container.setPadding(new Insets(15));
+        container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
+
         dialogStage.setScene(new Scene(container));
         dialogStage.showAndWait();
-        return selected[0];
+        return result[0];
     }
-
+    //___________________________________GETTERS____________________________________//
+    public StackPane getOverlayPane() {
+        return aiOverlayPane;
+    }
     private int getTotalSelected(Map<String, Integer> map) {
         return map.values().stream().mapToInt(Integer::intValue).sum();
     }
-
-    public void resetCounters() {
-        settlementCounter = 0;
-    }
-
     public Label getThinkingLabel() {
         return thinkingLabel;
     }
 
-    // AI THINKING OVERLAY FUNCTIONS:
+    //___________________________________AI THINKING OVERLAY FUNCTIONS____________________________________//
     public void setThinkingMessage(String text) {
         thinkingLabel.setText(text);
     }
-
-    public StackPane getOverlayPane() {
-        return aiOverlayPane;
-    }
-
     public void startThinkingAnimation() {
         rotateAnimation.playFromStart();
     }
-
     public void stopThinkingAnimation() {
         rotateAnimation.stop();
     }
-
     public void pauseThinkingAnimation(DrawOrDisplay draw) {
         if (rotateAnimation != null) {
             draw.rotateAnimation.pause();
         }
     }
-
     public void resumeThinkingAnimation(DrawOrDisplay draw) {
         if (rotateAnimation != null) {
             draw.rotateAnimation.play();
         }
     }
-
-    // ------------------------- Getter ------------------------- //
-
 }
