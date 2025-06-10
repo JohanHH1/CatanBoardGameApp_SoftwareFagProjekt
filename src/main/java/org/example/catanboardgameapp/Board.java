@@ -48,7 +48,7 @@ public class Board {
     private final DrawOrDisplay drawOrDisplay;
 
     //___________________________CONSTRUCTOR___________________________//
-    public Board(int radius, double GAME_WIDTH, double GAME_HEIGHT) {
+    public Board(Gameplay gameplay, int radius, double GAME_WIDTH, double GAME_HEIGHT) {
         this.radius = radius;
         this.hexSize = calculateHexSize(radius, GAME_WIDTH, GAME_HEIGHT);
         this.GAME_WIDTH = GAME_WIDTH;
@@ -56,8 +56,7 @@ public class Board {
         this.boardSize = radius + 1;
         initializeBoard();
         assignHarbors();
-        this.drawOrDisplay = new DrawOrDisplay(radius);
-    }
+        this.drawOrDisplay = gameplay.getDrawOrDisplay();    }
 
     //___________________________FUNCTIONS___________________________//
 

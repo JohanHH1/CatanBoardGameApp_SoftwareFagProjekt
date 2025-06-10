@@ -111,7 +111,6 @@ public class DrawOrDisplay {
         } else {
             cityShape.setFill(Color.GRAY);
         }
-
         cityShape.setStroke(Color.BLACK);
         cityShape.setStrokeWidth(1.0);
         boardGroup.getChildren().add(cityShape);
@@ -551,16 +550,19 @@ public class DrawOrDisplay {
     public void stopThinkingAnimation() {
         rotateAnimation.stop();
     }
-    public void pauseThinkingAnimation() {
+
+    public void pauseThinkingAnimation(DrawOrDisplay draw) {
         if (rotateAnimation != null) {
-            rotateAnimation.pause();
+            draw.rotateAnimation.pause();
         }
+        System.out.println("WRONG DRAW_OR_DISPLAY, CANT PAUSE ANIMATION");
     }
 
-    public void resumeThinkingAnimation() {
+    public void resumeThinkingAnimation(DrawOrDisplay draw) {
         if (rotateAnimation != null) {
-            rotateAnimation.play();
+            draw.rotateAnimation.play();
         }
+        System.out.println("WRONG DRAW_OR_DISPLAY, CANT UN-PAUSE ANIMATION");
     }
 
 

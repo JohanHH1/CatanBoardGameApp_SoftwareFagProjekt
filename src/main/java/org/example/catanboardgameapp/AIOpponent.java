@@ -16,9 +16,11 @@ public class AIOpponent extends Player {
     public enum StrategyLevel {
         EASY, MEDIUM, HARD
     }
+
     public enum Strategy {
         ROADBUILDER, CITYUPGRADER, SETTLEMENTPLACER, LONGESTROAD, BIGGESTARMY, NONE
     }
+
     public enum ThinkingSpeed {
         SLOW, MEDIUM, FAST, EXTREME
     }
@@ -35,7 +37,7 @@ public class AIOpponent extends Player {
     public AIOpponent(int playerId, Color color, StrategyLevel level, Gameplay gameplay) {
         super(playerId, color, gameplay);
         this.strategyLevel = level;
-        this.drawOrDisplay = new DrawOrDisplay(gameplay.getBoardRadius());
+        this.drawOrDisplay = gameplay.getDrawOrDisplay();
         this.gameplay = gameplay;
     }
 

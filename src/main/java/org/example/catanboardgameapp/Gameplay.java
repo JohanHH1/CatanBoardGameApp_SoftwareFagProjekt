@@ -2,10 +2,13 @@ package org.example.catanboardgameapp;
 
 import javafx.application.Platform;
 import javafx.scene.Group;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.example.catanboardgameviews.CatanBoardGameView;
@@ -19,7 +22,7 @@ public class Gameplay {
     //__________________________CONFIG & VIEWS_____________________________//
     private GameController gameController;
     private final int boardRadius;
-    private final DrawOrDisplay drawOrDisplay;
+    private DrawOrDisplay drawOrDisplay;
     private CatanBoardGameView catanBoardGameView;
     private MenuView menuView;
 
@@ -37,7 +40,7 @@ public class Gameplay {
     private volatile boolean gamePaused = false;
     private Thread activeAIThread;
     private boolean isRobberMoveRequired = false;
-
+    
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
@@ -51,11 +54,9 @@ public class Gameplay {
     private LongestRoadManager longestRoadManager = new LongestRoadManager();
     private BiggestArmy biggestArmy;
 
-
     //__________________________DICE ROLL TRACKING_____________________________//
     private int lastRolledDie1;
     private int lastRolledDie2;
-
 
     //__________________________CONSTRUCTOR_____________________________//
     public Gameplay(Stage primaryStage, int boardRadius, GameController gameController) {
@@ -64,6 +65,15 @@ public class Gameplay {
         this.gameController = gameController;
         this.biggestArmy = new BiggestArmy();
     }
+
+    public DrawOrDisplay getDrawOrDisplay() {
+        return drawOrDisplay;
+    }
+
+    public void setDrawOrDisplay(DrawOrDisplay drawOrDisplay) {
+        this.drawOrDisplay = drawOrDisplay;
+    }
+
 
     //________________________INITIALIZE_______________________________//
     public void initializeDevelopmentCards() {
@@ -724,7 +734,7 @@ public class Gameplay {
 
     public void pauseGame() {
         if (!gamePaused) {
-            drawOrDisplay.pauseThinkingAnimation();
+            this.drawOrDisplay.pauseThinkingAnimation(this.drawOrDisplay);
             System.out.println("Game paused.");
             gamePaused = true;
             stopAllAIThreads();  // interrupt AI thread cleanly
@@ -733,7 +743,7 @@ public class Gameplay {
 
     public void resumeGame() {
         if (!gamePaused) return; // prevent spamming or double-starting
-        drawOrDisplay.resumeThinkingAnimation();
+        this.drawOrDisplay.resumeThinkingAnimation(this.drawOrDisplay);
         System.out.println("Game resumed.");
         gamePaused = false;
         if (currentPlayer instanceof AIOpponent ai) {

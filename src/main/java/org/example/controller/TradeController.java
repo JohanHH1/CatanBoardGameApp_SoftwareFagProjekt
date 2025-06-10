@@ -15,7 +15,7 @@ public class TradeController {
     //___________________________CONTROLLER__________________________________//
     public TradeController(GameController gameController, int boardRadius) {
         this.gameController = gameController;
-        this.drawOrDisplay = new DrawOrDisplay(boardRadius);
+        this.drawOrDisplay = gameController.getGameplay().getDrawOrDisplay();
     }
 
     //___________________________FUNCTIONS__________________________________//
@@ -140,7 +140,7 @@ public class TradeController {
         Player currentPlayer = gameplay.getCurrentPlayer();
 
         // Show selection popup to choose any 2 resources
-        Map<String, Integer> selected = new DrawOrDisplay(gameplay.getBoardRadius()).showYearOfPlentyDialog();
+        Map<String, Integer> selected = drawOrDisplay.showYearOfPlentyDialog();
         if (selected != null) {
             devCard.addResourcesToPlayer(currentPlayer, selected);
             gameplay.getCatanBoardGameView().logToGameLog("Player " + currentPlayer.getPlayerId() +
