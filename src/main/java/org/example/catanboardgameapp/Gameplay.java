@@ -272,16 +272,8 @@ public class Gameplay {
         } else {
             distributeResources(roll);
         }
-                if (roll == 7) {
-                    catanBoardGameView.getNextTurnButton().setDisable(true);
-                    catanBoardGameView.getRobber().requireRobberMove();
-                    catanBoardGameView.getRobber().showRobberTargets(boardGroup);
-                    setRobberMoveRequired(true);
-                } else {
-                    distributeResources(roll);
-                }
 
-                catanBoardGameView.refreshSidebar();
+        catanBoardGameView.refreshSidebar();
             }));
             timeline.setCycleCount(1);
             timeline.play();

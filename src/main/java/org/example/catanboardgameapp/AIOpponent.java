@@ -18,7 +18,7 @@ public class AIOpponent extends Player {
     }
 
     public enum Strategy {
-        ROADBUILDER, CITYUPGRADER, SETTLEMENTPLACER, LONGESTROAD, BIGGESTARMY, NONE
+        ROADBUILDER, CITYUPGRADER, SETTLEMENTPLACER, LONGESTROAD, BIGGESTARMY, DEVELOPMENTCARDBYER, NONE
     }
 
     public enum ThinkingSpeed {
@@ -273,7 +273,7 @@ public class AIOpponent extends Player {
             return Strategy.SETTLEMENTPLACER;
         }
 
-        // 3. Road
+        // 4. Road
         boolean hasValidRoadSpots = gameplay.getBoard().getEdges().stream()
                 .anyMatch(e -> gameplay.isValidRoadPlacement(e));
         if (hasValidRoadSpots) {
