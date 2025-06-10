@@ -289,9 +289,8 @@ public class CatanBoardGameView {
             btn.setOnMouseEntered(e -> btn.setStyle(style + hover));
             btn.setOnMouseExited(e -> btn.setStyle(style));
         });
-
-        rollDiceButton.setVisible(false);
-        nextTurnButton.setVisible(false);
+        hideTurnButton();
+        hideDiceButton();
 
         HBox buttonBox = new HBox(12);
         buttonBox.getChildren().addAll(allButtons);
@@ -641,17 +640,16 @@ public class CatanBoardGameView {
 
     //________________________SHOW/HIDE BUTTONS____________________________________//
 
-    public void showDiceButton() {rollDiceButton.setVisible(true);
+    public void showDiceButton() {
     rollDiceButton.setDisable(false);}
     public void hideDiceButton() {
-        rollDiceButton.setVisible(false);
+        rollDiceButton.setDisable(true);
     }
     public void showTurnButton() {
-        nextTurnButton.setVisible(true);
         nextTurnButton.setDisable(false);
     }
     public void hideTurnButton() {
-        nextTurnButton.setVisible(false);
+        nextTurnButton.setDisable(true);
     }
 
 

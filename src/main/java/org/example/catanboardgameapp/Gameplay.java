@@ -257,7 +257,7 @@ public class Gameplay {
 
         // Handle robber or distribute resources
         if (roll == 7) {
-            catanBoardGameView.getNextTurnButton().setDisable(true);
+            catanBoardGameView.hideDiceButton();
             catanBoardGameView.getRobber().requireRobberMove();
             catanBoardGameView.getRobber().showRobberTargets(boardGroup);
             setRobberMoveRequired(true);
