@@ -653,14 +653,14 @@ public class CatanBoardGameView {
 
     //________________________SHOW/HIDE BUTTONS____________________________________//
 
-    public void showDiceButton() {
-        rollDiceButton.setVisible(true);
-    }
+    public void showDiceButton() {rollDiceButton.setVisible(true);
+    rollDiceButton.setDisable(false);}
     public void hideDiceButton() {
         rollDiceButton.setVisible(false);
     }
     public void showTurnButton() {
         nextTurnButton.setVisible(true);
+        nextTurnButton.setDisable(false);
     }
     public void hideTurnButton() {
         nextTurnButton.setVisible(false);

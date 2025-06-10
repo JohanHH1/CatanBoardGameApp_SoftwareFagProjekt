@@ -50,7 +50,8 @@ public class Robber {
             return;
         }
         boardGroup.getChildren().remove(this.robberCircle); // remove old robber
-
+        catanBoardGameView.hideTurnButton();
+        catanBoardGameView.hideDiceButton();
         List<Circle> highlightCircles = new ArrayList<>();
         activeRobberHighlights.clear();
 
@@ -91,11 +92,19 @@ public class Robber {
                 robberHasMoved();
                 gameplay.getDevelopmentCard().finishMovingKnight();
 */
+
+
+                if(gameplay.hasRolledDice()){
+                    catanBoardGameView.showTurnButton();
+                } else{
+                    catanBoardGameView.showDiceButton();
+                }
+
                 // Proceed with potential steal
                 List<Player> victims = showPotentialVictims(tile, this.gameplay.getCurrentPlayer());
                 if (victims.isEmpty()) {
                     catanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from.");
-                    catanBoardGameView.getNextTurnButton().setDisable(false);
+
                     return;
 
                 }
@@ -112,7 +121,9 @@ public class Robber {
                         catanBoardGameView.logToGameLog("Failed to steal a resource from " + victim);
                     }
                     catanBoardGameView.refreshSidebar();
-                    catanBoardGameView.getNextTurnButton().setDisable(false);
+                    //catanBoardGameView.showTurnButton();
+
+
                 });
                 activeRobberHighlights.clear();
 

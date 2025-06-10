@@ -339,6 +339,10 @@ public class Gameplay {
     }
 
     public void playDevelopmentCard(Player player, String cardName) {
+        if (isActionBlockedByDevelopmentCard()){
+            drawOrDisplay.showMustPlaceRobberPopup();
+            return;
+        }
         DevelopmentCard.DevelopmentCardType type =
                 DevelopmentCard.DevelopmentCardType.fromName(cardName);
 
