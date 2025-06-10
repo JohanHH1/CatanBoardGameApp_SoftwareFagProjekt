@@ -408,11 +408,19 @@ public class CatanBoardGameView {
         playerBox.getChildren().add(pointsText);
 
         LongestRoadManager longestRoadManager = gameplay.getLongestRoadManager();
-        System.out.println("Current holder: " + longestRoadManager.getCurrentHolder());
+
         if (player == longestRoadManager.getCurrentHolder()) {
             Text longestRoadText = new Text("Longest road");
             pointsText.setFont(Font.font("Arial", infoFontSize));
             playerBox.getChildren().add(longestRoadText);
+        }
+
+        BiggestArmy biggestArmy = gameplay.getBiggestArmy();
+
+        if (player == biggestArmy.getCurrentHolder()) {
+            Text biggestArmyText = new Text("Largest army");
+            biggestArmyText.setFont(Font.font("Arial", infoFontSize));
+            playerBox.getChildren().add(biggestArmyText);
         }
 
         return playerBox;

@@ -700,6 +700,7 @@ public class Gameplay {
     public BiggestArmy getBiggestArmy() {
         return biggestArmy;
     }
+
     public LongestRoadManager getLongestRoadManager() {
         return  longestRoadManager;
     }

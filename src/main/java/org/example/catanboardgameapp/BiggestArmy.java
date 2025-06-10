@@ -28,4 +28,7 @@ public class BiggestArmy {
             }
         }
     }
+    public Player getCurrentHolder() {
+        return biggestArmy;
+    }
 }
