@@ -224,6 +224,7 @@ public class CatanBoardGameView {
         });
 
         developmentCardButton.setOnAction(e -> {
+            //something devcard active then can not be puched !!!! find me
             if (gameplay.isBlockedByAITurn()) return;
             if (!gameplay.hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before buying Development Cards!");
