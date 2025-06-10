@@ -177,16 +177,18 @@ public class CatanBoardGameView {
 
         Label logLabel = new Label("Game Log");
 
-        scrollPane = null;
         VBox logColumn = new VBox(logLabel, gameLogArea);
         logColumn.setPadding(new Insets(5, 10, 5, 0));
         VBox.setVgrow(gameLogArea, Priority.ALWAYS);
+        VBox.setVgrow(logColumn, Priority.ALWAYS);
 
         HBox bottomContent = new HBox(diceColumn, logColumn);
         HBox.setHgrow(logColumn, Priority.ALWAYS);
 
         VBox logBox = new VBox(bottomContent);
+        VBox.setVgrow(bottomContent, Priority.ALWAYS);
         VBox.setVgrow(logBox, Priority.ALWAYS);
+
         return logBox;
     }
 
@@ -237,6 +239,8 @@ public class CatanBoardGameView {
         });
 
         centerButton.setOnAction(e -> {
+            // Optional UI adjustments
+            if (splitPane != null) splitPane.setDividerPositions(0.85);
             centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
             centerButton.getScene().getRoot().requestFocus(); // clear focus
         });
@@ -366,24 +370,6 @@ public class CatanBoardGameView {
                     devCardDetailsBox.getChildren().add(cardButton);
                 }
             }
-            /*for (Map.Entry<DevelopmentCardType, Integer> entry : player.getDevelopmentCards().entrySet()) {
-                if (entry.getValue() > 0) {
-                    Button cardButton = new Button(entry.getKey() + " (" + entry.getValue() + ")");
-                    cardButton.setFont(Font.font("Arial", infoFontSize));
-                    cardButton.setOnAction(e -> {
-                        try {
-                            DevelopmentCard.DevelopmentCardType type =
-                                    DevelopmentCard.DevelopmentCardType.fromName(entry.getKey());
-                            gameplay.playDevelopmentCard(player, type);
-                        } catch (IllegalArgumentException ex) {
-                            gameplay.getCatanBoardGameView().logToGameLog("Invalid card: " + entry.getKey());
-                        }
-                    });
-                    //cardButton.setOnAction(e -> gameplay.playDevelopmentCard(player, entry.getKey()));
-                    devCardDetailsBox.getChildren().add(cardButton);
-                }
-            }*/
-
             devCardButton.setOnAction(e -> {
                 boolean showing = devCardDetailsBox.isVisible();
                 devCardDetailsBox.setVisible(!showing);
@@ -470,7 +456,10 @@ public class CatanBoardGameView {
                 case A -> boardGroup.setTranslateX(boardGroup.getTranslateX() - step);
                 case S -> boardGroup.setTranslateY(boardGroup.getTranslateY() + step);
                 case D -> boardGroup.setTranslateX(boardGroup.getTranslateX() + step);
-                case R, C -> centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
+                case R, C -> {
+                    if (splitPane != null) splitPane.setDividerPositions(0.85); // snap gameLog back in place
+                    centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
+                }
                 case SPACE -> {
                     gameplay.pauseGame();
                     Alert pauseAlert = new Alert(Alert.AlertType.INFORMATION, "Game is paused. Press OK to resume.", ButtonType.OK);
@@ -597,11 +586,7 @@ public class CatanBoardGameView {
         zoom.setToY(0.75);
         SequentialTransition sequence = new SequentialTransition(zoom, move);
         sequence.play();
-        // Optional UI adjustments
-        if (splitPane != null) splitPane.setDividerPositions(0.85);
     }
-
-
 
     //__________________________VIEW UPDATES_____________________________//
     public void updateDiceImages(int die1, int die2) {

@@ -47,56 +47,67 @@ public class Robber {
     //____________________ROBBER PLACEMENT LOGIC__________________________
 
     public void showRobberTargets(Group boardGroup) {
-        if (gameplay.getCurrentPlayer() instanceof AIOpponent ai) {
-            placeRobberAutomatically(ai, boardGroup);
-            return;
-        }
-        boardGroup.getChildren().remove(this.robberCircle); // remove old robber
-        catanBoardGameView.hideTurnButton();
-        catanBoardGameView.hideDiceButton();
-        activeRobberHighlights.clear();
+        catanBoardGameView.runOnFX(() -> {
+            catanBoardGameView.logToGameLog(gameplay.getCurrentPlayer() + ", place the Robber on a highlighted Tile");
 
-        for (Tile tile : board.getTiles()) {
-            if (tile == this.currentTile || tile.isSea()) continue;
+            if (gameplay.getCurrentPlayer() instanceof AIOpponent ai) {
+                placeRobberAutomatically(ai, boardGroup);
+                return; // AI will handle everything automatically
+            }
 
-            Runnable onClick = () -> {
-                activeRobberHighlights.forEach(boardGroup.getChildren()::remove);
-                activeRobberHighlights.clear();
+            // Human Player:
+            boardGroup.getChildren().remove(this.robberCircle);
+            catanBoardGameView.hideTurnButton();
+            catanBoardGameView.hideDiceButton();
+            activeRobberHighlights.clear();
 
-                if (gameplay.isActionBlockedByDevelopmentCard()) {
-                    gameplay.getDevelopmentCard().finishPlayingCard();
-                }
+            for (Tile tile : board.getTiles()) {
+                if (tile == this.currentTile || tile.isSea()) continue;
 
-                gameplay.setRobberMoveRequired(false);
-                boardGroup.getChildren().remove(this.robberCircle);
-                this.robberCircle = drawOrDisplay.drawRobberCircle(tile.getCenter(), boardGroup);
-                this.moveTo(tile);
+                Runnable onClick = () -> {
+                    catanBoardGameView.runOnFX(() -> {
+                        activeRobberHighlights.forEach(boardGroup.getChildren()::remove);
+                        activeRobberHighlights.clear();
 
-                if (gameplay.hasRolledDice()) {
-                    catanBoardGameView.showTurnButton();
-                } else {
-                    catanBoardGameView.showDiceButton();
-                }
+                        if (gameplay.isActionBlockedByDevelopmentCard()) {
+                            gameplay.getDevelopmentCard().finishPlayingCard();
+                        }
 
-                List<Player> victims = showPotentialVictims(tile, gameplay.getCurrentPlayer());
-                if (victims.isEmpty()) {
-                    catanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from.");
-                    return;
-                }
+                        gameplay.setRobberMoveRequired(false);
+                        boardGroup.getChildren().remove(this.robberCircle);
+                        this.robberCircle = drawOrDisplay.drawRobberCircle(tile.getCenter(), boardGroup);
+                        this.moveTo(tile);
 
-                drawOrDisplay.showRobberVictimDialog(victims).ifPresent(victim -> {
-                    boolean success = stealResourceFrom(victim);
-                    if (!success) {
-                        catanBoardGameView.logToGameLog("Failed to steal a resource from " + victim);
-                    }
-                    catanBoardGameView.refreshSidebar();
-                });
+                        if (gameplay.hasRolledDice()) {
+                            catanBoardGameView.showTurnButton();
+                        } else {
+                            catanBoardGameView.showDiceButton();
+                        }
 
-                activeRobberHighlights.clear();
-            };
-            Circle highlight = drawOrDisplay.createRobberHighlight(tile, boardGroup, onClick);
-            activeRobberHighlights.add(highlight);
-        }}
+                        List<Player> victims = showPotentialVictims(tile, gameplay.getCurrentPlayer());
+                        if (victims.isEmpty()) {
+                            catanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from.");
+                            return;
+                        }
+
+                        drawOrDisplay.showRobberVictimDialog(victims).ifPresent(victim -> {
+                            boolean success = stealResourceFrom(victim);
+                            if (!success) {
+                                catanBoardGameView.logToGameLog("Failed to steal a resource from " + victim);
+                            }
+                            catanBoardGameView.refreshSidebar();
+                        });
+
+                        activeRobberHighlights.clear();
+                    });
+                };
+
+                Circle highlight = drawOrDisplay.createRobberHighlight(tile, boardGroup, onClick);
+                activeRobberHighlights.add(highlight);
+            }
+        });
+    }
+
     //______________________________AI HELPERS__________________________________//
     private void placeRobberAutomatically(AIOpponent ai, Group boardGroup) {
         AIOpponent.StrategyLevel level = ai.getStrategyLevel();
@@ -108,7 +119,7 @@ public class Robber {
                     .filter(t -> !t.isSea() && t != currentTile)
                     .toList();
             chosenTile = candidates.get(new Random().nextInt(candidates.size()));
-            catanBoardGameView.logToGameLog("AI " + ai.getPlayerId() + " (EASY) placed robber randomly.");
+            catanBoardGameView.logToGameLog(gameplay.getCurrentPlayer() + " (EASY) placed robber randomly.");
         }
 
         // ----------------- MEDIUM / HARD: Smart scoring -----------------
@@ -148,7 +159,7 @@ public class Robber {
             }
 
             chosenTile = bestTile != null ? bestTile : validTargets.get(0);
-            catanBoardGameView.logToGameLog("AI " + ai.getPlayerId() + " (" + level + ") placed robber on tile with score: " + bestScore);
+            catanBoardGameView.logToGameLog(gameplay.getCurrentPlayer() + " (" + level + ") placed robber on best possible tile with score: " + bestScore);
         }
 
         // ---------- Place Robber on Tile ----------

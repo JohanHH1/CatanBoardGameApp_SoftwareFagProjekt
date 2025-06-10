@@ -382,35 +382,36 @@ public class DrawOrDisplay {
     }
 
     public void showAITurnPopup() {
-        showAlert(Alert.AlertType.INFORMATION,"AI Turn in Progress",null,"Wait for AI to finish turn before making moves");
+        showAlert(Alert.AlertType.INFORMATION,"AI Turn in Progress",null,"Wait for AI to finish turn before making moves",null);
     }
 
     public void showTradeError(String message) {
-        showAlert(Alert.AlertType.ERROR, "Trade Error", null, message);
+        showAlert(Alert.AlertType.ERROR, "Trade Error", null, message,null);
     }
 
     public void showMaxRoadsReachedPopup() {
-        showAlert(Alert.AlertType.ERROR, "Max Roads Reached", "You already built 15 roads", "You cannot build more than 15 roads in the game.");
+        showAlert(Alert.AlertType.ERROR, "Max Roads Reached", "You already built 15 roads", "You cannot build more than 15 roads in the game.",null);
     }
     public void showMaxSettlementsReachedPopup() {
-        showAlert(Alert.AlertType.ERROR, "Max Settlements Reached", "You already built 5 settlements", "You cannot build more than 5 settlements in the game.");
+        showAlert(Alert.AlertType.ERROR, "Max Settlements Reached", "You already built 5 settlements", "You cannot build more than 5 settlements in the game.",null);
     }
 
     public void showMaxCitiesReachedPopup() {
-        showAlert(Alert.AlertType.ERROR, "Max Cities Reached", "You already built 4 cities", "You cannot build more than 4 roads in the game.");
+        showAlert(Alert.AlertType.ERROR, "Max Cities Reached", "You already built 4 cities", "You cannot build more than 4 roads in the game.", null);
     }
 
     public void showFailToBuyDevelopmentCardPopup() {
-        showAlert(Alert.AlertType.ERROR, "Insufficient Resources", "You do not have enough resources to buy a development card", "You need 1 grain, 1 wool, and 1 ore");
+        showAlert(Alert.AlertType.ERROR, "Insufficient Resources", "You do not have enough resources to buy a development card", "You need 1 grain, 1 wool, and 1 ore", null);
     }
 
     public void showNoMoreDevelopmentCardToBuyPopup() {
-        showAlert(Alert.AlertType.ERROR, "No More Development Cards", "There are no more development cards left in the game.", "Buy something else.");
+        showAlert(Alert.AlertType.ERROR, "No More Development Cards", "There are no more development cards left in the game.", "Buy something else.", null);
     }
 
     public void showFinishDevelopmentCardActionPopup() {
-        showAlert(Alert.AlertType.WARNING, "Action Required: Development Card", "Complete your development card action first.", "You must finish using your current development card before performing any other actions.");
+        showAlert(Alert.AlertType.WARNING, "Action Required: Development Card", "Complete your development card action first.", "You must finish using your current development card before performing any other actions.", null);
     }
+
     public Map<String, Integer> showDiscardDialog(Player player, int toDiscard, Map<String, Integer> playerResources, Gameplay gameplay) {
         List<String> resources = new ArrayList<>(playerResources.keySet());
 
@@ -437,15 +438,21 @@ public class DrawOrDisplay {
     }
 
     //___________________________________POPUP HELPER FUNCTIONS____________________________________//
-    public void showAlert(Alert.AlertType type, String title, String header, String content) {
+    public void showAlert(Alert.AlertType type, String title, String header, String content, Runnable onClose) {
         Platform.runLater(() -> {
             Alert alert = new Alert(type);
             alert.setTitle(title);
             alert.setHeaderText(header);
             alert.setContentText(content);
+            alert.setResizable(true);
+            alert.getDialogPane().setPrefWidth(400);
+            if (onClose != null) {
+                alert.setOnHidden(e -> onClose.run());
+            }
             alert.showAndWait();
         });
     }
+
     public void showCustomPopup(String title, String message, boolean runLater) {
         Runnable task = () -> {
             Stage popup = new Stage();

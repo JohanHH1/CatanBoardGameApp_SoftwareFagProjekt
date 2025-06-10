@@ -205,6 +205,7 @@ public class Gameplay {
     // Helper function for nextPlayerTurn function above
     private void startOfTurnEffects() {
         if (!initialPhase) {
+            catanBoardGameView.logToGameLog(getCurrentPlayer() +  " has ended their turn.");
             // Rotate player index only in main game phase
             currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
             currentPlayer = playerList.get(currentPlayerIndex);
@@ -259,37 +260,25 @@ public class Gameplay {
         catanBoardGameView.runOnFX(() -> {
             // Step 1: update visuals
             catanBoardGameView.updateDiceImages(lastRolledDie1, lastRolledDie2);
-            catanBoardGameView.logToGameLog(currentPlayer + " ROLLED A" + roll + "!");
+            catanBoardGameView.logToGameLog("\n" + currentPlayer + " ROLLED " + roll + "!");
             catanBoardGameView.hideDiceButton();
             catanBoardGameView.showTurnButton();
-
             catanBoardGameView.refreshSidebar();
 
-            // Step 2: delay AI logic slightly so rendering completes
-            Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100), ev -> {
-                Group boardGroup = catanBoardGameView.getBoardGroup();
-
-        // Handle robber or distribute resources
-        if (roll == 7) {
-            catanBoardGameView.hideDiceButton();
-            catanBoardGameView.getRobber().requireRobberMove();
-            catanBoardGameView.getRobber().showRobberTargets(boardGroup);
-            setRobberMoveRequired(true);
-        } else {
-            distributeResources(roll);
-        }
-
-        catanBoardGameView.refreshSidebar();
-            }));
-            timeline.setCycleCount(1);
-            timeline.play();
+            // Handle robber or distribute resources
+            if (roll == 7) {
+                catanBoardGameView.getRobber().requireRobberMove();
+                catanBoardGameView.getRobber().showRobberTargets(catanBoardGameView.getBoardGroup());
+                setRobberMoveRequired(true);
+            } else {
+                catanBoardGameView.logToGameLog("Distributing resources:");
+                distributeResources(roll);
+            }
+            catanBoardGameView.refreshSidebar();
         });
     }
 
-
     public void distributeResources(int diceRoll) {
-        if (diceRoll == 7) return;
-
         for (Tile tile : board.getTiles()) {
             if (tile.getTileDiceNumber() == diceRoll) {
                 Resource.ResourceType type = tile.getResourcetype();
@@ -309,8 +298,8 @@ public class Gameplay {
                 }
             }
         }
+        catanBoardGameView.runOnFX(() -> catanBoardGameView.logToGameLog("\n"));
     }
-
 
     //_________________________________________ AI THREAD _____________________________________________//
     public void startAIThread(AIOpponent ai) {
@@ -379,13 +368,6 @@ public class Gameplay {
 
         // Safely remove it from the player's collection
         player.getDevelopmentCards().computeIfPresent(type, (k, v) -> (v > 1) ? v - 1 : null);
-
-        // Knight-specific rule
-        if (type == DevelopmentCard.DevelopmentCardType.KNIGHT) {
-            setRobberMoveRequired(true);
-            player.increasePlayedKnights();
-            biggestArmy.calculateAndUpdateBiggestArmy(player);
-        }
 
         catanBoardGameView.runOnFX(() -> {
             catanBoardGameView.logToGameLog(player + " played " + type.getDisplayName() + " card.");
@@ -640,37 +622,37 @@ public class Gameplay {
     }
 
     private void handleEndOfGame(Player winner) {
-        Platform.runLater(() -> {
-            StringBuilder scoreboard = new StringBuilder("Final Scores:\n\n");
+        StringBuilder scoreboard = new StringBuilder("Final Scores:\n\n");
 
-            playerList.stream()
-                    .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
-                    .forEach(player -> {
-                        if (player instanceof AIOpponent ai) {
-                            String name = "AI Player " + ai.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")";
-                            int noneCount = ai.getNoneStrategyCount();
-                            scoreboard.append(String.format(
-                                    "%-25s : %d points (Strategy.NONE: %d times)%n",
-                                    name, ai.getPlayerScore(), noneCount
-                            ));
-                        } else {
-                            String name = "Player " + player.getPlayerId();
-                            scoreboard.append(String.format("%-25s : %d points%n", name, player.getPlayerScore()));
-                        }
-                    });
+        playerList.stream()
+                .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
+                .forEach(player -> {
+                    if (player instanceof AIOpponent ai) {
+                        String name = "AI Player " + ai.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")";
+                        scoreboard.append(String.format("%-25s : %d points%n", name, ai.getPlayerScore()));
+                        ai.getStrategyUsageMap().forEach((strategy, count) -> {
+                            scoreboard.append(String.format("   • %-20s : %d times%n", strategy.name(), count));
+                        });
+                        scoreboard.append("\n");
+                    } else {
+                        String name = "Player " + player.getPlayerId();
+                        scoreboard.append(String.format("%-25s : %d points%n%n", name, player.getPlayerScore()));
+                    }
+                });
 
-            scoreboard.append("\nTotal Turns Played: ").append(turnCounter);
+        scoreboard.append("\nTotal Turns Played: ").append(turnCounter);
 
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Game Over");
-            alert.setHeaderText("We have a winner!");
-            alert.setContentText("Player " + winner.getPlayerId() + " has won the game!\n\n" + scoreboard);
-            alert.setResizable(true);
-            alert.getDialogPane().setPrefWidth(400);
-            alert.setOnHidden(e -> menuView.showMainMenu());
-            alert.show();
-        });
+        String message = "Player " + winner.getPlayerId() + " has won the game!\n\n" + scoreboard;
+
+        drawOrDisplay.showAlert(
+                Alert.AlertType.INFORMATION,
+                "Game Over",
+                "We have a winner!",
+                message,
+                () -> menuView.showMainMenu()  // on close
+        );
     }
+
     public boolean isActionBlockedByDevelopmentCard() {
         return developmentCard.isPlayingCard();
     }

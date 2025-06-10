@@ -38,15 +38,14 @@ public class DevelopmentCard {
             @Override
             public void play(Player player, DevelopmentCard devCard) {
                 devCard.view.hideDiceButton();
-                devCard.view.showTurnButton();
                 devCard.view.hideTurnButton();
 
                 Group boardGroup = devCard.view.getBoardGroup();
                 devCard.startPlayingCard();
                 devCard.view.getRobber().showRobberTargets(boardGroup);
-                devCard.gameplay.setRobberMoveRequired(true);   // Moved here
-                player.increasePlayedKnights();                 // Moved here
-                devCard.gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(player); // Moved here
+                devCard.gameplay.setRobberMoveRequired(true);
+                player.increasePlayedKnights();
+                devCard.gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(player);
 
                 devCard.log("Player " + player.getPlayerId() + " played a knight development card");
             }
