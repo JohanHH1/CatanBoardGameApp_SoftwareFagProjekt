@@ -549,10 +549,9 @@ public class Gameplay {
             increasePlayerScore();
             return BuildResult.UPGRADED_TO_CITY;
         }
-        drawOrDisplay.notEnoughResources("Not enough resources to build a city");
+        drawOrDisplay.notEnoughResourcesPopup("Not enough resources to build a city");
         return BuildResult.INSUFFICIENT_RESOURCES;
     }
-
 
     //______________________VALID BUILD CHECKS___________________________//
     public boolean isValidSettlementPlacement(Vertex vertex) {

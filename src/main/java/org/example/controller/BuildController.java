@@ -46,7 +46,7 @@ public class BuildController {
                 } else {
                     double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
                     double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
-                    drawOrDisplay.showErrorCross(boardGroup, midX, midY);
+                    drawOrDisplay.drawErrorCross(boardGroup, midX, midY);
                 }
                 return;
             }
@@ -94,7 +94,7 @@ public class BuildController {
                 case NOT_CONNECTED, INVALID_EDGE, INSUFFICIENT_RESOURCES -> {
                     double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
                     double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
-                    drawOrDisplay.showErrorCross(boardGroup, midX, midY);
+                    drawOrDisplay.drawErrorCross(boardGroup, midX, midY);
             }
             }
         };
@@ -152,7 +152,7 @@ public class BuildController {
                     BuildResult cityResult = gameController.getGameplay().buildCity(vertex);
                     if (cityResult == BuildResult.TOO_MANY_CITIES) {
                             drawOrDisplay.showMaxCitiesReachedPopup();
-                            drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
+                            drawOrDisplay.drawErrorCross(boardGroup, vertex.getX(), vertex.getY());
                     }
                     if (cityResult == BuildResult.UPGRADED_TO_CITY) {
                         vertex.setOwner(currentPlayer);
@@ -163,13 +163,13 @@ public class BuildController {
 
                     } else {
                         // Neither worked
-                        drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
+                        drawOrDisplay.drawErrorCross(boardGroup, vertex.getX(), vertex.getY());
                     }
                 }
                 case TOO_MANY_SETTLEMENTS -> {
                     drawOrDisplay.showMaxSettlementsReachedPopup();
                 }
-                default -> drawOrDisplay.showErrorCross(boardGroup, vertex.getX(), vertex.getY());
+                default -> drawOrDisplay.drawErrorCross(boardGroup, vertex.getX(), vertex.getY());
             }
         };
     }
