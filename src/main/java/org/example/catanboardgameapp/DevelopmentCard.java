@@ -39,7 +39,7 @@ public class DevelopmentCard {
                 handler.view.hideDiceButton();
                 handler.view.showTurnButton();
                 Group boardGroup = handler.view.getBoardGroup();
-                handler.view.getNextTurnButton().setDisable(true);
+                handler.view.hideTurnButton();
                 handler.startPlayingCard();
                 handler.view.getRobber().showRobberTargets(boardGroup);
                 handler.log("Player " + player.getPlayerId() + " played a knight development card");

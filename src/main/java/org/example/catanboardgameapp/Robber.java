@@ -214,7 +214,7 @@ public class Robber {
             }
         }
         catanBoardGameView.refreshSidebar();
-        catanBoardGameView.getNextTurnButton().setDisable(false);
+        catanBoardGameView.showTurnButton();
     }
 
     private List<Player> showPotentialVictims(Tile tile, Player currentPlayer) {
