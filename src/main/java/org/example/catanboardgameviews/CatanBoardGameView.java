@@ -26,6 +26,7 @@ import org.example.controller.BuildController;
 import org.example.controller.GameController;
 import org.example.controller.TradeController;
 import org.example.controller.TurnController;
+import org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType;
 
 import java.io.InputStream;
 import java.util.List;
@@ -353,14 +354,41 @@ public class CatanBoardGameView {
             devCardDetailsBox.setVisible(false);
             devCardDetailsBox.setManaged(false);
 
-            for (Map.Entry<String, Integer> entry : player.getDevelopmentCards().entrySet()) {
+            for (Map.Entry<DevelopmentCardType, Integer> entry : player.getDevelopmentCards().entrySet()) {
                 if (entry.getValue() > 0) {
-                    Button cardButton = new Button(entry.getKey() + " (" + entry.getValue() + ")");
+                    DevelopmentCardType type = entry.getKey(); // capture outside lambda
+
+                    Button cardButton = new Button(type.getName() + " (" + entry.getValue() + ")");
                     cardButton.setFont(Font.font("Arial", infoFontSize));
-                    cardButton.setOnAction(e -> gameplay.playDevelopmentCard(player, entry.getKey()));
+
+                    cardButton.setOnAction(e -> {
+                        try {
+                            gameplay.playDevelopmentCard(player, type);
+                        } catch (IllegalArgumentException ex) {
+                            gameplay.getCatanBoardGameView().logToGameLog("Invalid card: " + type);
+                        }
+                    });
+
                     devCardDetailsBox.getChildren().add(cardButton);
                 }
             }
+            /*for (Map.Entry<DevelopmentCardType, Integer> entry : player.getDevelopmentCards().entrySet()) {
+                if (entry.getValue() > 0) {
+                    Button cardButton = new Button(entry.getKey() + " (" + entry.getValue() + ")");
+                    cardButton.setFont(Font.font("Arial", infoFontSize));
+                    cardButton.setOnAction(e -> {
+                        try {
+                            DevelopmentCard.DevelopmentCardType type =
+                                    DevelopmentCard.DevelopmentCardType.fromName(entry.getKey());
+                            gameplay.playDevelopmentCard(player, type);
+                        } catch (IllegalArgumentException ex) {
+                            gameplay.getCatanBoardGameView().logToGameLog("Invalid card: " + entry.getKey());
+                        }
+                    });
+                    //cardButton.setOnAction(e -> gameplay.playDevelopmentCard(player, entry.getKey()));
+                    devCardDetailsBox.getChildren().add(cardButton);
+                }
+            }*/
 
             devCardButton.setOnAction(e -> {
                 boolean showing = devCardDetailsBox.isVisible();

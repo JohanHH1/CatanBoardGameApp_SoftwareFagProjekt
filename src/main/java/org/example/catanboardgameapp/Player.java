@@ -13,7 +13,7 @@ public class Player {
     private final int playerId;
     private final Color color;
     private final HashMap<String, Integer> resources;
-    private final HashMap<String, Integer> developmentCards;
+    private Map<DevelopmentCardType, Integer> developmentCards = new HashMap<>();
     private final List<Vertex> settlements;
     private final List<Edge> roads;
     private final List<Vertex> cities;
@@ -47,7 +47,7 @@ public class Player {
 
     private void initializeDevelopmentCards() {
         for (DevelopmentCardType cardType : DevelopmentCardType.values()) {
-            developmentCards.put(cardType.getName(), DEBUG_MODE ? 2 : 0);
+            developmentCards.put(cardType, DEBUG_MODE ? 2 : 0);
         }
     }
     //______________________________ROBBER LOGIC____________________________//
@@ -125,7 +125,7 @@ public class Player {
         return resources;
     }
 
-    public HashMap<String, Integer> getDevelopmentCards() {
+    public Map<DevelopmentCardType, Integer> getDevelopmentCards() {
         return developmentCards;
     }
 

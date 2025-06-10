@@ -335,9 +335,9 @@ public class Gameplay {
             removeResource("Ore", 1);
             removeResource("Grain", 1);
 
-            String cardType = shuffledDevelopmentCards.remove(0);
-            currentPlayer.getDevelopmentCards().put(cardType, currentPlayer.getDevelopmentCards().getOrDefault(cardType, 0) + 1);
-
+            String cardName = shuffledDevelopmentCards.remove(0);
+            DevelopmentCard.DevelopmentCardType type = DevelopmentCard.DevelopmentCardType.fromName(cardName);
+            currentPlayer.getDevelopmentCards().merge(type, 1, Integer::sum);
             String log = currentPlayer + " bought a development card";
             catanBoardGameView.runOnFX(() -> {
                 catanBoardGameView.logToGameLog(log);
@@ -347,8 +347,28 @@ public class Gameplay {
             catanBoardGameView.runOnFX(drawOrDisplay::showFailToBuyDevelopmentCardPopup);
         }
     }
+    public void playDevelopmentCard(Player player, DevelopmentCard.DevelopmentCardType type) {
+        if (isActionBlockedByDevelopmentCard()) {
+            drawOrDisplay.showMustPlaceRobberPopup();
+            return;
+        }
 
-    public void playDevelopmentCard(Player player, String cardName) {
+        // Play the card: delegates to enum's implementation
+        type.play(player, developmentCard);
+
+        // Remove the card from the player's collection
+        player.getDevelopmentCards().merge(type, -1, Integer::sum);
+
+        // Knight-specific rule
+        if (type == DevelopmentCard.DevelopmentCardType.KNIGHT) {
+            setRobberMoveRequired(true);
+            player.increasePlayedKnights();
+            biggestArmy.calculateAndUpdateBiggestArmy(player);
+        }
+
+        catanBoardGameView.runOnFX(catanBoardGameView::refreshSidebar);
+    }
+   /* public void playDevelopmentCard(Player player, DevelopmentCard.DevelopmentCardType type) {
         if (isActionBlockedByDevelopmentCard()){
             drawOrDisplay.showMustPlaceRobberPopup();
             return;
@@ -367,7 +387,8 @@ public class Gameplay {
             biggestArmy.calculateAndUpdateBiggestArmy(currentPlayer);
         }
         catanBoardGameView.refreshSidebar();
-    }
+    }*/
+
 
     public DevelopmentCard getDevelopmentCard() {
         return developmentCard;
