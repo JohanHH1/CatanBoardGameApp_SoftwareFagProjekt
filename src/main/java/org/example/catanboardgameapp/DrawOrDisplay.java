@@ -449,6 +449,84 @@ public class DrawOrDisplay {
         });
     }
 
+    public Map<String, Integer> showDiscardDialog(Player player, int toDiscard, Map<String, Integer> playerResources, Gameplay gameplay) {
+        Stage dialogStage = new Stage();
+        dialogStage.initModality(Modality.APPLICATION_MODAL);
+        dialogStage.initStyle(StageStyle.UNDECORATED);
+        dialogStage.setTitle("Discard Resources");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(10));
+        grid.getColumnConstraints().addAll(new ColumnConstraints(100), new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints());
+
+        Map<String, Integer> discardSelection = new HashMap<>();
+        Map<String, Text> counterTexts = new HashMap<>();
+        Button discardButton = new Button("Discard");
+        discardButton.setDisable(true);
+
+        int row = 0;
+        for (Map.Entry<String, Integer> entry : playerResources.entrySet()) {
+            String resource = entry.getKey();
+            int count = entry.getValue();
+
+            Text label = new Text(resource + " (" + count + ")");
+            Button minus = new Button("-");
+            Button plus = new Button("+");
+            Text counter = new Text("0");
+
+            counter.setWrappingWidth(30);
+            counter.setTextAlignment(TextAlignment.CENTER);
+
+            discardSelection.put(resource, 0);
+            counterTexts.put(resource, counter);
+
+            plus.setOnAction(e -> {
+                if (discardSelection.get(resource) < count &&
+                        gameplay.getTotalSelectedCards(discardSelection) < toDiscard) {
+                    discardSelection.put(resource, discardSelection.get(resource) + 1);
+                    counter.setText(discardSelection.get(resource).toString());
+                    discardButton.setDisable(gameplay.getTotalSelectedCards(discardSelection) != toDiscard);
+                }
+            });
+            minus.setOnAction(e -> {
+                if (discardSelection.get(resource) > 0) {
+                    discardSelection.put(resource, discardSelection.get(resource) - 1);
+                    counter.setText(discardSelection.get(resource).toString());
+                    discardButton.setDisable(gameplay.getTotalSelectedCards(discardSelection) != toDiscard);
+                }
+            });
+
+            grid.addRow(row++, label, minus, counter, plus);
+        }
+        final Map<String, Integer>[] result = new Map[]{null};
+
+        discardButton.setOnAction(e -> {
+            result[0] = new HashMap<>(discardSelection);
+            dialogStage.close();
+        });
+
+        Button randomDiscardButton = new Button("Discard cards randomly");
+        randomDiscardButton.setOnAction(e -> {
+            result[0] = player.chooseDiscardCards();
+            dialogStage.close();
+        });
+
+        VBox container = new VBox(15,
+                new Text(player + " you must discard " + toDiscard + " resource cards."),
+                grid,
+                new HBox(10, discardButton, randomDiscardButton)
+        );
+        container.setPadding(new Insets(15));
+        container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
+
+        dialogStage.setScene(new Scene(container));
+        dialogStage.showAndWait();
+        return result[0];
+
+    }
+
 
     public Map<String, Integer> showYearOfPlentyDialog() {
         List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
