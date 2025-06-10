@@ -64,7 +64,12 @@ public class Robber {
                 activeRobberHighlights.clear();
                 highlightCircles.forEach(boardGroup.getChildren()::remove);
 
-                System.out.println("is here");
+                //System.out.println("is here");
+                System.out.println(gameplay.isActionBlockedByDevelopmentCard());
+
+                if (gameplay.isActionBlockedByDevelopmentCard()) {
+                    gameplay.getDevelopmentCard().finishPlayingCard();
+                }
                 gameplay.setRobberMoveRequired(false);
 
                 // ✅ Remove the old robber circle
@@ -91,6 +96,7 @@ public class Robber {
                     catanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from.");
                     catanBoardGameView.getNextTurnButton().setDisable(false);
                     return;
+
                 }
 
                 // Ask user to steal from a victim
@@ -112,6 +118,7 @@ public class Robber {
             });
 
             highlightCircles.add(highlight); // now safe to track
+
         }
     }
 

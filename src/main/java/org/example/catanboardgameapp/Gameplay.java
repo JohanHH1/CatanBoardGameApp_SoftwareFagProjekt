@@ -644,6 +644,9 @@ public class Gameplay {
             alert.show();
         });
     }
+    public boolean isActionBlockedByDevelopmentCard() {
+        return developmentCard.isPlayingCard();
+    }
 
     //__________________________SETTERS________________________//
 

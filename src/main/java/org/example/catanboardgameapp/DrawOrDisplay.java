@@ -442,21 +442,13 @@ public class DrawOrDisplay {
     public void showMustPlaceRobberPopup() {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Robber move in progress");
-            alert.setHeaderText("You must move robber before continuing.");
-            alert.setContentText("Complete your knight card action by moving the robber. Other actions are temporarily disabled.");
+            alert.setTitle("Action Required: Development Card");
+            alert.setHeaderText("Complete your development card action first.");
+            alert.setContentText("You must finish using your current development card before performing any other actions.");
             alert.showAndWait();
         });
     }
-    public void showMustPlaceTwoRoadsPopup() {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Road Building In Progress");
-            alert.setHeaderText("You must place two roads before continuing.");
-            alert.setContentText("Complete your Road Building card action by placing two free roads. Other actions are temporarily disabled.");
-            alert.showAndWait();
-        });
-    }
+
 
     public Map<String, Integer> showYearOfPlentyDialog() {
         List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");

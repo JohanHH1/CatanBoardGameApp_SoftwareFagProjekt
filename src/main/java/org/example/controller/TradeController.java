@@ -22,20 +22,13 @@ public class TradeController {
     public void setupTradeButton(Button tradeButton) {
         // Prevent trading while placing free roads (e.g., from Road Building card)
         tradeButton.setOnAction(e -> {
-            if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
-                drawOrDisplay.showMustPlaceTwoRoadsPopup();
-                return;
-            }
-            if (gameController.getGameplay().isRobberMoveRequired()) {
+            if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
                 drawOrDisplay.showMustPlaceRobberPopup();
                 return;
             }
             Gameplay gameplay = gameController.getGameplay();
-            if (gameplay.getDevelopmentCard().isPlacingFreeRoads()) {
-                drawOrDisplay.showMustPlaceTwoRoadsPopup();
-            }
             // Enforce Humans cant Trade while its AI turn
-            else if (gameplay.isBlockedByAITurn()) {System.out.println("AI TURN");}
+            if (gameplay.isBlockedByAITurn()) {System.out.println("AI TURN");}
             // Enforce dice roll before trading
             else if (!gameplay.isInInitialPhase() && !gameplay.hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before Trading!");
@@ -138,6 +131,7 @@ public class TradeController {
         gameplay.getCatanBoardGameView().logToGameLog("Player " + currentPlayer.getPlayerId() +
                 " played a Monopoly card and took " + taken + " " + chosenResource + " from other players.");
         gameplay.getCatanBoardGameView().refreshSidebar();
+        gameplay.getDevelopmentCard().finishPlayingCard();
     }
 // ___________________________DEVELOPMENT CARD: YEAR OF PLENTY___________________________ //
     public void playYearOfPlentyCardFromButton() {
@@ -155,6 +149,7 @@ public class TradeController {
                             .map(e -> e.getValue() + " " + e.getKey())
                             .collect(Collectors.joining(", ")) + ".");
             gameplay.getCatanBoardGameView().refreshSidebar();
+            gameplay.getDevelopmentCard().finishPlayingCard();
         }
     }
 

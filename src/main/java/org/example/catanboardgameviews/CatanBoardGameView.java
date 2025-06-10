@@ -207,11 +207,18 @@ public class CatanBoardGameView {
         });
 
         rollDiceButton.setOnAction(e -> {
+            if (gameplay.isActionBlockedByDevelopmentCard()){
+                drawOrDisplay.showMustPlaceRobberPopup();
+                return;
+            }
             gameplay.rollDice();
-            rollDiceButton.getScene().getRoot().requestFocus(); // clear focus
         });
 
         developmentCardButton.setOnAction(e -> {
+            if (gameplay.getDevelopmentCard().isPlayingCard()) {
+                drawOrDisplay.showMustPlaceRobberPopup();
+                return;
+            }
             //something devcard active then can not be puched !!!! find me
             if (gameplay.isBlockedByAITurn()) return;
             if (!gameplay.hasRolledDice()) {

@@ -43,6 +43,7 @@ public class BuildController {
                     if (!gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
                         gameController.getGameView().logToGameLog("Finished placing 2 free roads.");
                         gameController.getGameView().refreshSidebar();
+                        gameController.getGameplay().getDevelopmentCard().finishPlayingCard();
                     }
                 } else {
                     double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
@@ -51,7 +52,8 @@ public class BuildController {
                 }
                 return;
             }
-            if (gameController.getGameplay().isRobberMoveRequired()) {
+
+            if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
                 drawOrDisplay.showMustPlaceRobberPopup();
                 return;
             }
@@ -105,15 +107,11 @@ public class BuildController {
     // Handles mouse click on a vertex (for building settlement or upgrading to city)
     public EventHandler<MouseEvent> createSettlementClickHandler(Circle circle, Vertex vertex, BorderPane root) {
         return event -> {
-            if (vertex.isCity()) return; // Don't allow clicking on cities
-            if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
-                drawOrDisplay.showMustPlaceTwoRoadsPopup();
-                return;
-            }
-            if (gameController.getGameplay().isRobberMoveRequired()) {
+            if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
                 drawOrDisplay.showMustPlaceRobberPopup();
                 return;
             }
+            if (vertex.isCity()) return; // Don't allow clicking on cities
 
             // Enforce dice roll in main phase
             if (!gameController.getGameplay().isInInitialPhase() && !gameController.getGameplay().hasRolledDice()) {
