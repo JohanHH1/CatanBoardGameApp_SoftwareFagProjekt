@@ -202,7 +202,7 @@ public class Robber {
                 if (p instanceof AIOpponent ai) {
                     discarded = ai.chooseDiscardCards();
                 } else {
-                    discarded = showDiscardDialog(p, gameplay);
+                    discarded = discardCards(p, gameplay);
                 }
                 if (discarded != null) {
                     discardResourcesForPlayer(p, discarded);
@@ -212,7 +212,7 @@ public class Robber {
         }
 
 
-    private Map<String, Integer> showDiscardDialog(Player player, Gameplay gameplay) {
+    private Map<String, Integer> discardCards(Player player, Gameplay gameplay) {
         Map<String, Integer> playerResources = new HashMap<>(player.getResources());
         int totalCards = playerResources.values().stream().mapToInt(Integer::intValue).sum();
         int toDiscard = totalCards / 2;
