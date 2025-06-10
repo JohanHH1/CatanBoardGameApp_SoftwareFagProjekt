@@ -12,6 +12,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -210,6 +211,13 @@ public class DrawOrDisplay {
         circle.setStrokeWidth(strokeWidth);
         boardGroup.getChildren().add(circle);
         return circle;
+    }
+
+    public Circle createRobberHighlight(Tile tile, Group boardGroup, Runnable onClick) {
+        Point2D center = tile.getCenter();
+        Circle highlight = drawRobberCircle(center, boardGroup);
+        highlight.setOnMouseClicked(e -> onClick.run());
+        return highlight;
     }
 
     public void drawHarbors(List<Tile> tiles, Group boardGroup) {
@@ -447,6 +455,17 @@ public class DrawOrDisplay {
             alert.setContentText("You must finish using your current development card before performing any other actions.");
             alert.showAndWait();
         });
+    }
+
+    public Optional<Player> showRobberVictimDialog(List<Player> victims) {
+        if (victims == null || victims.isEmpty()) return Optional.empty();
+
+        ChoiceDialog<Player> dialog = new ChoiceDialog<>(victims.get(0), victims);
+        dialog.setTitle("Choose a player to steal from");
+        dialog.setHeaderText("Select a player with a city or settlement on this tile:");
+        dialog.setContentText("Player:");
+
+        return dialog.showAndWait();
     }
 
     public Map<String, Integer> showDiscardDialog(Player player, int toDiscard, Map<String, Integer> playerResources, Gameplay gameplay) {

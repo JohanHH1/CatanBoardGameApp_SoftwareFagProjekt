@@ -15,7 +15,9 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class Robber {
 
@@ -51,74 +53,49 @@ public class Robber {
         boardGroup.getChildren().remove(this.robberCircle); // remove old robber
         catanBoardGameView.hideTurnButton();
         catanBoardGameView.hideDiceButton();
-        List<Circle> highlightCircles = new ArrayList<>();
         activeRobberHighlights.clear();
 
         for (Tile tile : board.getTiles()) {
-            if (tile == this.currentTile) continue;
-            if (tile.isSea()) continue;
+            if (tile == this.currentTile || tile.isSea()) continue;
 
-            Point2D center = tile.getCenter();
-            Circle highlight = drawOrDisplay.drawRobberCircle(center, boardGroup); // already added inside
-            highlight.setOnMouseClicked(e -> {
+            Runnable onClick = () -> {
                 activeRobberHighlights.forEach(boardGroup.getChildren()::remove);
                 activeRobberHighlights.clear();
-                highlightCircles.forEach(boardGroup.getChildren()::remove);
-
 
                 if (gameplay.isActionBlockedByDevelopmentCard()) {
                     gameplay.getDevelopmentCard().finishPlayingCard();
                 }
+
                 gameplay.setRobberMoveRequired(false);
-
-                // ✅ Remove the old robber circle
                 boardGroup.getChildren().remove(this.robberCircle);
-
-                // ✅ Draw the new robber circle
-                this.robberCircle = drawOrDisplay.drawRobberCircle(center, boardGroup);
+                this.robberCircle = drawOrDisplay.drawRobberCircle(tile.getCenter(), boardGroup);
                 this.moveTo(tile);
 
-
-                if(gameplay.hasRolledDice()){
+                if (gameplay.hasRolledDice()) {
                     catanBoardGameView.showTurnButton();
-                } else{
+                } else {
                     catanBoardGameView.showDiceButton();
                 }
 
-                // Proceed with potential steal
-                List<Player> victims = showPotentialVictims(tile, this.gameplay.getCurrentPlayer());
+                List<Player> victims = showPotentialVictims(tile, gameplay.getCurrentPlayer());
                 if (victims.isEmpty()) {
                     catanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from.");
-
                     return;
-
                 }
 
-                // Ask user to steal from a victim
-                ChoiceDialog<Player> dialog = new ChoiceDialog<>(victims.get(0), victims);
-                dialog.setTitle("Choose a player to steal from");
-                dialog.setHeaderText("Select a player with a city/settlement on this tile:");
-                dialog.setContentText("Player:");
-
-                dialog.showAndWait().ifPresent(victim -> {
+                drawOrDisplay.showRobberVictimDialog(victims).ifPresent(victim -> {
                     boolean success = stealResourceFrom(victim);
                     if (!success) {
                         catanBoardGameView.logToGameLog("Failed to steal a resource from " + victim);
                     }
                     catanBoardGameView.refreshSidebar();
-                    //catanBoardGameView.showTurnButton();
-
-
                 });
+
                 activeRobberHighlights.clear();
-
-            });
-
-            highlightCircles.add(highlight); // now safe to track
-
-        }
-    }
-
+            };
+            Circle highlight = drawOrDisplay.createRobberHighlight(tile, boardGroup, onClick);
+            activeRobberHighlights.add(highlight);
+        }}
     //______________________________AI HELPERS__________________________________//
     private void placeRobberAutomatically(AIOpponent ai, Group boardGroup) {
         AIOpponent.StrategyLevel level = ai.getStrategyLevel();
