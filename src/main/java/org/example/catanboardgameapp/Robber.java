@@ -1,5 +1,6 @@
 package org.example.catanboardgameapp;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
@@ -196,6 +197,7 @@ public class Robber {
         for (Player p : gameplay.getPlayerList()) {
             int total = p.getResources().values().stream().mapToInt(Integer::intValue).sum();
             if (total > 7) {
+                Platform.runLater(() -> {
                 Map<String, Integer> discarded;
                 if (p instanceof AIOpponent ai) {
                     discarded = ai.chooseDiscardCards();
@@ -204,10 +206,11 @@ public class Robber {
                 }
                 if (discarded != null) {
                     discardResourcesForPlayer(p, discarded);
+                }});
                 }
             }
         }
-    }
+
 
     private Map<String, Integer> showDiscardDialog(Player player, Gameplay gameplay) {
         Map<String, Integer> playerResources = new HashMap<>(player.getResources());
