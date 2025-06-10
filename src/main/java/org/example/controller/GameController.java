@@ -11,10 +11,11 @@ public class GameController {
 
     private final Stage primaryStage;
     private CatanBoardGameView gameView;
+    private TurnController turnController;
+    private TradeController tradeController;
     private Gameplay gameplay;
     private BuildController buildController;
     private MenuView menuView;
-
 
     //___________________________CONSTRUCTOR_________________________________//
     public GameController(Stage primaryStage) {
@@ -24,28 +25,32 @@ public class GameController {
     //___________________________FUNCTIONS__________________________________//
 
     public void startGame(int playerCount, int boardSize, int easyAI, int medAI, int hardAI) {
-        // Initialize core game logic and data
         gameplay = new Gameplay(primaryStage, boardSize - 1, this);
-
         gameplay.setMenuView(this.menuView);
-        // Add all players (And AI players if chosen)
+
+        // Add players
         gameplay.initializeAllPlayers(playerCount, easyAI, medAI, hardAI);
         gameplay.resetCounters();
-        // Create the game UI and logic
-        gameView = new CatanBoardGameView(primaryStage, gameplay, this, boardSize - 1); // scene is initialized inside constructor
 
-        // Register game view back into gameplay (after it's fully constructed)
+        // Initialize controllers FIRST
+        turnController = new TurnController(this);
+        this.setTurnController(turnController);
+
+        tradeController = new TradeController(this, gameplay.getBoardRadius());
+        this.setTradeController(tradeController);
+
+        // THEN create the view
+        gameView = new CatanBoardGameView(primaryStage, gameplay, this, boardSize - 1);
         gameplay.setCatanBoardGameView(gameView);
 
-        // Build the full game User Interface
+        // Build UI AFTER everything is set up
         gameView.buildGameUI();
         gameplay.initializeDevelopmentCards();
 
-        // Show the game
         primaryStage.setScene(gameView.getScene());
         primaryStage.show();
-        Player currentPlayer = gameplay.getCurrentPlayer();
 
+        Player currentPlayer = gameplay.getCurrentPlayer();
         if (gameplay.isInInitialPhase()) {
             if (currentPlayer instanceof AIOpponent ai) {
                 ai.placeInitialSettlementAndRoad(gameplay, gameView.getBoardGroup());
@@ -95,9 +100,20 @@ public class GameController {
     public void setBuildController(BuildController buildController) {
         this.buildController = buildController;
     }
-
+    public void setTradeController(TradeController tradeController) {
+        this.tradeController = tradeController;
+    }
+    public void setTurnController(TurnController turnController) {
+        this.turnController = turnController;
+    }
     public Gameplay getGameplay() {
         return gameplay;
+    }
+    public TurnController getTurnController() {
+        return turnController;
+    }
+    public TradeController getTradeController() {
+        return tradeController;
     }
 
     public CatanBoardGameView getGameView() {
