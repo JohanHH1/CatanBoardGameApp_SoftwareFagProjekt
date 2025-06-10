@@ -161,7 +161,7 @@ public class AIOpponent extends Player {
     }
 
     //__________________________________MAKE MOVE LOGIC________________________________________//
-    public void makeMoveAI(Gameplay gameplay) {
+    public void makeMoveAI(Gameplay gameplay, Group boardGroup) {
         // Wait until game is unpaused
         while (gameplay.isGamePaused()) {
             if (Thread.currentThread().isInterrupted()) return;
@@ -190,9 +190,9 @@ public class AIOpponent extends Player {
 
         // Perform AI move (off FX thread!)
         switch (strategyLevel) {
-            case EASY -> makeEasyLevelMove(gameplay);
-            case MEDIUM -> makeMediumLevelMove(gameplay);
-            case HARD -> makeHardLevelMove(gameplay);
+            case EASY -> makeEasyLevelMove(gameplay, boardGroup);
+            case MEDIUM -> makeMediumLevelMove(gameplay, boardGroup);
+            case HARD -> makeHardLevelMove(gameplay, boardGroup);
         }
 
         // Done – UI update on FX thread
@@ -233,8 +233,6 @@ public class AIOpponent extends Player {
         noneStrategyCount++;
         return Strategy.NONE;
     }
-
-
 
     private Strategy determineMediumStrategy(Gameplay gameplay) {
         // 1. City upgrade (only if has upgradeable settlement)
@@ -288,7 +286,7 @@ public class AIOpponent extends Player {
         return Strategy.NONE;
     }
 
-    private void makeEasyLevelMove(Gameplay gameplay) {
+    private void makeEasyLevelMove(Gameplay gameplay, Group boardGroup) {
         boolean moveMade;
         int safetyLimit = 10;
         CatanBoardGameView view = gameplay.getCatanBoardGameView();
@@ -300,9 +298,9 @@ public class AIOpponent extends Player {
             moveMade = false;
 
             switch (strategy) {
-                case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
-                case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
-                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
+                case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
+                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
             }
 
             if (!moveMade) {
@@ -310,9 +308,9 @@ public class AIOpponent extends Player {
                 if (moveMade) {
                     // Retry original action after trade
                     switch (strategy) {
-                        case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
-                        case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
-                        case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                        case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
+                        case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
+                        case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
                     }
                 }
             }
@@ -325,7 +323,7 @@ public class AIOpponent extends Player {
         });
     }
 
-    private void makeMediumLevelMove(Gameplay gameplay) {
+    private void makeMediumLevelMove(Gameplay gameplay, Group boardGroup) {
         boolean moveMade;
         int safetyLimit = 10;
         CatanBoardGameView view = gameplay.getCatanBoardGameView();
@@ -336,18 +334,18 @@ public class AIOpponent extends Player {
             moveMade = false;
 
             switch (strategy) {
-                case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
-                case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
-                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
+                case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
+                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
             }
 
             if (!moveMade) {
                 moveMade = tryBankTrade(gameplay, strategy);
                 if (moveMade) {
                     switch (strategy) {
-                        case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
-                        case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
-                        case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                        case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
+                        case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
+                        case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
                     }
                 }
             }
@@ -360,7 +358,7 @@ public class AIOpponent extends Player {
     }
 
 
-    private void makeHardLevelMove(Gameplay gameplay) {
+    private void makeHardLevelMove(Gameplay gameplay, Group boardGroup) {
         boolean moveMade;
         int safetyLimit = 10;
         CatanBoardGameView view = gameplay.getCatanBoardGameView();
@@ -371,18 +369,18 @@ public class AIOpponent extends Player {
             moveMade = false;
 
             switch (strategy) {
-                case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
-                case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
-                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
+                case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
+                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
             }
 
             if (!moveMade) {
                 moveMade = tryBankTrade(gameplay, strategy);
                 if (moveMade) {
                     switch (strategy) {
-                        case CITYUPGRADER -> moveMade = tryBuildCity(gameplay);
-                        case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay);
-                        case ROADBUILDER -> moveMade = tryBuildRoad(gameplay);
+                        case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
+                        case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
+                        case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
                     }
                 }
             }
@@ -394,7 +392,7 @@ public class AIOpponent extends Player {
         });
     }
 
-    private boolean tryBuildCity(Gameplay gameplay) {
+    private boolean tryBuildCity(Gameplay gameplay, Group boardGroup) {
         if (!hasResources("Ore", 3) || !hasResources("Grain", 2)) return false;
         List<Vertex> settlements = getSettlements();
         if (settlements.isEmpty()) return false;
@@ -415,14 +413,19 @@ public class AIOpponent extends Player {
             if (result == BuildResult.UPGRADED_TO_CITY) {
                 String msg = "AI Player " + getPlayerId() + " upgraded settlement at " + best.getIdOrCoords()
                         + " to a city (dice score: " + bestScore + ").";
-                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(msg));
+                Vertex finalBest = best;
+                gameplay.getCatanBoardGameView().runOnFX(() -> {
+                    drawOrDisplay.drawCity(finalBest, boardGroup);
+                    gameplay.getCatanBoardGameView().logToGameLog(msg);
+                });
+
                 return true;
             }
         }
         return false;
     }
 
-    private boolean tryBuildSettlement(Gameplay gameplay) {
+    private boolean tryBuildSettlement(Gameplay gameplay, Group boardGroup) {
         // Check if AI has enough resources for a settlement
         if (!hasResources("Brick", 1) || !hasResources("Wood", 1)
                 || !hasResources("Wool", 1) || !hasResources("Grain", 1)) {
@@ -449,8 +452,14 @@ public class AIOpponent extends Player {
             BuildResult result = gameplay.buildSettlement(bestSpot);
             if (result == BuildResult.SUCCESS) {
                 String msg = "AI Player " + getPlayerId() + " built a settlement at vertex " + bestSpot.getIdOrCoords();
-                gameplay.getCatanBoardGameView().runOnFX(() ->
-                        gameplay.getCatanBoardGameView().logToGameLog(msg));
+                Circle circle = new Circle(bestSpot.getX(), bestSpot.getY(), 16.0 / gameplay.getBoardRadius());
+                Vertex finalBestSpot = bestSpot;
+
+                gameplay.getCatanBoardGameView().runOnFX(() -> {
+                    drawOrDisplay.drawSettlement(circle, finalBestSpot, boardGroup);
+                    gameplay.getCatanBoardGameView().logToGameLog(msg);
+                });
+
                 return true;
             }
         }
@@ -458,7 +467,8 @@ public class AIOpponent extends Player {
         return false;
     }
 
-    private boolean tryBuildRoad(Gameplay gameplay) {
+    private boolean tryBuildRoad(Gameplay gameplay, Group boardGroup) {
+
         // Ensure resources for road
         if (!hasResources("Brick", 1) || !hasResources("Wood", 1)) return false;
 
@@ -498,13 +508,18 @@ public class AIOpponent extends Player {
                         bestEdge.getVertex1().getIdOrCoords() + " and " +
                         bestEdge.getVertex2().getIdOrCoords();
 
-                gameplay.getCatanBoardGameView().runOnFX(() ->
-                        gameplay.getCatanBoardGameView().logToGameLog(msg)
-                );
+                Edge finalBestEdge = bestEdge;
+                gameplay.getCatanBoardGameView().runOnFX(() -> {
+                    Line line = new Line(
+                            finalBestEdge.getVertex1().getX(), finalBestEdge.getVertex1().getY(),
+                            finalBestEdge.getVertex2().getX(), finalBestEdge.getVertex2().getY()
+                    );
+                    drawOrDisplay.drawRoad(line, this, boardGroup);
+                    gameplay.getCatanBoardGameView().logToGameLog(msg);
+                });
                 return true;
             }
         }
-
         return false;
     }
 
@@ -549,9 +564,9 @@ public class AIOpponent extends Player {
                                 " traded " + usedRatio + " " + give +
                                 " for 1 " + need + " (Strategy: " + strategy + ")";
 
-                        gameplay.getCatanBoardGameView().runOnFX(() ->
-                                gameplay.getCatanBoardGameView().logToGameLog(msg)
-                        );
+                        gameplay.getCatanBoardGameView().runOnFX(() -> {
+                            gameplay.getCatanBoardGameView().logToGameLog(msg);
+                        });
                         return true;
                     }
                 }
