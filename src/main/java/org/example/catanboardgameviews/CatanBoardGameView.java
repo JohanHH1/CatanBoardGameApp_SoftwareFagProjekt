@@ -94,7 +94,6 @@ public class CatanBoardGameView {
         this.rollDiceButton = new Button("Roll Dice");
         this.nextTurnButton = new Button("Next Turn");
 
-
         // Game log text area setup
         this.gameLogArea = new TextArea();
         gameLogArea.setEditable(false);
@@ -135,7 +134,6 @@ public class CatanBoardGameView {
         StackPane layeredRoot = new StackPane(root, aiTurnOverlay);
         this.scene.setRoot(layeredRoot); // replace root scene node
     }
-
 
     //__________________________UI SETUP METHODS_____________________________//
 

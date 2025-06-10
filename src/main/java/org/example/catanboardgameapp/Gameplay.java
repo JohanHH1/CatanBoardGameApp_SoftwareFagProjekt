@@ -194,11 +194,13 @@ public class Gameplay {
         catanBoardGameView.hideTurnButton();
         setHasRolledThisTurn(false);
 
-        catanBoardGameView.centerBoard(
-                catanBoardGameView.getBoardGroup(),
-                menuView.getGAME_WIDTH(),
-                menuView.getGAME_HEIGHT()
-        );
+        if (hasHumanPlayers()) {
+            catanBoardGameView.centerBoard(
+                    catanBoardGameView.getBoardGroup(),
+                    menuView.getGAME_WIDTH(),
+                    menuView.getGAME_HEIGHT()
+            );
+        }
     }
 
     public void crashGameIfMaxTurnsExceeded(int MAX_TURNS, int turnCounter) {
@@ -301,7 +303,6 @@ public class Gameplay {
                 ai.makeMoveAI(this);
             }
         });
-
         activeAIThread.setDaemon(true);
         activeAIThread.start();
     }
@@ -712,6 +713,7 @@ public class Gameplay {
 
     public void pauseGame() {
         if (!gamePaused) {
+            drawOrDisplay.pauseThinkingAnimation();
             System.out.println("Game paused.");
             gamePaused = true;
             stopAllAIThreads();  // interrupt AI thread cleanly
@@ -720,6 +722,7 @@ public class Gameplay {
 
     public void resumeGame() {
         if (!gamePaused) return; // prevent spamming or double-starting
+        drawOrDisplay.resumeThinkingAnimation();
         System.out.println("Game resumed.");
         gamePaused = false;
         if (currentPlayer instanceof AIOpponent ai) {
@@ -738,6 +741,7 @@ public class Gameplay {
         }
         return false;
     }
+
     public boolean hasHumanPlayers() {
         return playerList.stream().anyMatch(p -> !(p instanceof AIOpponent));
     }

@@ -138,6 +138,7 @@ public class AIOpponent extends Player {
                         drawOrDisplay.drawRoad(line, this, boardGroup);
                         view.logToGameLog("AI Player " + getPlayerId() + " (" + strategyLevel.name() + ") finished placing their initial settlement and road.");
                         gameplay.nextPlayerTurn();
+                        view.refreshSidebar();
                         view.hideAITurnOverlay();
                     });
                     return;
@@ -229,6 +230,7 @@ public class AIOpponent extends Player {
 
         // 4. No good option
         System.out.println("AI Player " + getPlayerId() + " (EASY): No effective strategy available.");
+        noneStrategyCount++;
         return Strategy.NONE;
     }
 
@@ -256,6 +258,7 @@ public class AIOpponent extends Player {
 
         // 4. No good option
         System.out.println("AI Player " + getPlayerId() + " (EASY): No effective strategy available.");
+        noneStrategyCount++;
         return Strategy.NONE;
     }
 
@@ -281,6 +284,7 @@ public class AIOpponent extends Player {
 
         // 4. No good option
         System.out.println("AI Player " + getPlayerId() + " (EASY): No effective strategy available.");
+        noneStrategyCount++;
         return Strategy.NONE;
     }
 

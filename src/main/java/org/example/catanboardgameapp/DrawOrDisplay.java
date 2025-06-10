@@ -559,6 +559,17 @@ public class DrawOrDisplay {
     public void stopThinkingAnimation() {
         rotateAnimation.stop();
     }
+    public void pauseThinkingAnimation() {
+        if (rotateAnimation != null) {
+            rotateAnimation.pause();
+        }
+    }
+
+    public void resumeThinkingAnimation() {
+        if (rotateAnimation != null) {
+            rotateAnimation.play();
+        }
+    }
 
 
 
