@@ -302,7 +302,7 @@ public class Gameplay {
             if (initialPhase) {
                 ai.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
             } else {
-                ai.makeMoveAI(this, catanBoardGameView.getBoardGroup());
+                ai.makeMoveAI(this, getCatanBoardGameView().getBoardGroup());
             }
         });
         activeAIThread.setDaemon(true);
