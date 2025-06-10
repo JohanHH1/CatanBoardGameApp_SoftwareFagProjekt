@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DevelopmentCard {
-
+    private final Gameplay gameplay;
     private final List<Player> playerList;
     private final CatanBoardGameView view;
     private final TradeController tradeController;
@@ -18,7 +18,8 @@ public class DevelopmentCard {
     private boolean playingCard = false;
     private int freeRoadsLeft = 0;
 
-    public DevelopmentCard(List<Player> playerList, CatanBoardGameView view, TradeController tradeController) {
+    public DevelopmentCard(Gameplay gameplay, List<Player> playerList, CatanBoardGameView view, TradeController tradeController) {
+        this.gameplay = gameplay;
         this.playerList = playerList;
         this.view = view;
         this.tradeController = tradeController;
@@ -38,10 +39,15 @@ public class DevelopmentCard {
             public void play(Player player, DevelopmentCard handler) {
                 handler.view.hideDiceButton();
                 handler.view.showTurnButton();
-                Group boardGroup = handler.view.getBoardGroup();
                 handler.view.hideTurnButton();
+
+                Group boardGroup = handler.view.getBoardGroup();
                 handler.startPlayingCard();
                 handler.view.getRobber().showRobberTargets(boardGroup);
+                handler.gameplay.setRobberMoveRequired(true);   // Moved here
+                player.increasePlayedKnights();                 // Moved here
+                handler.gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(player); // Moved here
+
                 handler.log("Player " + player.getPlayerId() + " played a knight development card");
             }
         },
@@ -68,24 +74,18 @@ public class DevelopmentCard {
             }
         };
 
-        private final String name;
+        private final String displayName;
 
-        DevelopmentCardType(String name) {
-            this.name = name;
+        DevelopmentCardType(String displayName) {
+            this.displayName = displayName;
         }
 
-        public String getName() {
-            return name;
+        public String getDisplayName() {
+            return displayName;
         }
 
         public abstract void play(Player player, DevelopmentCard handler);
 
-        public static DevelopmentCardType fromName(String name) {
-            return Arrays.stream(values())
-                    .filter(card -> card.name.equalsIgnoreCase(name))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Unknown card: " + name));
-        }
     }
 
 
@@ -121,7 +121,6 @@ public class DevelopmentCard {
     public boolean isPlacingFreeRoads() {
         return placingFreeRoads;
     }
-
 
 
     public void decrementFreeRoads() {

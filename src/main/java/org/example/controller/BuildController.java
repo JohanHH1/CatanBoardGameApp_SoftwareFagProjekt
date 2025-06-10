@@ -6,10 +6,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
-import javafx.scene.shape.Rectangle;
 import org.example.catanboardgameapp.*;
 
 import java.util.Optional;
@@ -54,7 +52,7 @@ public class BuildController {
             }
 
             if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
-                drawOrDisplay.showMustPlaceRobberPopup();
+                drawOrDisplay.showFinishDevelopmentCardActionPopup();
                 return;
             }
             // Enforce dice roll in main phase
@@ -108,7 +106,7 @@ public class BuildController {
     public EventHandler<MouseEvent> createSettlementClickHandler(Circle circle, Vertex vertex, BorderPane root) {
         return event -> {
             if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
-                drawOrDisplay.showMustPlaceRobberPopup();
+                drawOrDisplay.showFinishDevelopmentCardActionPopup();
                 return;
             }
             if (vertex.isCity()) return; // Don't allow clicking on cities

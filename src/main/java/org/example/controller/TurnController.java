@@ -1,12 +1,7 @@
 package org.example.controller;
 
-import javafx.animation.PauseTransition;
 import javafx.event.ActionEvent;
-import javafx.scene.control.Button;
 import org.example.catanboardgameapp.DrawOrDisplay;
-import javafx.util.Duration;
-import org.example.catanboardgameapp.AIOpponent;
-import org.example.catanboardgameapp.Player;
 
 public class TurnController {
 
@@ -22,7 +17,7 @@ public class TurnController {
     //___________________________FUNCTIONS__________________________________//
     public void handleNextTurnButtonPressed(ActionEvent event) {
         if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
-            drawOrDisplay.showMustPlaceRobberPopup();
+            drawOrDisplay.showFinishDevelopmentCardActionPopup();
             return;
         }
         var gameplay = gameController.getGameplay();

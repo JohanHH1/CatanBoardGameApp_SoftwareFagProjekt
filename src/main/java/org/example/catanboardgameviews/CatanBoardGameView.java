@@ -14,11 +14,9 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.example.catanboardgameapp.*;
@@ -28,7 +26,6 @@ import org.example.controller.TradeController;
 import org.example.controller.TurnController;
 import org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType;
 
-import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -213,7 +210,7 @@ public class CatanBoardGameView {
 
         rollDiceButton.setOnAction(e -> {
             if (gameplay.isActionBlockedByDevelopmentCard()){
-                drawOrDisplay.showMustPlaceRobberPopup();
+                drawOrDisplay.showFinishDevelopmentCardActionPopup();
                 return;
             }
             gameplay.rollDice();
@@ -221,7 +218,7 @@ public class CatanBoardGameView {
 
         developmentCardButton.setOnAction(e -> {
             if (gameplay.getDevelopmentCard().isPlayingCard()) {
-                drawOrDisplay.showMustPlaceRobberPopup();
+                drawOrDisplay.showFinishDevelopmentCardActionPopup();
                 return;
             }
             //something devcard active then can not be puched !!!! find me
@@ -355,7 +352,7 @@ public class CatanBoardGameView {
                 if (entry.getValue() > 0) {
                     DevelopmentCardType type = entry.getKey(); // capture outside lambda
 
-                    Button cardButton = new Button(type.getName() + " (" + entry.getValue() + ")");
+                    Button cardButton = new Button(type.getDisplayName() + " (" + entry.getValue() + ")");
                     cardButton.setFont(Font.font("Arial", infoFontSize));
 
                     cardButton.setOnAction(e -> {

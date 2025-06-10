@@ -4,13 +4,8 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.scene.Group;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -18,7 +13,8 @@ import org.example.catanboardgameviews.CatanBoardGameView;
 import java.util.*;
 import org.example.catanboardgameviews.MenuView;
 import org.example.controller.GameController;
-import org.example.controller.TradeController;
+
+import static org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType.*;
 
 public class Gameplay {
 
@@ -48,14 +44,19 @@ public class Gameplay {
     private Board board;
     private Vertex lastInitialSettlement = null;
     private DevelopmentCard developmentCard;
-    private final String[] developmentCardsTypes =
-            { "Monopoly","Monopoly","Road Building","Road Building","Year Of Plenty","Year Of Plenty",
-              "Victory Point", "Victory Point", "Victory Point", "Victory Point", "Victory Point",
-              "Knight", "Knight","Knight","Knight","Knight","Knight","Knight","Knight","Knight",
-              "Knight","Knight", "Knight","Knight","Knight"};
-    private List<String> shuffledDevelopmentCards;
-    private LongestRoadManager longestRoadManager = new LongestRoadManager();
-    private BiggestArmy biggestArmy;
+    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
+            MONOPOLY, MONOPOLY,
+            ROADBUILDING, ROADBUILDING,
+            YEAROFPLENTY, YEAROFPLENTY,
+            VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT,
+            KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT,
+            KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT
+    };
+
+    private List<DevelopmentCard.DevelopmentCardType> shuffledDevelopmentCards;
+
+    private final LongestRoadManager longestRoadManager;
+    private final BiggestArmy biggestArmy;
 
     //__________________________DICE ROLL TRACKING_____________________________//
     private int lastRolledDie1;
@@ -66,6 +67,7 @@ public class Gameplay {
         this.drawOrDisplay = new DrawOrDisplay(boardRadius);
         this.boardRadius = boardRadius;
         this.gameController = gameController;
+        this.longestRoadManager = new LongestRoadManager();
         this.biggestArmy = new BiggestArmy();
     }
 
@@ -83,14 +85,18 @@ public class Gameplay {
         if (catanBoardGameView == null) {
             throw new IllegalStateException("CatanBoardGameView must be set before initializing development cards.");
         }
+
         // Create the development card handler (now that view is valid)
         this.developmentCard = new DevelopmentCard(
+                this,
                 playerList,
                 catanBoardGameView,
                 gameController.getTradeController()
         );
-        // Shuffle the development card deck
-        List<String> shuffledDevCards = new ArrayList<>(Arrays.asList(developmentCardsTypes));
+
+        // Shuffle the development card deck using enum values directly
+        List<DevelopmentCard.DevelopmentCardType> shuffledDevCards =
+                new ArrayList<>(Arrays.asList(developmentCardTypes));
         Collections.shuffle(shuffledDevCards);
         this.shuffledDevelopmentCards = shuffledDevCards;
     }
@@ -346,11 +352,13 @@ public class Gameplay {
             removeResource("Wool", 1);
             removeResource("Ore", 1);
             removeResource("Grain", 1);
+            // Correctly remove and use the DevelopmentCardType directly
+            DevelopmentCard.DevelopmentCardType cardType = shuffledDevelopmentCards.remove(0);
 
-            String cardName = shuffledDevelopmentCards.remove(0);
-            DevelopmentCard.DevelopmentCardType type = DevelopmentCard.DevelopmentCardType.fromName(cardName);
-            currentPlayer.getDevelopmentCards().merge(type, 1, Integer::sum);
-            String log = currentPlayer + " bought a development card";
+            // Store the card in the player's development card map
+            currentPlayer.getDevelopmentCards().merge(cardType, 1, Integer::sum);
+
+            String log = currentPlayer + " bought a development card: " + cardType.getDisplayName();
             catanBoardGameView.runOnFX(() -> {
                 catanBoardGameView.logToGameLog(log);
                 catanBoardGameView.refreshSidebar();
@@ -359,17 +367,18 @@ public class Gameplay {
             catanBoardGameView.runOnFX(drawOrDisplay::showFailToBuyDevelopmentCardPopup);
         }
     }
+
     public void playDevelopmentCard(Player player, DevelopmentCard.DevelopmentCardType type) {
         if (isActionBlockedByDevelopmentCard()) {
-            drawOrDisplay.showMustPlaceRobberPopup();
+            drawOrDisplay.showFinishDevelopmentCardActionPopup();
             return;
         }
 
-        // Play the card: delegates to enum's implementation
+        // Play the card
         type.play(player, developmentCard);
 
-        // Remove the card from the player's collection
-        player.getDevelopmentCards().merge(type, -1, Integer::sum);
+        // Safely remove it from the player's collection
+        player.getDevelopmentCards().computeIfPresent(type, (k, v) -> (v > 1) ? v - 1 : null);
 
         // Knight-specific rule
         if (type == DevelopmentCard.DevelopmentCardType.KNIGHT) {
@@ -378,27 +387,11 @@ public class Gameplay {
             biggestArmy.calculateAndUpdateBiggestArmy(player);
         }
 
-        catanBoardGameView.runOnFX(catanBoardGameView::refreshSidebar);
+        catanBoardGameView.runOnFX(() -> {
+            catanBoardGameView.logToGameLog(player + " played " + type.getDisplayName() + " card.");
+            catanBoardGameView.refreshSidebar();
+        });
     }
-   /* public void playDevelopmentCard(Player player, DevelopmentCard.DevelopmentCardType type) {
-        if (isActionBlockedByDevelopmentCard()){
-            drawOrDisplay.showMustPlaceRobberPopup();
-            return;
-        }
-        DevelopmentCard.DevelopmentCardType type =
-                DevelopmentCard.DevelopmentCardType.fromName(cardName);
-
-        type.play(player, developmentCard);
-        player.getDevelopmentCards().merge(cardName, -1, Integer::sum);
-        catanBoardGameView.runOnFX(catanBoardGameView::refreshSidebar);
-
-        if (type == DevelopmentCard.DevelopmentCardType.KNIGHT) {
-            setRobberMoveRequired(true);
-            currentPlayer.increasePlayedKnights();
-            biggestArmy.calculateAndUpdateBiggestArmy(currentPlayer);
-        }
-        catanBoardGameView.refreshSidebar();
-    }*/
 
 
     public DevelopmentCard getDevelopmentCard() {
@@ -703,6 +696,13 @@ public class Gameplay {
     public void resetCounters() {
         turnCounter=0;
         drawOrDisplay.resetCounters();
+    }
+
+    public BiggestArmy getBiggestArmy() {
+        return biggestArmy;
+    }
+    public LongestRoadManager getLongestRoadManager() {
+        return  longestRoadManager;
     }
 
 //__________________________GETTERS________________________//

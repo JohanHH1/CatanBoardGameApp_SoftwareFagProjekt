@@ -30,7 +30,6 @@ import javafx.util.Duration;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.controller.BuildController;
 
-import javax.swing.*;
 import java.io.InputStream;
 import java.util.*;
 
@@ -447,7 +446,7 @@ public class DrawOrDisplay {
             alert.showAndWait();
         });
     }
-    public void showMustPlaceRobberPopup() {
+    public void showFinishDevelopmentCardActionPopup() {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Action Required: Development Card");

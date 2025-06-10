@@ -23,7 +23,7 @@ public class TradeController {
         // Prevent trading while placing free roads (e.g., from Road Building card)
         tradeButton.setOnAction(e -> {
             if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
-                drawOrDisplay.showMustPlaceRobberPopup();
+                drawOrDisplay.showFinishDevelopmentCardActionPopup();
                 return;
             }
             Gameplay gameplay = gameController.getGameplay();
