@@ -759,6 +759,10 @@ public class Gameplay {
         return catanBoardGameView;
     }
 
+    public List<String> getShuffledDevelopmentCards() {
+        return shuffledDevelopmentCards;
+    }
+
     public boolean isGamePaused() {
         return gamePaused;
     }

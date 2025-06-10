@@ -273,6 +273,12 @@ public class AIOpponent extends Player {
             return Strategy.SETTLEMENTPLACER;
         }
 
+        // 3. development card
+        boolean hasDevcardResources = hasResources("Ore", 1) && hasResources("Grain", 1) && hasResources("Wool", 1);
+        if (hasDevcardResources && (!gameplay.getShuffledDevelopmentCards().isEmpty())){
+            return Strategy.DEVELOPMENTCARDBYER;
+
+        }
         // 4. Road
         boolean hasValidRoadSpots = gameplay.getBoard().getEdges().stream()
                 .anyMatch(e -> gameplay.isValidRoadPlacement(e));
@@ -371,6 +377,7 @@ public class AIOpponent extends Player {
                 case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
                 case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
                 case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
+                case DEVELOPMENTCARDBYER -> moveMade = tryBuyDevCard(gameplay, boardGroup);
             }
 
             if (!moveMade) {
@@ -380,6 +387,7 @@ public class AIOpponent extends Player {
                         case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
                         case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
                         case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
+                        case DEVELOPMENTCARDBYER -> moveMade = tryBuyDevCard(gameplay, boardGroup);
                     }
                 }
             }
@@ -465,6 +473,12 @@ public class AIOpponent extends Player {
 
         return false;
     }
+    private boolean tryBuyDevCard(Gameplay gameplay,  Group boardGroup) {
+        if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1)) {return false;}
+            gameplay.buyDevelopmentCard();
+            gameplay.getCatanBoardGameView().logToGameLog("AI Player " + getPlayerId() + " has bought a development card");
+        return true;
+    }
 
     private boolean tryBuildRoad(Gameplay gameplay, Group boardGroup) {
 
@@ -522,6 +536,8 @@ public class AIOpponent extends Player {
         return false;
     }
 
+
+
     private boolean tryBankTrade(Gameplay gameplay, Strategy strategy) {
         Map<String, Integer> resources = getResources();
         List<String> allTypes = List.of("Brick", "Wood", "Ore", "Grain", "Wool");
@@ -541,6 +557,11 @@ public class AIOpponent extends Player {
             case ROADBUILDER -> {
                 targetCost.put("Brick", 1);
                 targetCost.put("Wood", 1);
+            }
+            case DEVELOPMENTCARDBYER -> {
+                targetCost.put("Wool", 1);
+                targetCost.put("Grain", 1);
+                targetCost.put("Ore", 1);
             }
             default -> { return false; }
         }
