@@ -192,6 +192,7 @@ public class AIOpponent extends Player {
         // Background logic
         if (!gameplay.isGamePaused() && !gameplay.hasRolledDice()) {
             gameplay.rollDice();
+            System.out.println("AI rolling dice");
         }
 
         // Perform AI move (off FX thread!)
@@ -496,15 +497,15 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
         */}
         case VICTORYPOINT -> {
             increasePlayerScore();
-            gameplay.getCatanBoardGameView().logToGameLog("AI played Victory Point and gained 1 point.");
+            System.out.println("IS IN VICTORYPOINT TO INCREASE SCORE!!!!!!!!!1");
+            gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Victory Point and gained 1 point."));
         }
     }
     // Remove card from inventory
-    getDevelopmentCards().computeIfPresent(cardType, (k, v) -> (v > 1) ? v - 1 : null);
+    getDevelopmentCards().computeIfPresent(cardType, (k, v) -> (v > 1) ? v - 1 : 0);
     }
 
     private boolean tryBuildRoad(Gameplay gameplay, Group boardGroup) {
-
         // Ensure resources for road
         if (!hasResources("Brick", 1) || !hasResources("Wood", 1)) return false;
 
