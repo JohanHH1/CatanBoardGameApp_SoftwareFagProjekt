@@ -264,10 +264,10 @@ public class AIOpponent extends Player {
         } else if (hasResources("Ore", 1) && hasResources("Grain", 1) && hasResources("Wool", 1)
                 && !gameplay.getShuffledDevelopmentCards().isEmpty()) {
             selected = Strategy.DEVELOPMENTCARDBYER;
-        } else if (gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
-            selected = Strategy.ROADBUILDER;
         } else if (shouldUseResources(gameplay)) {
             selected = Strategy.USERESOURCES;
+        }else if (gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
+                selected = Strategy.ROADBUILDER;
         } else {
             selected = Strategy.NONE;
         }

@@ -31,7 +31,7 @@ public class DevelopmentCard {
             @Override
             public void play(Player player, DevelopmentCard devCard) {
                 devCard.startPlayingCard();
-                devCard.tradeController.playMonopolyCardFromButton();
+                devCard.gameplay.playMonopolyCard();
                 devCard.log("Player " + player.getPlayerId() + " played a monopoly development card");
             }
         },
@@ -62,7 +62,7 @@ public class DevelopmentCard {
             @Override
             public void play(Player player, DevelopmentCard devCard) {
                 devCard.startPlayingCard();
-                devCard.tradeController.playYearOfPlentyCardFromButton();
+                devCard.gameplay.playYearOfPlentyCard();
                 devCard.log("Player " + player.getPlayerId() + " played a year of plenty development card");
             }
         },
