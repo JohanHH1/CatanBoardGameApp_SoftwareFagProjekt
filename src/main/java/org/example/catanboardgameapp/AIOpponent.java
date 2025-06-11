@@ -257,16 +257,25 @@ public class AIOpponent extends Player {
 
         boolean hasCityResources = hasResources("Ore", 3) && hasResources("Grain", 2);
         boolean canUpgrade = getSettlements().stream().anyMatch(v -> !v.isCity());
+        Player holder = gameplay.getCurrentBiggestArmyHolder();
+        boolean oneLessOrSameThanBiggestArmy = false;
+
         if (hasCityResources && canUpgrade) {
             selected = Strategy.CITYUPGRADER;
         } else if (!getValidSettlementSpots(gameplay).isEmpty()) {
             selected = Strategy.SETTLEMENTPLACER;
+        } else if (holder != null && holder != this) {
+        int holderKnights = holder.getPlayedKnights();
+        int myKnights = getPlayedKnights();
+        oneLessOrSameThanBiggestArmy = (myKnights == holderKnights || myKnights == holderKnights - 1 || myKnights == holderKnights - 2);
+        } if (oneLessOrSameThanBiggestArmy && hasResources("Wool", 1) && hasResources("Grain", 1) && hasResources("Ore", 1)) {
+        selected = Strategy.BIGGESTARMY;
         } else if (hasResources("Ore", 1) && hasResources("Grain", 1) && hasResources("Wool", 1)
                 && !gameplay.getShuffledDevelopmentCards().isEmpty()) {
             selected = Strategy.DEVELOPMENTCARDBYER;
         } else if (shouldUseResources(gameplay)) {
             selected = Strategy.USERESOURCES;
-        }else if (gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
+        } else if (gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
                 selected = Strategy.ROADBUILDER;
         } else {
             selected = Strategy.NONE;
@@ -336,6 +345,7 @@ public class AIOpponent extends Player {
                 case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
                 case DEVELOPMENTCARDBYER -> moveMade = tryBuyDevCard(gameplay);
                 case USERESOURCES -> moveMade = tryBankTrade(gameplay, strategy);
+                case BIGGESTARMY -> moveMade = tryPlayDevCard(gameplay, boardGroup);
             }
         } while (moveMade && --attempts > 0);
 

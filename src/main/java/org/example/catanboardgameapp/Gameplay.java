@@ -718,6 +718,10 @@ public class Gameplay {
         return biggestArmy;
     }
 
+    public Player getCurrentBiggestArmyHolder() {
+        return biggestArmy.getCurrentHolder();
+    }
+
     public LongestRoadManager getLongestRoadManager() {
         return  longestRoadManager;
     }
