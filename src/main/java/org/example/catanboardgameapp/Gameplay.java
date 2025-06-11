@@ -11,6 +11,8 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import org.example.catanboardgameviews.MenuView;
 import org.example.controller.GameController;
 
@@ -39,7 +41,7 @@ public class Gameplay {
     private volatile boolean gamePaused = false;
     private Thread activeAIThread;
     private boolean isRobberMoveRequired = false;
-    
+
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
@@ -375,6 +377,34 @@ public class Gameplay {
         });
     }
 
+    public void playMonopolyCard() {
+        Player currentPlayer = getCurrentPlayer();
+        String chosenResource = drawOrDisplay.showMonopolyDialog();
+        if (chosenResource == null) return;
+
+        int taken = developmentCard.monopolizeResource(chosenResource, currentPlayer);
+
+        catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a Monopoly card and took " + taken + " " + chosenResource + " from other players." );
+        catanBoardGameView.refreshSidebar();
+        developmentCard.finishPlayingCard();
+    }
+
+    public void playYearOfPlentyCard() {
+        Player currentPlayer = getCurrentPlayer();
+        Map<String, Integer> selected = drawOrDisplay.showYearOfPlentyDialog();
+
+        if (selected != null) {
+            developmentCard.addResourcesToPlayer(currentPlayer, selected);
+
+            String gained = selected.entrySet().stream()
+                    .map(entry -> entry.getValue() + " " + entry.getKey()).collect(Collectors.joining(", "));
+
+            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " used Year of Plenty and recieved " + gained + ".");
+
+            catanBoardGameView.refreshSidebar();
+            developmentCard.finishPlayingCard();
+        }
+    }
 
     public DevelopmentCard getDevelopmentCard() {
         return developmentCard;

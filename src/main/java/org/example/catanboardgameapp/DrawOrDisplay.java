@@ -424,6 +424,24 @@ public class DrawOrDisplay {
                 player::chooseDiscardCards
         );
     }
+
+    public String showMonopolyDialog() {
+        List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
+
+        Map<String, Integer> result = showResourceSelectionDialog(
+                "Monopoly",
+                "Select exactly 1 resource to monopolize:",
+                resources,
+                1,
+                false,
+                null
+        );
+        if (result == null) return null;
+
+        return result.entrySet().stream().filter(entry -> entry.getValue() == 1).map(Map.Entry::getKey).findFirst().orElse(null);
+    }
+
+
     public Map<String, Integer> showYearOfPlentyDialog() {
         List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
 
