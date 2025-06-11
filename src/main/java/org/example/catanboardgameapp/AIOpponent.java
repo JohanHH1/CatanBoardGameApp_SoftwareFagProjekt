@@ -258,16 +258,25 @@ public class AIOpponent extends Player {
 
         boolean hasCityResources = hasResources("Ore", 3) && hasResources("Grain", 2);
         boolean canUpgrade = getSettlements().stream().anyMatch(v -> !v.isCity());
+        Player holder = gameplay.getCurrentBiggestArmyHolder();
+        boolean oneLessOrSameThanBiggestArmy = false;
+
         if (hasCityResources && canUpgrade) {
             selected = Strategy.CITYUPGRADER;
         } else if (!getValidSettlementSpots(gameplay).isEmpty()) {
             selected = Strategy.SETTLEMENTPLACER;
+        } else if (holder != null && holder != this) {
+        int holderKnights = holder.getPlayedKnights();
+        int myKnights = getPlayedKnights();
+        oneLessOrSameThanBiggestArmy = (myKnights == holderKnights || myKnights == holderKnights - 1 || myKnights == holderKnights - 2);
+        } if (oneLessOrSameThanBiggestArmy && hasResources("Wool", 1) && hasResources("Grain", 1) && hasResources("Ore", 1)) {
+        selected = Strategy.BIGGESTARMY;
         } else if (hasResources("Ore", 1) && hasResources("Grain", 1) && hasResources("Wool", 1)
                 && !gameplay.getShuffledDevelopmentCards().isEmpty()) {
             selected = Strategy.DEVELOPMENTCARDBYER;
         } else if (shouldUseResources(gameplay)) {
             selected = Strategy.USERESOURCES;
-        }else if (gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
+        } else if (gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
                 selected = Strategy.ROADBUILDER;
         } else {
             selected = Strategy.NONE;
@@ -337,6 +346,7 @@ public class AIOpponent extends Player {
                 case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
                 case DEVELOPMENTCARDBYER -> moveMade = tryBuyDevCard(gameplay);
                 case USERESOURCES -> moveMade = tryBankTrade(gameplay, strategy);
+                case BIGGESTARMY -> moveMade = tryPlayDevCard(gameplay, boardGroup);
             }
         } while (moveMade && --attempts > 0);
 
@@ -653,14 +663,7 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
             int productionScore = 0;
 
             // Production score: total dice weight from settlements
-            for (Vertex v : getSettlements()) {
-                for (Tile t : gameplay.getBoard().getTiles()) {
-                    if (t.getVertices().contains(v) &&
-                            t.getResourcetype().toString().equals(res)) {
-                        productionScore += getDiceProbabilityValue(t.getTileDiceNumber());
-                    }
-                }
-            }
+            productionScore = getProductionScore(res, productionScore);
 
             // Base score: more owned = more discardable
             int score = amountOwned * 3;
@@ -709,6 +712,18 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
         }
 
         return discardMap;
+    }
+
+    private int getProductionScore(String res, int productionScore) {
+        for (Vertex v : getSettlements()) {
+            for (Tile t : gameplay.getBoard().getTiles()) {
+                if (t.getVertices().contains(v) &&
+                        t.getResourcetype().toString().equals(res)) {
+                    productionScore += getDiceProbabilityValue(t.getTileDiceNumber());
+                }
+            }
+        }
+        return productionScore;
     }
 
     private int getSmartRoadScore(Edge edge, Vertex source, Gameplay gameplay) {
@@ -978,6 +993,44 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
                 .thenComparingInt(productionScore::get));                 // Least useful production
 
         return tradable.get(0);
+    }
+
+    public Map<String, Integer> chooseResourcesForYearOfPlenty() {
+        Strategy currentStrategy = determineStrategy();
+        Set<String> needed = getNeededResourcesForStrategy(currentStrategy);
+
+        Map<String, Integer> priorityMap = new HashMap<>();
+        for (String res : needed) {
+            int owned = getResources().getOrDefault(res, 0);
+            int prodScore = 0;
+            prodScore = getProductionScore(res, prodScore);
+            int tradeRatio = gameplay.getBestTradeRatio(res, this);
+            int score = (5 - owned) * 3 + (5 - prodScore) * 2 + tradeRatio * 2;
+            priorityMap.put(res, score);
+        }
+
+        List<String> topTwo = priorityMap.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(2)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        Map<String, Integer> result = new HashMap<>();
+        for (String res : topTwo) {
+            result.put(res, result.getOrDefault(res, 0) + 1);
+        }
+
+        // If only 1 resource chosen, double it
+        if (result.size() == 1) {
+            String key = topTwo.get(0);
+            result.put(key, 2);
+        } else if (result.size() < 2) {
+            // fallback to random if nothing found
+            result.put("Ore", 1);
+            result.put("Grain", 1);
+        }
+
+        return result;
     }
 
 

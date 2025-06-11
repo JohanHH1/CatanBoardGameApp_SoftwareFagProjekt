@@ -396,7 +396,13 @@ public class Gameplay {
 
     public void playYearOfPlentyCard() {
         Player currentPlayer = getCurrentPlayer();
-        Map<String, Integer> selected = drawOrDisplay.showYearOfPlentyDialog();
+        Map<String, Integer> selected;
+
+        if (currentPlayer instanceof AIOpponent ai && ai.getStrategyLevel() == AIOpponent.StrategyLevel.HARD) {
+            selected = ai.chooseResourcesForYearOfPlenty();
+        } else {
+            selected = drawOrDisplay.showYearOfPlentyDialog();
+        }
 
         if (selected != null) {
             developmentCard.addResourcesToPlayer(currentPlayer, selected);
@@ -716,6 +722,10 @@ public class Gameplay {
 
     public BiggestArmy getBiggestArmy() {
         return biggestArmy;
+    }
+
+    public Player getCurrentBiggestArmyHolder() {
+        return biggestArmy.getCurrentHolder();
     }
 
     public LongestRoadManager getLongestRoadManager() {
