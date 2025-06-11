@@ -497,13 +497,16 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
                 }
             }*/
         }
-        case YEAROFPLENTY -> {/*
-            String res1 = chooseSmartResourceToReceive(gameplay);
-            String res2 = chooseSmartResourceToReceive(gameplay);
-            getResources().merge(res1, 1, Integer::sum);
-            getResources().merge(res2, 1, Integer::sum);
-            gameplay.getCatanBoardGameView().logToGameLog("AI played Year of Plenty: +1 " + res1 + ", +1 " + res2);
-        */}
+        case YEAROFPLENTY -> {
+            Map<String, Integer> selected = chooseResourcesForYearOfPlenty();
+            for (Map.Entry<String, Integer> entry : selected.entrySet()) {
+                getResources().merge(entry.getKey(), entry.getValue(), Integer::sum);
+            }
+            String gained = selected.entrySet().stream()
+                    .map(e -> "+ " + e.getValue() + " " + e.getKey())
+                    .collect(Collectors.joining(", "));
+            gameplay.getCatanBoardGameView().logToGameLog("AI played Year of Plenty: " + gained);
+        }
         case VICTORYPOINT -> {
             increasePlayerScore();
             gameplay.getCatanBoardGameView().logToGameLog("AI played Victory Point and gained 1 point.");
@@ -995,6 +998,7 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
     }
 
     public Map<String, Integer> chooseResourcesForYearOfPlenty() {
+        gameplay.getCatanBoardGameView().logToGameLog("ai used chooseresource for year plenty ai method!");
         Strategy currentStrategy = determineStrategy();
         Set<String> needed = getNeededResourcesForStrategy(currentStrategy);
 
