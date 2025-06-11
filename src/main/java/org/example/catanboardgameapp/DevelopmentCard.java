@@ -8,13 +8,15 @@ import org.example.controller.TradeController;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DevelopmentCard {
     private final Gameplay gameplay;
     private final List<Player> playerList;
     private final CatanBoardGameView view;
     private final TradeController tradeController;
-
+    private DrawOrDisplay drawOrDisplay;
+    private CatanBoardGameView catanBoardGameView;
     private boolean placingFreeRoads = false;
     private boolean playingCard = false;
     private int freeRoadsLeft = 0;
@@ -62,7 +64,7 @@ public class DevelopmentCard {
             @Override
             public void play(Player player, DevelopmentCard devCard) {
                 devCard.startPlayingCard();
-                devCard.gameplay.playYearOfPlentyCard();
+                devCard.playYearOfPlentyCard();
                 devCard.log("Player " + player.getPlayerId() + " played a year of plenty development card");
             }
         },
@@ -90,6 +92,29 @@ public class DevelopmentCard {
 
     public void playingCard(Player player, DevelopmentCardType cardType){
         cardType.play(player,this);
+    }
+
+    public void playYearOfPlentyCard() {
+        Player currentPlayer = gameplay.getCurrentPlayer();
+        Map<String, Integer> selected;
+
+        if (currentPlayer instanceof AIOpponent ai && ai.getStrategyLevel() == AIOpponent.StrategyLevel.HARD) {
+            selected = ai.chooseResourcesForYearOfPlenty();
+        } else {
+            selected = drawOrDisplay.showYearOfPlentyDialog();
+        }
+
+        if (selected != null) {
+            addResourcesToPlayer(currentPlayer, selected);
+
+            String gained = selected.entrySet().stream()
+                    .map(entry -> entry.getValue() + " " + entry.getKey()).collect(Collectors.joining(", "));
+
+            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " used Year of Plenty and recieved " + gained + ".");
+
+            catanBoardGameView.refreshSidebar();
+            finishPlayingCard();
+        }
     }
 
 

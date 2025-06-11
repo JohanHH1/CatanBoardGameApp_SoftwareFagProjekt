@@ -394,28 +394,7 @@ public class Gameplay {
         developmentCard.finishPlayingCard();
     }
 
-    public void playYearOfPlentyCard() {
-        Player currentPlayer = getCurrentPlayer();
-        Map<String, Integer> selected;
 
-        if (currentPlayer instanceof AIOpponent ai && ai.getStrategyLevel() == AIOpponent.StrategyLevel.HARD) {
-            selected = ai.chooseResourcesForYearOfPlenty();
-        } else {
-            selected = drawOrDisplay.showYearOfPlentyDialog();
-        }
-
-        if (selected != null) {
-            developmentCard.addResourcesToPlayer(currentPlayer, selected);
-
-            String gained = selected.entrySet().stream()
-                    .map(entry -> entry.getValue() + " " + entry.getKey()).collect(Collectors.joining(", "));
-
-            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " used Year of Plenty and recieved " + gained + ".");
-
-            catanBoardGameView.refreshSidebar();
-            developmentCard.finishPlayingCard();
-        }
-    }
 
     public DevelopmentCard getDevelopmentCard() {
         return developmentCard;
