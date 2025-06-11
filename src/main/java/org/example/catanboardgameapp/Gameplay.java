@@ -44,13 +44,16 @@ public class Gameplay {
     private Board board;
     private Vertex lastInitialSettlement = null;
     private DevelopmentCard developmentCard;
-    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
+   /* private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
             MONOPOLY, MONOPOLY,
             ROADBUILDING, ROADBUILDING,
             YEAROFPLENTY, YEAROFPLENTY,
             VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT
+    };*/
+    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
+            VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT
     };
 
     private List<DevelopmentCard.DevelopmentCardType> shuffledDevelopmentCards;
@@ -337,6 +340,8 @@ public class Gameplay {
     public void buyDevelopmentCard() {
         if (shuffledDevelopmentCards.isEmpty()) {
             catanBoardGameView.runOnFX(drawOrDisplay::showNoMoreDevelopmentCardToBuyPopup);
+        } else if (!hasRolledDice()){
+            catanBoardGameView.runOnFX(() -> drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before taking any actions!"));
         } else if (canRemoveResource("Wool", 1) && canRemoveResource("Ore", 1) && canRemoveResource("Grain", 1)) {
             removeResource("Wool", 1);
             removeResource("Ore", 1);

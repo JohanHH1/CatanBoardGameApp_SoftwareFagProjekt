@@ -377,6 +377,7 @@ public class DrawOrDisplay {
     public void notEnoughResourcesPopup(String message) {
         showCustomPopup("Not enough resources", message, true);
     }
+
     public void rollDiceBeforeActionPopup(String message) {
         showCustomPopup("Action Blocked", message, true);
     }

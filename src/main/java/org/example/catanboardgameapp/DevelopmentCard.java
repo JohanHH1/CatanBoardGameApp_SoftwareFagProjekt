@@ -4,6 +4,7 @@ import org.example.catanboardgameviews.CatanBoardGameView;
 import javafx.scene.Group;
 import org.example.controller.TradeController;
 
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -83,8 +84,8 @@ public class DevelopmentCard {
             return displayName;
         }
 
-        public abstract void play(Player player, DevelopmentCard devCard);
 
+        public abstract void play(Player player, DevelopmentCard devCard);
     }
 
     public void playingCard(Player player, DevelopmentCardType cardType){
