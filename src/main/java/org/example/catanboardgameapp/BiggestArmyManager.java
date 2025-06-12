@@ -1,33 +1,36 @@
 package org.example.catanboardgameapp;
-import org.example.catanboardgameviews.CatanBoardGameView;
 
-public class BiggestArmy {
+public class BiggestArmyManager {
+
     private Player biggestArmy;
-    private CatanBoardGameView catanBoardGameView;
+    private final Gameplay gameplay;
 
+    // ---------------- Constructor ---------------- //
+    public BiggestArmyManager(Gameplay gameplay) {
+        this.gameplay = gameplay;
+    }
+
+    // ---------------- Public API ---------------- //
     public void calculateAndUpdateBiggestArmy(Player currentPlayer) {
         int currentKnights = currentPlayer.getPlayedKnights();
 
         if (currentKnights >= 3) {
             if (biggestArmy == null) {
-                // First player to receive BiggestArmy
+                // First player to receive Biggest Army
                 biggestArmy = currentPlayer;
-                biggestArmy.increasePlayerScore();
-                biggestArmy.increasePlayerScore();
+                gameplay.increasePlayerScoreByTwo(currentPlayer);
             } else {
                 int previousKnights = biggestArmy.getPlayedKnights();
 
                 if (currentKnights > previousKnights && currentPlayer != biggestArmy) {
-                    biggestArmy.decreasePlayerScore();
-                    biggestArmy.decreasePlayerScore();
+                    gameplay.decreasePlayerScoreByTwo(biggestArmy);
                     biggestArmy = currentPlayer;
-                    biggestArmy.increasePlayerScore();
-                    biggestArmy.increasePlayerScore();
-
+                    gameplay.increasePlayerScoreByTwo(currentPlayer);
                 }
             }
         }
     }
+
     public Player getCurrentHolder() {
         return biggestArmy;
     }

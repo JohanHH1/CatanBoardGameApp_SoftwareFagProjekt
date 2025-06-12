@@ -615,7 +615,7 @@ public class DrawOrDisplay {
         container.getChildren().add(buttons);
         container.setPadding(new Insets(15));
         container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
-        
+
         dialogStage.setScene(new Scene(container));
         dialogStage.showAndWait();
         return result[0];

@@ -212,8 +212,10 @@ public class Robber {
                 Map<String, Integer> discarded;
                 if (p instanceof AIOpponent ai) {
                     discarded = ai.chooseDiscardCards();
+                    catanBoardGameView.refreshSidebar();
                 } else {
                     discarded = discardCards(p, gameplay);
+                    catanBoardGameView.refreshSidebar();
                 }
                 if (discarded != null) {
                     discardResourcesForPlayer(p, discarded);

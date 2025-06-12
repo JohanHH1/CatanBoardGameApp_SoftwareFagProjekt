@@ -201,7 +201,6 @@ public class AIOpponent extends Player {
             case MEDIUM -> makeMediumLevelMove(gameplay, boardGroup);
             case HARD -> makeHardLevelMove(gameplay, boardGroup);
         }
-
         // Done – UI update on FX thread
         gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().hideAITurnOverlay());
     }
@@ -437,7 +436,6 @@ public class AIOpponent extends Player {
                 return true;
             }
         }
-
         return false;
     }
     private boolean shouldGoForLongestRoad(Gameplay gameplay) {
@@ -457,7 +455,6 @@ public class AIOpponent extends Player {
     private boolean tryBuyDevCard(Gameplay gameplay) {
         if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1) || !gameplay.hasRolledDice()) {return false;}
             gameplay.buyDevelopmentCard();
-        gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +  " has bought a development card"));
         gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +" has "+  gameplay.getCurrentPlayer().getDevelopmentCards().toString()));
 
         return true;
@@ -467,60 +464,24 @@ public class AIOpponent extends Player {
         if (hasNoDevelopmentCards()) {
             return false;
         } else {
-            DevelopmentCard.DevelopmentCardType devCard = removeFirstDevelopmentCard();
-            if (devCard != null) {
-                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +" has "+  gameplay.getCurrentPlayer().getDevelopmentCards().toString()));
-                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() + " has played a development card !!!!!!!!!!!!!!!!!!!!!!!!!"));
-                playDevelopmentCardAsAI(devCard,gameplay);
-                //devCard.play(this, gameplay.getDevelopmentCard());
-                getDevelopmentCards().computeIfPresent(devCard, (k, v) -> (v > 1) ? v - 1 : 0);
+            DevelopmentCard.DevelopmentCardType devCardType = removeFirstDevelopmentCard();
+            if (devCardType != null) {
+                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(
+                        gameplay.getCurrentPlayer() + " has " + gameplay.getCurrentPlayer().getDevelopmentCards().toString()
+
+                        )
+                );
+
+                // Call the enum-based AI method
+                devCardType.playAsAI(this, gameplay.getDevelopmentCard(), gameplay);
+
+                // Remove it from inventory AFTER play
+                getDevelopmentCards().computeIfPresent(devCardType, (k, v) -> (v > 1) ? v - 1 : 0);
+
                 return true;
             }
         }
         return false;
-    }
-public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType, Gameplay gameplay) {
-    switch (cardType) {
-        case MONOPOLY -> {
-            String resource = chooseSmartResourceToReceive(gameplay);
-            int total = gameplay.getDevelopmentCard().monopolizeResource(resource, this);
-            gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Monopoly and took " + total + " " + resource));
-        }
-        case KNIGHT -> {
-            increasePlayedKnights();
-            gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(this);
-            increasePlayedKnights();
-            gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(this);
-            Group boardGroup = gameplay.getCatanBoardGameView().getBoardGroup();
-            gameplay.getCatanBoardGameView().getRobber().showRobberTargets(boardGroup);
-        }
-        case ROADBUILDING -> {
-            int placed = 0;
-            for (Edge edge : gameplay.getBoard().getEdges()) {
-                if (placed == 2) break;
-                if (gameplay.isValidRoadPlacement(edge)) {
-                    if (gameplay.buildRoad(edge) == BuildResult.SUCCESS) {
-                        placed++;
-                        gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI placed a free road."));
-                    }
-                }
-            }
-        }
-        case YEAROFPLENTY -> {
-            Map<String, Integer> selected = chooseResourcesForYearOfPlenty();
-            for (Map.Entry<String, Integer> entry : selected.entrySet()) {
-                getResources().merge(entry.getKey(), entry.getValue(), Integer::sum);
-            }
-            String gained = selected.entrySet().stream()
-                    .map(e -> "+ " + e.getValue() + " " + e.getKey())
-                    .collect(Collectors.joining(", "));
-            gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Year of Plenty: " + gained));
-        }
-        case VICTORYPOINT -> {
-            increasePlayerScore();
-            gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Victory Point and gained 1 point."));
-        }
-    }
     }
 
     private boolean tryBuildRoad(Gameplay gameplay, Group boardGroup) {
@@ -620,7 +581,6 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
 
         return false;
     }
-
 
     public boolean tryBankTrade(Gameplay gameplay, Strategy strategy) {
         Map<String, Integer> resources = getResources();
@@ -766,7 +726,6 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
                 gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(log.toString()));
             }
         }
-
         return discardMap;
     }
 

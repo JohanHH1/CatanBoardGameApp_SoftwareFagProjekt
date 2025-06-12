@@ -1,17 +1,12 @@
 package org.example.catanboardgameapp;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.scene.Group;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.example.catanboardgameviews.MenuView;
 import org.example.controller.GameController;
@@ -46,7 +41,7 @@ public class Gameplay {
     private Board board;
     private Vertex lastInitialSettlement = null;
     private DevelopmentCard developmentCard;
-   /* private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
+    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
             MONOPOLY, MONOPOLY,
             ROADBUILDING, ROADBUILDING,
             YEAROFPLENTY, YEAROFPLENTY,
@@ -54,16 +49,16 @@ public class Gameplay {
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT
 
-    }*/
-    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
-           KNIGHT, KNIGHT
-
     };
+//    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
+//           KNIGHT, KNIGHT
+//
+//    };
 
     private List<DevelopmentCard.DevelopmentCardType> shuffledDevelopmentCards;
 
     private final LongestRoadManager longestRoadManager;
-    private final BiggestArmy biggestArmy;
+    private final BiggestArmyManager biggestArmy;
 
     //__________________________DICE ROLL TRACKING_____________________________//
     private int lastRolledDie1;
@@ -74,8 +69,8 @@ public class Gameplay {
         this.drawOrDisplay = new DrawOrDisplay(boardRadius);
         this.boardRadius = boardRadius;
         this.gameController = gameController;
-        this.longestRoadManager = new LongestRoadManager();
-        this.biggestArmy = new BiggestArmy();
+        this.longestRoadManager = new LongestRoadManager(this);
+        this.biggestArmy = new BiggestArmyManager(this);
     }
 
     public DrawOrDisplay getDrawOrDisplay() {
@@ -618,11 +613,9 @@ public class Gameplay {
         return !(vertex.hasSettlement() && vertex.getOwner() == currentPlayer);
     }
 
-
     //___________________________SCORE MANAGEMENT_____________________________//
     public void increasePlayerScore() {
-        currentPlayer.increasePlayerScore();
-
+        currentPlayer.playerScorePlusOne();
         if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
             if (isGamePaused()) return;
 
@@ -632,9 +625,19 @@ public class Gameplay {
     }
 
     // SKAL BRUGES TIL LONGEST ROAD BIGGEST ARMY
-    public void decreasePlayerScore() {
-        currentPlayer.decreasePlayerScore();
-        currentPlayer.decreasePlayerScore();
+    public void decreasePlayerScoreByTwo(Player player) {
+        currentPlayer.playerScoreMinusOne();
+        currentPlayer.playerScoreMinusOne();
+    }
+    public void increasePlayerScoreByTwo(Player player) {
+        currentPlayer.playerScorePlusOne();
+        currentPlayer.playerScorePlusOne();
+        if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
+            if (isGamePaused()) return;
+
+            Player winner = currentPlayer; // <- Freeze the winning player here
+            handleEndOfGame(winner);       // <- pass it down
+        }
     }
 
     //___________________________HELPER FUNCTIONS_____________________________//
@@ -701,7 +704,7 @@ public class Gameplay {
         drawOrDisplay.resetCounters();
     }
 
-    public BiggestArmy getBiggestArmy() {
+    public BiggestArmyManager getBiggestArmy() {
         return biggestArmy;
     }
 

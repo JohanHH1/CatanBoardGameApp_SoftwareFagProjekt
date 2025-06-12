@@ -1,14 +1,9 @@
 package org.example.catanboardgameapp;
 
 import org.example.catanboardgameviews.CatanBoardGameView;
-import javafx.scene.Group;
 import org.example.controller.TradeController;
 
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DevelopmentCard {
@@ -35,34 +30,82 @@ public class DevelopmentCard {
         MONOPOLY("Monopoly") {
             @Override
             public void play(Player player, DevelopmentCard devCard) {
+
                 devCard.startPlayingCard();
                 devCard.gameplay.playMonopolyCard();
                 devCard.log("Player " + player.getPlayerId() + " played a monopoly development card");
             }
+
+            @Override
+            public void playAsAI(AIOpponent ai, DevelopmentCard devCard, Gameplay gameplay) {
+                String resource = ai.chooseSmartResourceToReceive(gameplay);
+                int total = devCard.monopolizeResource(resource, ai);
+                devCard.log("AI played Monopoly and took " + total + " " + resource);
+            }
         },
+
         KNIGHT("Knight") {
             @Override
             public void play(Player player, DevelopmentCard devCard) {
                 devCard.view.hideDiceButton();
                 devCard.view.hideTurnButton();
-
-                Group boardGroup = devCard.view.getBoardGroup();
                 devCard.startPlayingCard();
-                devCard.view.getRobber().showRobberTargets(boardGroup);
+                devCard.view.getRobber().showRobberTargets(devCard.view.getBoardGroup());
                 devCard.gameplay.setRobberMoveRequired(true);
                 player.increasePlayedKnights();
                 devCard.gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(player);
-
                 devCard.log("Player " + player.getPlayerId() + " played a knight development card");
             }
+
+            @Override
+            public void playAsAI(AIOpponent ai, DevelopmentCard devCard, Gameplay gameplay) {
+                ai.increasePlayedKnights();
+                gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(ai);
+
+                Player victim = ai.chooseBestRobberyTargetForHardAI(ai, gameplay.getPlayerList());
+                if (victim != null) {
+                    List<String> pool = new ArrayList<>();
+                    victim.getResources().forEach((res, count) -> {
+                        for (int i = 0; i < count; i++) pool.add(res);
+                    });
+
+                    if (!pool.isEmpty()) {
+                        Collections.shuffle(pool);
+                        String stolen = pool.get(0);
+
+                        victim.getResources().put(stolen, Math.max(0, victim.getResources().get(stolen) - 1));
+                        ai.getResources().merge(stolen, 1, Integer::sum);
+
+                        devCard.log("AI played Knight and stole 1 " + stolen + " from Player " + victim.getPlayerId());
+                    } else {
+                        devCard.log("AI played Knight but " + victim + " had no resources.");
+                    }
+                }
+            }
         },
+
         ROADBUILDING("Road Building") {
             @Override
             public void play(Player player, DevelopmentCard devCard) {
                 devCard.startPlacingFreeRoads(2);
                 devCard.log("Player " + player.getPlayerId() + " played a road building development card");
             }
+
+            @Override
+            public void playAsAI(AIOpponent ai, DevelopmentCard devCard, Gameplay gameplay) {
+                int placed = 0;
+                for (Edge edge : gameplay.getBoard().getEdges()) {
+                    if (placed == 2) break;
+                    if (gameplay.isValidRoadPlacement(edge)) {
+                        if (gameplay.buildRoad(edge) == BuildResult.SUCCESS) {
+                            placed++;
+                            devCard.log("AI placed a free road.");
+                        }
+                    }
+                }
+            }
         },
+
         YEAROFPLENTY("Year Of Plenty") {
             @Override
             public void play(Player player, DevelopmentCard devCard) {
@@ -70,12 +113,35 @@ public class DevelopmentCard {
                 devCard.playYearOfPlentyCard();
                 devCard.log("Player " + player.getPlayerId() + " played a year of plenty development card");
             }
+
+            @Override
+            public void playAsAI(AIOpponent ai, DevelopmentCard devCard, Gameplay gameplay) {
+                Map<String, Integer> selected = ai.chooseResourcesForYearOfPlenty();
+                selected.forEach((res, amt) ->
+                        ai.getResources().merge(res, amt, Integer::sum)
+                );
+
+                String gained = selected.entrySet().stream()
+                        .map(e -> "+ " + e.getValue() + " " + e.getKey())
+                        .collect(Collectors.joining(", "));
+
+                devCard.log("AI played Year of Plenty: " + gained);
+            }
         },
+
         VICTORYPOINT("Victory Point") {
             @Override
             public void play(Player player, DevelopmentCard devCard) {
-                player.increasePlayerScore();
+                devCard.gameplay.increasePlayerScore();
                 devCard.log("Player " + player.getPlayerId() + " played a victory point development card");
+            }
+
+            @Override
+            public void playAsAI(AIOpponent ai, DevelopmentCard devCard, Gameplay gameplay) {
+                gameplay.increasePlayerScore();
+                gameplay.getCatanBoardGameView().runOnFX(() ->
+                        gameplay.getCatanBoardGameView().logToGameLog("AI played Victory Point and gained 1 point.")
+                );
             }
         };
 
@@ -89,12 +155,11 @@ public class DevelopmentCard {
             return displayName;
         }
 
-
         public abstract void play(Player player, DevelopmentCard devCard);
-    }
 
-    public void playingCard(Player player, DevelopmentCardType cardType){
-        cardType.play(player,this);
+        public void playAsAI(AIOpponent ai, DevelopmentCard devCard, Gameplay gameplay) {
+            throw new UnsupportedOperationException("AI play not implemented for " + this.name());
+        }
     }
 
     public void playYearOfPlentyCard() {

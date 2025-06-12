@@ -510,7 +510,7 @@ public class CatanBoardGameView {
         Text armyText = new Text("Largest army: " + player.getPlayedKnights());
         armyText.setFont(Font.font("Georgia", infoFontSize));
 
-        BiggestArmy biggestArmy = gameplay.getBiggestArmy();
+        BiggestArmyManager biggestArmy = gameplay.getBiggestArmy();
         if (player == biggestArmy.getCurrentHolder()) {
             armyText.setText("🏅 Largest army: " + player.getPlayedKnights());
             armyText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
