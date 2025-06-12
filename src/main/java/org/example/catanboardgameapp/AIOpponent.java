@@ -193,7 +193,6 @@ public class AIOpponent extends Player {
         // Background logic
         if (!gameplay.isGamePaused() && !gameplay.hasRolledDice()) {
             gameplay.rollDice();
-            System.out.println("AI rolling dice");
         }
 
         // Perform AI move (off FX thread!)
@@ -388,7 +387,7 @@ public class AIOpponent extends Player {
         if (best != null) {
             BuildResult result = gameplay.buildCity(best);
             if (result == BuildResult.UPGRADED_TO_CITY) {
-                String msg = gameplay.getCurrentPlayer() +  "UPGRADED TO A CITY";
+                String msg = gameplay.getCurrentPlayer() +  " UPGRADED TO A CITY";
                 Vertex finalBest = best;
                 gameplay.getCatanBoardGameView().runOnFX(() -> {
                     drawOrDisplay.drawCity(finalBest, boardGroup);
@@ -430,7 +429,6 @@ public class AIOpponent extends Player {
                 String msg = gameplay.getCurrentPlayer() + " succesfully built a Settlement";
                 Circle circle = new Circle(bestSpot.getX(), bestSpot.getY(), 16.0 / gameplay.getBoardRadius());
                 Vertex finalBestSpot = bestSpot;
-
                 gameplay.getCatanBoardGameView().runOnFX(() -> {
                     drawOrDisplay.drawSettlement(circle, finalBestSpot, boardGroup);
                     gameplay.getCatanBoardGameView().logToGameLog(msg);
@@ -460,7 +458,7 @@ public class AIOpponent extends Player {
     private boolean tryBuyDevCard(Gameplay gameplay) {
         if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1) || !gameplay.hasRolledDice()) {return false;}
             gameplay.buyDevelopmentCard();
-            gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +  " has bought a development card");
+        gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +  " has bought a development card"));
         return true;
     }
 
@@ -470,8 +468,8 @@ public class AIOpponent extends Player {
         } else {
             DevelopmentCard.DevelopmentCardType devCard = removeFirstDevelopmentCard();
             if (devCard != null) {
-                System.out.println(getDevelopmentCards().toString());
-                gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() + " has played a development card !!!!!!!!!!!!!!!!!!!!!!!!!");
+                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() + " has getDevelopmentCards().toString()"));
+                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() + " has played a development card !!!!!!!!!!!!!!!!!!!!!!!!!"));
                 playDevelopmentCardAsAI(devCard,gameplay);
                 //devCard.play(this, gameplay.getDevelopmentCard());
                 getDevelopmentCards().computeIfPresent(devCard, (k, v) -> (v > 1) ? v - 1 : 0);
@@ -485,7 +483,7 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
         case MONOPOLY -> {
             String resource = chooseSmartResourceToReceive(gameplay);
             int total = gameplay.getDevelopmentCard().monopolizeResource(resource, this);
-            gameplay.getCatanBoardGameView().logToGameLog("AI played Monopoly and took " + total + " " + resource);
+            gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Monopoly and took " + total + " " + resource));
         }
         case KNIGHT -> {
             increasePlayedKnights();
@@ -506,10 +504,9 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
 
                     victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
                     this.getResources().put(stolen, this.getResources().getOrDefault(stolen, 0) + 1);
-
-                    gameplay.getCatanBoardGameView().logToGameLog("AI played Knight and stole 1 " + stolen + " from Player " + victim.getPlayerId());
+                    gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Knight and stole 1 " + stolen + " from Player " + victim.getPlayerId()));
                 } else {
-                    gameplay.getCatanBoardGameView().logToGameLog("AI played Knight but " + victim + " had no resources.");
+                    gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Knight but " + victim + " had no resources."));
                 }
             }
         }
@@ -520,7 +517,7 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
                 if (gameplay.isValidRoadPlacement(edge)) {
                     if (gameplay.buildRoad(edge) == BuildResult.SUCCESS) {
                         placed++;
-                        gameplay.getCatanBoardGameView().logToGameLog("AI placed a free road.");
+                        gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI placed a free road."));
                     }
                 }
             }
@@ -533,7 +530,7 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
             String gained = selected.entrySet().stream()
                     .map(e -> "+ " + e.getValue() + " " + e.getKey())
                     .collect(Collectors.joining(", "));
-            gameplay.getCatanBoardGameView().logToGameLog("AI played Year of Plenty: " + gained);
+            gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Year of Plenty: " + gained));
         }
         case VICTORYPOINT -> {
             increasePlayerScore();
@@ -782,7 +779,7 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
             discardMap.forEach((res, amt) -> log.append(amt).append(" ").append(res).append(", "));
             if (!discardMap.isEmpty()) {
                 log.setLength(log.length() - 2); // remove trailing comma
-                gameplay.getCatanBoardGameView().logToGameLog(log.toString());
+                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(log.toString()));
             }
         }
 
@@ -1071,7 +1068,8 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
     }
 
     public Map<String, Integer> chooseResourcesForYearOfPlenty() {
-        gameplay.getCatanBoardGameView().logToGameLog("ai used chooseresource for year plenty ai method!");
+        gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("ai used choose resource for year plenty ai method!"));
+
         Strategy currentStrategy = determineStrategy();
         Set<String> needed = getNeededResourcesForStrategy(currentStrategy);
 
