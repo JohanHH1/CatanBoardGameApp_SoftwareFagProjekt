@@ -15,7 +15,7 @@ public class DevelopmentCard {
     private final List<Player> playerList;
     private final CatanBoardGameView view;
     private final TradeController tradeController;
-    private final DrawOrDisplay drawOrDisplay;
+    private DrawOrDisplay drawOrDisplay;
     private CatanBoardGameView catanBoardGameView;
     private boolean placingFreeRoads = false;
     private boolean playingCard = false;
@@ -26,7 +26,6 @@ public class DevelopmentCard {
         this.playerList = playerList;
         this.view = view;
         this.tradeController = tradeController;
-        this.drawOrDisplay = gameplay.getDrawOrDisplay();
     }
 
     public enum DevelopmentCardType {

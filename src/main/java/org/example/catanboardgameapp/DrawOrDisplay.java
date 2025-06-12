@@ -438,8 +438,10 @@ public class DrawOrDisplay {
                 null
         );
         if (result == null) return null;
+
         return result.entrySet().stream().filter(entry -> entry.getValue() == 1).map(Map.Entry::getKey).findFirst().orElse(null);
     }
+
 
     public Map<String, Integer> showYearOfPlentyDialog() {
         List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
@@ -581,7 +583,6 @@ public class DrawOrDisplay {
         dialogStage.showAndWait();
         return result[0];
     }
-
     //___________________________________GETTERS____________________________________//
     public StackPane getOverlayPane() {
         return aiOverlayPane;

@@ -56,7 +56,7 @@ public class Gameplay {
 
     }*/
     private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
-           KNIGHT, KNIGHT
+            VICTORYPOINT, VICTORYPOINT, YEAROFPLENTY, YEAROFPLENTY
 
     };
 
@@ -710,7 +710,7 @@ public class Gameplay {
     }
 
     public LongestRoadManager getLongestRoadManager() {
-        return longestRoadManager;
+        return  longestRoadManager;
     }
 
 //__________________________GETTERS________________________//

@@ -217,7 +217,6 @@ public class Robber {
                 }
                 if (discarded != null) {
                     discardResourcesForPlayer(p, discarded);
-                    catanBoardGameView.refreshSidebar();
                 }});
                 }
             }

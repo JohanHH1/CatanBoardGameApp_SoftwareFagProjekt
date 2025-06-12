@@ -260,6 +260,7 @@ public class Board {
         return boardGroup;
     }
 
+
     private Point2D axialToPixel(int q, int r) {
         double offsetX = GAME_WIDTH / 2;
         double offsetY = GAME_HEIGHT / 2;
