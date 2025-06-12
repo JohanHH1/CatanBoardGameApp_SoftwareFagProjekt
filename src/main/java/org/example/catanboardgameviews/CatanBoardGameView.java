@@ -167,6 +167,8 @@ public class CatanBoardGameView {
         root.setCenter(splitPane);
         root.setTop(createTopButtonBar());
         root.setLeft(createLeftMenu(false));
+        root.setStyle("-fx-background-color: #f9f0d2;");
+
 
         // Overlay for when AI is making a move (thinking)
         drawOrDisplay.buildFancyAIOverlay();
@@ -215,6 +217,14 @@ public class CatanBoardGameView {
         VBox logBox = new VBox(bottomContent);
         VBox.setVgrow(bottomContent, Priority.ALWAYS);
         VBox.setVgrow(logBox, Priority.ALWAYS);
+
+        logBox.setStyle("""
+    -fx-background-color: linear-gradient(to bottom, #f9f0d2, #e2c18f);
+    -fx-border-color: #a86c1f;
+    -fx-border-width: 2;
+
+""");
+
 
         return logBox;
     }
@@ -313,7 +323,7 @@ public class CatanBoardGameView {
     
         -fx-background-radius: 12;
         -fx-border-radius: 12;
-        -fx-border-color: #5e3c10;
+        -fx-border-color: #a86c1f;
         -fx-border-width: 2;
         -fx-padding: 6 14 6 14;
         -fx-font-family: 'Georgia', 'Serif';
@@ -550,8 +560,8 @@ public class CatanBoardGameView {
             -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
             -fx-border-color: #8c5b1a;
             -fx-border-width: 2;
-            -fx-border-radius: 12;
-            -fx-background-radius: 12;
+            -fx-border-radius: 0;
+            -fx-background-radius: 0;
             -fx-min-width: 220;
         """);
 
