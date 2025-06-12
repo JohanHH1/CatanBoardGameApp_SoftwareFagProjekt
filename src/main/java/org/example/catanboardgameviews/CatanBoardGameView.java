@@ -101,7 +101,26 @@ public class CatanBoardGameView {
         this.gameLogArea = new TextArea();
         gameLogArea.setEditable(false);
         gameLogArea.setWrapText(true);
-        gameLogArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12;");
+
+        gameLogArea.setFocusTraversable(false);
+        gameLogArea.setPrefRowCount(8); // valfri höjd
+        gameLogArea.setStyle("""
+    -fx-font-family: 'Georgia';
+    -fx-font-size: 12;
+    -fx-text-fill: #3e2b1f;
+    -fx-control-inner-background: #f9f0d2;
+    -fx-highlight-fill: #d4a627;
+    -fx-highlight-text-fill: black;
+    -fx-prompt-text-fill: #a86c1f;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #a86c1f;
+    -fx-border-width: 1.5;
+    -fx-padding: 6;
+""");
+
+
+        /*gameLogArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12;"); */
 
         // Drawing/rendering utility
         this.drawOrDisplay = gameplay.getDrawOrDisplay(); // Get shared instance
@@ -172,11 +191,18 @@ public class CatanBoardGameView {
         diceImages.setAlignment(Pos.CENTER_LEFT);
         diceImages.setPadding(new Insets(0, 0, 0, 5));
 
-        VBox diceColumn = new VBox(new Label("Dice Roll"), diceImages);
+        //VBox diceColumn = new VBox(new Label("Dice Roll"), diceImages);
+
+        Label diceLabel = new Label("Dice Roll");
+        diceLabel.setFont(Font.font("Georgia", FontWeight.BOLD, 14)); // eller valfri storlek/vikt
+
+        VBox diceColumn = new VBox(diceLabel, diceImages);
+
         diceColumn.setAlignment(Pos.TOP_LEFT);
         diceColumn.setPadding(new Insets(5));
 
         Label logLabel = new Label("Game Log");
+        logLabel.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
 
         VBox logColumn = new VBox(logLabel, gameLogArea);
         logColumn.setPadding(new Insets(5, 10, 5, 0));
@@ -280,6 +306,29 @@ public class CatanBoardGameView {
                 tradeButton, developmentCardButton, showCostsButton, toggleConfirmBtn, exitButton
         );
 
+
+        String baseStyle = """
+        -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
+        -fx-text-fill: #2b1d0e;
+    
+        -fx-background-radius: 12;
+        -fx-border-radius: 12;
+        -fx-border-color: #5e3c10;
+        -fx-border-width: 2;
+        -fx-padding: 6 14 6 14;
+        -fx-font-family: 'Georgia', 'Serif';
+        -fx-cursor: hand;
+    """;
+
+        String hoverStyle = "-fx-background-color: linear-gradient(to bottom, #f0c785, #c5852f);";
+
+        allButtons.forEach(btn -> {
+            btn.setStyle(baseStyle);
+            btn.setOnMouseEntered(e -> btn.setStyle(baseStyle + hoverStyle));
+            btn.setOnMouseExited(e -> btn.setStyle(baseStyle));
+        });
+
+/*
         String style = "-fx-background-color: linear-gradient(to bottom, #f9f9f9, #e0e0e0); -fx-background-radius: 8;" +
                 "-fx-border-radius: 8; -fx-border-color: #b0b0b0; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 14 8 14;";
         String hover = "-fx-background-color: linear-gradient(to bottom, #e6e6e6, #cccccc);";
@@ -288,7 +337,7 @@ public class CatanBoardGameView {
             btn.setStyle(style);
             btn.setOnMouseEntered(e -> btn.setStyle(style + hover));
             btn.setOnMouseExited(e -> btn.setStyle(style));
-        });
+        });*/
         hideTurnButton();
         hideDiceButton();
 
@@ -296,25 +345,58 @@ public class CatanBoardGameView {
         buttonBox.getChildren().addAll(allButtons);
         buttonBox.setPadding(new Insets(10));
         buttonBox.setAlignment(Pos.CENTER_LEFT);
-        buttonBox.setStyle("-fx-background-color: linear-gradient(to bottom, #ececec, #d4d4d4); -fx-border-color: #aaa; -fx-border-width: 0 0 1 0;");
+
+        buttonBox.setStyle("""
+        -fx-background-color: linear-gradient(to bottom, #f3e2c7, #d2a86e);
+        -fx-border-color: #a86c1f;
+        -fx-border-width: 0 0 3 0;
+    """);
+
+        /*buttonBox.setStyle("-fx-background-color: linear-gradient(to bottom, #ececec, #d4d4d4); -fx-border-color: #aaa; -fx-border-width: 0 0 1 0;");*/
         return buttonBox;
     }
 
     private VBox createPlayerBox(Player player, double nameFontSize, double infoFontSize) {
         VBox playerBox = new VBox(5);
 
+
+        playerBox.setPadding(new Insets(8)); //new
+        playerBox.setSpacing(4);
+        playerBox.setStyle("""
+        -fx-background-color: linear-gradient(to bottom, #f3e2c7, #e0b97d);
+        -fx-background-radius: 10;
+        -fx-border-radius: 10;
+        -fx-border-color: #a86c1f;
+        -fx-border-width: 1.5;
+    """);
+
+
         String displayName = (player instanceof AIOpponent ai)
                 ? "AIPlayer " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
                 : "Player " + player.getPlayerId();
 
         Text playerName = new Text(displayName);
-        playerName.setFont(Font.font("Arial", FontWeight.BOLD, nameFontSize));
+        playerName.setFont(Font.font("Georgia", FontWeight.BOLD, nameFontSize));
         playerName.setFill(player.getColor());
 
+
+        if (player == gameplay.getCurrentPlayer()) { //new
+            playerBox.setStyle("""
+            -fx-background-color: linear-gradient(to bottom, #fff6cc, #eedc9a);
+            -fx-border-color: #d4a627;
+            -fx-border-width: 2;
+            -fx-background-radius: 10;
+            -fx-border-radius: 10;
+        """);
+            playerName.setFont(Font.font("Georgia", FontWeight.EXTRA_BOLD, nameFontSize + 6));
+        }
+
+
+        /*
         if (player == gameplay.getCurrentPlayer()) {
             playerBox.setStyle("-fx-background-color: lightyellow; -fx-border-color: black; -fx-border-width: 2px;");
             playerName.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, nameFontSize + 2));
-        }
+        } */
 
         playerBox.getChildren().add(playerName);
 
@@ -322,7 +404,7 @@ public class CatanBoardGameView {
             // Expandable resource section
             int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
             Button resourceButton = new Button("Resources: " + totalResources);
-            resourceButton.setFont(Font.font("Arial", infoFontSize));
+            resourceButton.setFont(Font.font("Georgia", infoFontSize));
 
             VBox resourceDetailsBox = new VBox(3);
             resourceDetailsBox.setPadding(new Insets(5, 0, 0, 10));
@@ -331,7 +413,7 @@ public class CatanBoardGameView {
 
             for (Map.Entry<String, Integer> entry : player.getResources().entrySet()) {
                 Text resourceText = new Text(entry.getKey() + ": " + entry.getValue());
-                resourceText.setFont(Font.font("Arial", infoFontSize));
+                resourceText.setFont(Font.font("Georgia", infoFontSize));
                 resourceDetailsBox.getChildren().add(resourceText);
             }
 
@@ -346,7 +428,7 @@ public class CatanBoardGameView {
             // Expandable dev cards
             int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
             Button devCardButton = new Button("Development Cards: " + totalDevCards);
-            devCardButton.setFont(Font.font("Arial", infoFontSize));
+            devCardButton.setFont(Font.font("Georgia", infoFontSize));
 
             VBox devCardDetailsBox = new VBox(3);
             devCardDetailsBox.setPadding(new Insets(5, 0, 0, 10));
@@ -358,7 +440,7 @@ public class CatanBoardGameView {
                     DevelopmentCardType type = entry.getKey(); // capture outside lambda
 
                     Button cardButton = new Button(type.getDisplayName() + " (" + entry.getValue() + ")");
-                    cardButton.setFont(Font.font("Arial", infoFontSize));
+                    cardButton.setFont(Font.font("Georgia", infoFontSize));
 
                     cardButton.setOnAction(e -> {
                         try {
@@ -381,12 +463,12 @@ public class CatanBoardGameView {
         } else {
             int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
             Text resourceTotal = new Text("Resources: " + totalResources);
-            resourceTotal.setFont(Font.font("Arial", infoFontSize));
+            resourceTotal.setFont(Font.font("Georgia", infoFontSize));
             playerBox.getChildren().add(resourceTotal);
 
             int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
             Text devCardTotal = new Text("Development Cards: " + totalDevCards);
-            devCardTotal.setFont(Font.font("Arial", infoFontSize));
+            devCardTotal.setFont(Font.font("Georgia", infoFontSize));
             playerBox.getChildren().add(devCardTotal);
         }
 
@@ -394,7 +476,7 @@ public class CatanBoardGameView {
 
         if (player == longestRoadManager.getCurrentHolder()) {
             Text longestRoadText = new Text("🏅 Longest road");;
-            longestRoadText.setFont(Font.font("Arial", FontWeight.BOLD, infoFontSize));
+            longestRoadText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
             playerBox.getChildren().add(longestRoadText);
         }
 
@@ -402,12 +484,12 @@ public class CatanBoardGameView {
 
         if (player == biggestArmy.getCurrentHolder()) {
             Text biggestArmyText = new Text("🏅 Largest army");
-            biggestArmyText.setFont(Font.font("Arial", FontWeight.BOLD, infoFontSize));
+            biggestArmyText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
             playerBox.getChildren().add(biggestArmyText);
         }
 
         Text pointsText = new Text("Victory points: " + player.getPlayerScore());
-        pointsText.setFont(Font.font("Arial", infoFontSize));
+        pointsText.setFont(Font.font("Georgia", infoFontSize));
         playerBox.getChildren().add(pointsText);
 
         return playerBox;
@@ -425,7 +507,46 @@ public class CatanBoardGameView {
         double infoFontSize = 12;
 
         Text title = new Text("Player Stats");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+
+        title.setFont(Font.font("Georgia", FontWeight.BOLD, 16));
+        title.setFill(Color.web("#5e3c10"));
+        playerListVBox.getChildren().add(title);
+
+        for (Player player : gameplay.getPlayerList()) {
+            VBox playerBox = createPlayerBox(player, nameFontSize, infoFontSize);
+            playerBox.setStyle("""
+            -fx-background-color: linear-gradient(to bottom, #f3e2c7, #e0b97d);
+            -fx-padding: 6;
+            -fx-background-radius: 8;
+            -fx-border-color: #a86c1f;
+            -fx-border-radius: 8;
+        """);
+            playerListVBox.getChildren().add(playerBox);
+        }
+
+        if (!hasBeenInitialized) {
+            ScrollPane scrollPane = new ScrollPane(playerListVBox);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setPrefHeight(500);
+            scrollPane.setStyle("""
+            -fx-background: transparent;
+            -fx-background-color: transparent;
+            -fx-border-color: #a86c1f;
+            -fx-border-radius: 10;
+        """);
+
+            VBox container = new VBox(scrollPane);
+            container.setPadding(new Insets(8));
+            container.setStyle("""
+            -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+            -fx-border-color: #8c5b1a;
+            -fx-border-width: 2;
+            -fx-border-radius: 12;
+            -fx-background-radius: 12;
+            -fx-min-width: 220;
+        """);
+
+        /*title.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         playerListVBox.getChildren().add(title);
 
         for (Player player : gameplay.getPlayerList()) {
@@ -440,7 +561,7 @@ public class CatanBoardGameView {
             scrollPane.setStyle("-fx-background-color: #e0e0e0;");
 
             VBox container = new VBox(scrollPane);
-            container.setStyle("-fx-background-color: #e0e0e0; -fx-min-width: 200;");
+            container.setStyle("-fx-background-color: #e0e0e0; -fx-min-width: 200;");*/
             return container;
         }
 

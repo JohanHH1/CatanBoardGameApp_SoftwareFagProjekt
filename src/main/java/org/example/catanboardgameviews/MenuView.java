@@ -320,10 +320,10 @@ public class MenuView {
     private Button createMenuButton(String text, int width, int height) {
         Button button = new Button(text);
         button.setPrefSize(width, height);
-        button.setFont(new Font("Arial", 20));
+        button.setFont(new Font("Georgia", 20));
         button.setStyle(
                 "-fx-background-color: #6E2C00;" +
-                        "-fx-text-fill: white;" +
+                        "-fx-text-fill: #fceabb;" +
                         "-fx-background-radius: 10;" +
                         "-fx-cursor: hand;"
         );
@@ -334,7 +334,7 @@ public class MenuView {
         ));
         button.setOnMouseExited(e -> button.setStyle(
                 "-fx-background-color: #6E2C00;" +
-                        "-fx-text-fill: white;" +
+                        "-fx-text-fill: #fceabb;" +
                         "-fx-background-radius: 10;"
         ));
         return button;
