@@ -38,7 +38,7 @@ public class DevelopmentCard {
 
             @Override
             public void playAsAI(AIOpponent ai, DevelopmentCard devCard, Gameplay gameplay) {
-                String resource = ai.chooseSmartResourceToReceive(gameplay);
+                String resource = ai.chooseSmartResourceToMonopoly(gameplay);
                 int total = devCard.monopolizeResource(resource, ai);
                 devCard.log("AI played Monopoly and took " + total + " " + resource);
             }

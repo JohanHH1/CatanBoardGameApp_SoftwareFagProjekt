@@ -452,10 +452,12 @@ public class AIOpponent extends Player {
         
         return currentHolder != this && closeEnough && hasResourcesLR;
     }
+
+
+
     private boolean tryBuyDevCard(Gameplay gameplay) {
         if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1) || !gameplay.hasRolledDice()) {return false;}
             gameplay.buyDevelopmentCard();
-        gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +" has "+  gameplay.getCurrentPlayer().getDevelopmentCards().toString()));
 
         return true;
     }
@@ -464,20 +466,13 @@ public class AIOpponent extends Player {
         if (hasNoDevelopmentCards()) {
             return false;
         } else {
-            DevelopmentCard.DevelopmentCardType devCardType = removeFirstDevelopmentCard();
+            DevelopmentCard.DevelopmentCardType devCardType = getFirstDevelopmentCard();
             if (devCardType != null) {
-                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(
-                        gameplay.getCurrentPlayer() + " has " + gameplay.getCurrentPlayer().getDevelopmentCards().toString()
-
-                        )
-                );
-
                 // Call the enum-based AI method
+                System.out.println(gameplay.getCurrentPlayer() +"HAS PLAYED A DEVELOPMENT!!!!!!! " + devCardType);
                 devCardType.playAsAI(this, gameplay.getDevelopmentCard(), gameplay);
-
                 // Remove it from inventory AFTER play
                 getDevelopmentCards().computeIfPresent(devCardType, (k, v) -> (v > 1) ? v - 1 : 0);
-
                 return true;
             }
         }
@@ -965,6 +960,11 @@ public class AIOpponent extends Player {
         int woolFromOpponents = totalOpponentResources.getOrDefault("Wool", 0);
         int woodFromOpponents = totalOpponentResources.getOrDefault("Wood", 0);
         int brickFromOpponents = totalOpponentResources.getOrDefault("Brick", 0);
+        System.out.println("ore to steal: " +oreFromOpponents );
+        System.out.println("Grain to steal: " +grainFromOpponents );
+        System.out.println("Wool to steal: " +woolFromOpponents );
+        System.out.println("Wood to steal: " +woodFromOpponents );
+        System.out.println("Brick to steal: " +brickFromOpponents );
 
         // enough to build a city
         int oreNeed = Math.max(0, 3 - oreHave);

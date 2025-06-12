@@ -43,7 +43,6 @@ public class Gameplay {
     private DevelopmentCard developmentCard;
     private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
             MONOPOLY, MONOPOLY,
-            ROADBUILDING, ROADBUILDING,
             YEAROFPLENTY, YEAROFPLENTY,
             VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT,
@@ -52,6 +51,13 @@ public class Gameplay {
     };
 //    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
 //           KNIGHT, KNIGHT
+//private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
+ //       MONOPOLY, MONOPOLY,
+   //     ROADBUILDING, ROADBUILDING,
+    //    YEAROFPLENTY, YEAROFPLENTY,
+    //    VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT,
+    //    KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT,
+    //    KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT
 //
 //    };
 
@@ -350,8 +356,11 @@ public class Gameplay {
 
             // Store the card in the player's development card map
             currentPlayer.getDevelopmentCards().merge(cardType, 1, Integer::sum);
+            System.out.println("DEV CARDS AFTER MERGE: " + currentPlayer.getDevelopmentCards());// removed before hand in
+            System.out.println("Current player class: " + currentPlayer.getClass().getSimpleName());// removed before hand in
+            System.out.println("Current player ID: " + currentPlayer.getPlayerId()); // removed before hand in
 
-            String log = currentPlayer + " bought a development card: " + cardType.getDisplayName();
+            String log = currentPlayer + " bought a development card: " + cardType.getDisplayName(); // removed before hand in 
             catanBoardGameView.runOnFX(() -> {
                 catanBoardGameView.logToGameLog(log);
                 catanBoardGameView.refreshSidebar();
@@ -366,15 +375,15 @@ public class Gameplay {
             drawOrDisplay.showFinishDevelopmentCardActionPopup();
             return;
         }
-
         // Play the card
         type.play(player, developmentCard);
 
         // Safely remove it from the player's collection
-        player.getDevelopmentCards().computeIfPresent(type, (k, v) -> (v > 1) ? v - 1 : null);
+        player.getDevelopmentCards().computeIfPresent(type, (k, v) -> (v > 1) ? v - 1 : 0);
 
         catanBoardGameView.runOnFX(() -> {
             catanBoardGameView.logToGameLog(player + " played " + type.getDisplayName() + " card.");
+            catanBoardGameView.logToGameLog(player + " now has " + getDevelopmentCard().toString()); // needs to be removed at some point
             catanBoardGameView.refreshSidebar();
         });
     }

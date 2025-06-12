@@ -131,20 +131,13 @@ public class Player {
     public Map<DevelopmentCardType, Integer> getDevelopmentCards() {
         return developmentCards;
     }
-    public DevelopmentCardType removeFirstDevelopmentCard() {
-        for (Map.Entry<DevelopmentCardType, Integer> entry : developmentCards.entrySet()) {
-            DevelopmentCardType type = entry.getKey();
-            int count = entry.getValue();
-
-            if (count > 1) {
-                developmentCards.put(type, count - 1);
-            } else {
-                developmentCards.remove(type);
+    public DevelopmentCardType getFirstDevelopmentCard() {
+        for (Map.Entry<DevelopmentCard.DevelopmentCardType, Integer> entry : developmentCards.entrySet()) {
+            if (entry.getValue() > 0) {
+                return entry.getKey(); // ✅ Return the first card type without modifying the map
             }
-
-            return type;
         }
-        return null; // or throw an exception if the map is empty
+        return null;
     }
 
     public List<Vertex> getSettlements() {
