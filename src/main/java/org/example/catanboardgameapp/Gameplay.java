@@ -56,7 +56,7 @@ public class Gameplay {
 
     }*/
     private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
-            VICTORYPOINT, VICTORYPOINT, YEAROFPLENTY, YEAROFPLENTY
+           KNIGHT, KNIGHT
 
     };
 

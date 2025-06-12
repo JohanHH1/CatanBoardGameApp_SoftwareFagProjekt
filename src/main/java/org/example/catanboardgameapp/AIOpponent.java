@@ -453,12 +453,13 @@ public class AIOpponent extends Player {
         boolean hasResourcesLR = hasResources("Wood", 1) && hasResources("Brick", 1);
         
         return currentHolder != this && closeEnough && hasResourcesLR;
-
     }
     private boolean tryBuyDevCard(Gameplay gameplay) {
         if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1) || !gameplay.hasRolledDice()) {return false;}
             gameplay.buyDevelopmentCard();
         gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +  " has bought a development card"));
+        gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +" has "+  gameplay.getCurrentPlayer().getDevelopmentCards().toString()));
+
         return true;
     }
 
@@ -468,7 +469,7 @@ public class AIOpponent extends Player {
         } else {
             DevelopmentCard.DevelopmentCardType devCard = removeFirstDevelopmentCard();
             if (devCard != null) {
-                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() + " has getDevelopmentCards().toString()"));
+                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +" has "+  gameplay.getCurrentPlayer().getDevelopmentCards().toString()));
                 gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() + " has played a development card !!!!!!!!!!!!!!!!!!!!!!!!!"));
                 playDevelopmentCardAsAI(devCard,gameplay);
                 //devCard.play(this, gameplay.getDevelopmentCard());
@@ -488,27 +489,10 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
         case KNIGHT -> {
             increasePlayedKnights();
             gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(this);
-
-            Player victim = chooseBestRobberyTargetForHardAI(this, gameplay.getPlayerList());
-            if (victim != null) {
-                List<String> pool = new ArrayList<>();
-                victim.getResources().forEach((res, count) -> {
-                    for (int i = 0; i < count; i++) {
-                        pool.add(res);
-                    }
-                });
-
-                if (!pool.isEmpty()) {
-                    Collections.shuffle(pool);
-                    String stolen = pool.get(0);
-
-                    victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
-                    this.getResources().put(stolen, this.getResources().getOrDefault(stolen, 0) + 1);
-                    gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Knight and stole 1 " + stolen + " from Player " + victim.getPlayerId()));
-                } else {
-                    gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Knight but " + victim + " had no resources."));
-                }
-            }
+            increasePlayedKnights();
+            gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(this);
+            Group boardGroup = gameplay.getCatanBoardGameView().getBoardGroup();
+            gameplay.getCatanBoardGameView().getRobber().showRobberTargets(boardGroup);
         }
         case ROADBUILDING -> {
             int placed = 0;
@@ -870,6 +854,11 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
                 if (getResources().getOrDefault("Wool", 0) < 1) needed.add("Wool");
                 if (getResources().getOrDefault("Grain", 0) < 1) needed.add("Grain");
             }
+            case DEVELOPMENTCARDBYER -> {
+                if (getResources().getOrDefault("Ore", 0) < 1) needed.add("Ore");
+                if (getResources().getOrDefault("Wool", 0) < 1) needed.add("Wool");
+                if (getResources().getOrDefault("Grain", 0) < 1) needed.add("Grain");
+            }
             case ROADBUILDER -> {
                 if (getResources().getOrDefault("Brick", 0) < 1) needed.add("Brick");
                 if (getResources().getOrDefault("Wood", 0) < 1) needed.add("Wood");
@@ -1068,8 +1057,6 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
     }
 
     public Map<String, Integer> chooseResourcesForYearOfPlenty() {
-        gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("ai used choose resource for year plenty ai method!"));
-
         Strategy currentStrategy = determineStrategy();
         Set<String> needed = getNeededResourcesForStrategy(currentStrategy);
 
