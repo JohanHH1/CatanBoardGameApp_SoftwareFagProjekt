@@ -447,7 +447,7 @@ public class AIOpponent extends Player {
                 gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() + " has played a development card !!!!!!!!!!!!!!!!!!!!!!!!!");
                 playDevelopmentCardAsAI(devCard,gameplay);
                 //devCard.play(this, gameplay.getDevelopmentCard());
-                getDevelopmentCards().computeIfPresent(devCard, (k, v) -> (v > 1) ? v - 1 : null);
+                getDevelopmentCards().computeIfPresent(devCard, (k, v) -> (v > 1) ? v - 1 : 0);
                 return true;
             }
         }
@@ -510,12 +510,9 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
         }
         case VICTORYPOINT -> {
             increasePlayerScore();
-            System.out.println("IS IN VICTORYPOINT TO INCREASE SCORE!!!!!!!!!1");
             gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog("AI played Victory Point and gained 1 point."));
         }
     }
-    // Remove card from inventory
-    getDevelopmentCards().computeIfPresent(cardType, (k, v) -> (v > 1) ? v - 1 : 0);
     }
 
     private boolean tryBuildRoad(Gameplay gameplay, Group boardGroup) {

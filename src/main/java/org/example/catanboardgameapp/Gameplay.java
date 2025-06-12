@@ -55,7 +55,7 @@ public class Gameplay {
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT
     };*/
     private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
-            VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT
+            VICTORYPOINT, VICTORYPOINT, YEAROFPLENTY, YEAROFPLENTY
     };
 
     private List<DevelopmentCard.DevelopmentCardType> shuffledDevelopmentCards;
