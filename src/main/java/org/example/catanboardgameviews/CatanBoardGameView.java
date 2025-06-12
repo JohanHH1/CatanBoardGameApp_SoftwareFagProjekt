@@ -368,19 +368,15 @@ public class CatanBoardGameView {
 
     private VBox createPlayerBox(Player player, double nameFontSize, double infoFontSize) {
         VBox playerBox = new VBox(5);
-
-
-        playerBox.setPadding(new Insets(8)); //new
+        playerBox.setPadding(new Insets(8));
         playerBox.setSpacing(4);
-        playerBox.setStyle("""
-        -fx-background-color: linear-gradient(to bottom, #f3e2c7, #e0b97d);
+
+        String baseStyle = """
         -fx-background-radius: 10;
         -fx-border-radius: 10;
-        -fx-border-color: #a86c1f;
-        -fx-border-width: 1.5;
-    """);
+    """;
 
-
+        String playerStyle;
         String displayName = (player instanceof AIOpponent ai)
                 ? "AIPlayer " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
                 : "Player " + player.getPlayerId();
@@ -390,17 +386,25 @@ public class CatanBoardGameView {
         playerName.setFill(player.getColor());
 
 
-        if (player == gameplay.getCurrentPlayer()) { //new
-            playerBox.setStyle("""
+        if (player == gameplay.getCurrentPlayer()) {
+            playerStyle = """
             -fx-background-color: linear-gradient(to bottom, #fff6cc, #eedc9a);
-            -fx-border-color: #d4a627;
-            -fx-border-width: 2;
-            -fx-background-radius: 10;
-            -fx-border-radius: 10;
-        """);
+            -fx-border-color: #d4a627, #000000;
+            -fx-border-insets: 0, 2;
+            -fx-border-width: 4, 2;
+        """;
             playerName.setFont(Font.font("Georgia", FontWeight.EXTRA_BOLD, nameFontSize + 6));
+            playerName.setText(displayName);
+        } else {
+            playerStyle = """
+            -fx-background-color: linear-gradient(to bottom, #f3e2c7, #e0b97d);
+            -fx-border-color: #a86c1f;
+            -fx-border-width: 1.5;
+        """;
         }
 
+        playerBox.setStyle(baseStyle + playerStyle);
+        playerBox.getChildren().add(playerName);
 
         /*
         if (player == gameplay.getCurrentPlayer()) {
@@ -408,7 +412,7 @@ public class CatanBoardGameView {
             playerName.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, nameFontSize + 2));
         } */
 
-        playerBox.getChildren().add(playerName);
+        //playerBox.getChildren().add(playerName);
 
         if (player == gameplay.getCurrentPlayer()) {
             // Expandable resource section
@@ -538,15 +542,8 @@ public class CatanBoardGameView {
         title.setFill(Color.web("#5e3c10"));
         playerListVBox.getChildren().add(title);
 
-        for (Player player : gameplay.getPlayerList()) {
+       for (Player player : gameplay.getPlayerList()) {
             VBox playerBox = createPlayerBox(player, nameFontSize, infoFontSize);
-            playerBox.setStyle("""
-            -fx-background-color: linear-gradient(to bottom, #f3e2c7, #e0b97d);
-            -fx-padding: 6;
-            -fx-background-radius: 8;
-            -fx-border-color: #a86c1f;
-            -fx-border-radius: 8;
-        """);
             playerListVBox.getChildren().add(playerBox);
         }
 
