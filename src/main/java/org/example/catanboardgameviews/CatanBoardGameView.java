@@ -14,6 +14,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -389,25 +390,25 @@ public class CatanBoardGameView {
             playerBox.getChildren().add(devCardTotal);
         }
 
-        Text pointsText = new Text("Victory points: " + player.getPlayerScore());
-        pointsText.setFont(Font.font("Arial", infoFontSize));
-        playerBox.getChildren().add(pointsText);
-
         LongestRoadManager longestRoadManager = gameplay.getLongestRoadManager();
 
         if (player == longestRoadManager.getCurrentHolder()) {
-            Text longestRoadText = new Text("Longest road");
-            pointsText.setFont(Font.font("Arial", infoFontSize));
+            Text longestRoadText = new Text("🏅 Longest road");;
+            longestRoadText.setFont(Font.font("Arial", FontWeight.BOLD, infoFontSize));
             playerBox.getChildren().add(longestRoadText);
         }
 
         BiggestArmy biggestArmy = gameplay.getBiggestArmy();
 
         if (player == biggestArmy.getCurrentHolder()) {
-            Text biggestArmyText = new Text("Largest army");
-            biggestArmyText.setFont(Font.font("Arial", infoFontSize));
+            Text biggestArmyText = new Text("🏅 Largest army");
+            biggestArmyText.setFont(Font.font("Arial", FontWeight.BOLD, infoFontSize));
             playerBox.getChildren().add(biggestArmyText);
         }
+
+        Text pointsText = new Text("Victory points: " + player.getPlayerScore());
+        pointsText.setFont(Font.font("Arial", infoFontSize));
+        playerBox.getChildren().add(pointsText);
 
         return playerBox;
     }
