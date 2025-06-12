@@ -933,6 +933,124 @@ public class AIOpponent extends Player {
         return score;
     }
 
+    public String chooseSmartResourceToMonopoly(Gameplay gameplay){
+        //by
+        ///settelment
+        // hvad den kan bytte frest til via havn eller 4:1
+
+        List<Player> opponents = gameplay.getPlayerList().stream()
+                .filter(p -> p != this)
+                .toList();
+
+        Map<String, Integer> totalOpponentResources = new HashMap<>();
+
+        for (Player p : opponents) {
+            for (Map.Entry<String, Integer> entry : p.getResources().entrySet()) {
+                totalOpponentResources.merge(entry.getKey(), entry.getValue(), Integer::sum);
+            }
+        }
+
+
+        // --- Step 1: Check if we can steal enough to build a full city ---
+        int oreHave = this.getResources().getOrDefault("Ore", 0);
+        int grainHave = this.getResources().getOrDefault("Grain", 0);
+        int woolHave = this.getResources().getOrDefault("Wool", 0);
+        int woodHave = this.getResources().getOrDefault("Wood", 0);
+        int brickHave = this.getResources().getOrDefault("Brick", 0);
+
+
+
+        int oreFromOpponents = totalOpponentResources.getOrDefault("Ore", 0);
+        int grainFromOpponents = totalOpponentResources.getOrDefault("Grain", 0);
+        int woolFromOpponents = totalOpponentResources.getOrDefault("Wool", 0);
+        int woodFromOpponents = totalOpponentResources.getOrDefault("Wood", 0);
+        int brickFromOpponents = totalOpponentResources.getOrDefault("Brick", 0);
+
+        // enough to build a city
+        int oreNeed = Math.max(0, 3 - oreHave);
+        int grainNeed = Math.max(0, 2 - grainHave);
+
+        if ((oreFromOpponents >= oreNeed) && grainNeed==0 ){
+            System.out.println("steals ore for city");
+            return "Ore";
+        } else if (grainFromOpponents >= grainNeed && oreNeed==0) {
+            System.out.println("steals grain for city");
+            return"Grain";
+        }
+
+        // enought to build a settelment:
+        grainNeed = Math.max(0, 1 - grainHave);
+        int woodNeed = Math.max(0, 1 - woodHave);
+        int woolNeed = Math.max(0, 1 - woolHave);
+        int brickNeed = Math.max(0, 1 - brickHave);
+        if (grainNeed > 0 && grainNeed <= grainFromOpponents
+                && woodNeed == 0 && woolNeed == 0 && brickNeed == 0) {
+            System.out.println("steals grain for settlement");
+            return "Grain";
+        } else if (woodNeed > 0 && woodNeed <= woodFromOpponents
+                && grainNeed == 0 && woolNeed == 0 && brickNeed == 0) {
+            System.out.println("steals Wood for settlement");
+            return "Wood";
+        } else if (woolNeed > 0 && woolNeed <= woolFromOpponents
+                && grainNeed == 0 && woodNeed == 0 && brickNeed == 0) {
+            System.out.println("steals Wool for settlement");
+            return "Wool";
+        } else if (brickNeed > 0 && brickNeed <= brickFromOpponents
+                && grainNeed == 0 && woolNeed == 0 && woodNeed == 0) {
+            System.out.println("steals Brick for settlement");
+            return "Brick";
+        }
+        Map.Entry<String, Integer> mostCommon = getMostCommonOpponentResourceWithCount(totalOpponentResources);
+        String mostCommonResourceName = mostCommon.getKey();
+        int count = mostCommon.getValue();
+        List<Harbor.HarborType> harborTypes = new ArrayList<>();
+        for (Harbor harbor : gameplay.getBoard().getHarbors()) {
+            if (harbor.usableBy(this)) {
+                harborTypes.add(harbor.getType());
+            }
+        }
+        String bestTradeResource = null;
+        int bestTradeValue = 0;
+
+        for (String resource : List.of("Ore", "Grain", "Wool", "Wood", "Brick")) {
+            int available = totalOpponentResources.getOrDefault(resource, 0);
+            int tradeRatio = 4; // default (not tradable)
+
+            // Check for specific 2:1 harbor
+            for (Harbor.HarborType type : harborTypes) {
+                if (type.specific != null && type.specific.name().equalsIgnoreCase(resource)) {
+                    tradeRatio = 2;
+                    break;
+                }
+            }
+
+            // If no 2:1 harbor, check for generic 3:1
+            if (tradeRatio == 4) {
+                for (Harbor.HarborType type : harborTypes) {
+                    if (type == Harbor.HarborType.GENERIC) {
+                        tradeRatio = 3;
+                        break;
+                    }
+                }
+            }
+
+            // If we have a usable harbor (2:1 or 3:1), compute trades
+            if (tradeRatio < 4) {
+                int tradeCount = available / tradeRatio;
+                if (tradeCount > bestTradeValue) {
+                    bestTradeValue = tradeCount;
+                    bestTradeResource = resource;
+                }
+            }
+        }
+        System.out.println("steals the best resource: " + bestTradeResource);
+        return bestTradeResource;
+    }
+    private Map.Entry<String, Integer> getMostCommonOpponentResourceWithCount(Map<String, Integer> totalOpponentResources) {
+        return totalOpponentResources.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .orElse(Map.entry("Grain", 0)); // fallback
+    }
     public String chooseSmartResourceToReceive(Gameplay gameplay) {
         List<String> allTypes = List.of("Brick", "Wood", "Ore", "Grain", "Wool");
         List<String> priority = List.of("Ore", "Grain", "Brick", "Wood", "Wool");
