@@ -405,6 +405,10 @@ public class CatanBoardGameView {
             int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
             Button resourceButton = new Button("Resources: " + totalResources);
             resourceButton.setFont(Font.font("Georgia", infoFontSize));
+            resourceButton.setStyle("""
+                                    -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
+                                    -fx-text-fill: #2b1d0e; """
+            );
 
             VBox resourceDetailsBox = new VBox(3);
             resourceDetailsBox.setPadding(new Insets(5, 0, 0, 10));
@@ -429,6 +433,11 @@ public class CatanBoardGameView {
             int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
             Button devCardButton = new Button("Development Cards: " + totalDevCards);
             devCardButton.setFont(Font.font("Georgia", infoFontSize));
+            devCardButton.setStyle("""
+                                    -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
+                                    -fx-text-fill: #2b1d0e; """
+                                    );
+
 
             VBox devCardDetailsBox = new VBox(3);
             devCardDetailsBox.setPadding(new Insets(5, 0, 0, 10));
