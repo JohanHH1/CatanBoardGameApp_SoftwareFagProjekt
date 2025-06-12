@@ -710,7 +710,7 @@ public class Gameplay {
     }
 
     public LongestRoadManager getLongestRoadManager() {
-        return  longestRoadManager;
+        return longestRoadManager;
     }
 
 //__________________________GETTERS________________________//
