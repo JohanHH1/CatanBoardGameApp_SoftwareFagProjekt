@@ -17,7 +17,7 @@ public class BuildController {
     private final Group boardGroup;
     private final DrawOrDisplay drawOrDisplay;
     private final GameController gameController;
-    private boolean confirmBeforeBuild = false; // 🔧 start with confirmation OFF
+    private boolean confirmBeforeBuild = false; // start with confirmation OFF
 
     //___________________________CONTROLLER__________________________________//
     public BuildController(GameController gameController) {
@@ -33,15 +33,18 @@ public class BuildController {
         return event -> {
             if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
                 if (gameController.getGameplay().isValidRoadPlacement(edge)) {
-                    gameController.getGameplay().getCurrentPlayer().getRoads().add(edge);
-                    buildRoad(edge, gameController.getGameplay().getCurrentPlayer());
-                    gameController.getGameView().logToGameLog("Placed free road via Road Building card.");
-                    gameController.getGameplay().getDevelopmentCard().decrementFreeRoads();
+                    gameController.getGameView().logToGameLog("Place your free roads now");
+                    Player player = gameController.getGameplay().getCurrentPlayer();
+                    BuildResult result = gameController.getGameplay().placeFreeRoad(player, edge);
+                    if (result == BuildResult.SUCCESS) {
+                        buildRoad(edge, player); // This will draw it on screen
+                        gameController.getGameView().logToGameLog("Placed a free road via Road Building card.");
+                        gameController.getGameplay().getDevelopmentCard().decrementFreeRoads();
 
-                    if (!gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
-                        gameController.getGameView().logToGameLog("Finished placing 2 free roads.");
-                        gameController.getGameView().refreshSidebar();
-                        gameController.getGameplay().getDevelopmentCard().finishPlayingCard();
+                        if (!gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
+                            gameController.getGameView().logToGameLog("Finished placing 2 free roads.");
+                            gameController.getGameplay().getDevelopmentCard().finishPlayingCard();
+                        }
                     }
                 } else {
                     double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
@@ -144,7 +147,7 @@ public class BuildController {
                     vertex.setOwner(currentPlayer);
                     drawOrDisplay.drawSettlement(circle, vertex, boardGroup);
                     circle.setOnMouseClicked(createSettlementClickHandler(circle, vertex, root));
-                    gameController.getGameView().logToGameLog("Settlement built by player " + currentPlayer.getPlayerId());
+                    gameController.getGameView().logToGameLog(currentPlayer.getPlayerId() + " built a SETTLEMENT");
                     gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                 }
                 case INSUFFICIENT_RESOURCES, INVALID_VERTEX -> {
@@ -159,7 +162,7 @@ public class BuildController {
                         gameController.getGameView().getSettlementLayer().getChildren().remove(circle);
                         drawOrDisplay.drawCity(vertex, gameController.getGameplay().getCatanBoardGameView().getBoardGroup());
                         gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
-                        gameController.getGameView().logToGameLog("City built by player " + currentPlayer.getPlayerId());
+                        gameController.getGameView().logToGameLog(currentPlayer.getPlayerId() + "built a CITY");
 
                     } else {
                         // Neither worked
@@ -181,8 +184,8 @@ public class BuildController {
         );
         drawOrDisplay.drawRoad(playerRoadLine, currentPlayer, boardGroup);
         gameController.getGameView().getRoadLayer().getChildren().add(playerRoadLine);
-
     }
+
     public void toggleConfirmBeforeBuild() {
         confirmBeforeBuild = !confirmBeforeBuild;
     }

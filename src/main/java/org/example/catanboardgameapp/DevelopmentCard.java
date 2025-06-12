@@ -32,7 +32,7 @@ public class DevelopmentCard {
             public void play(Player player, DevelopmentCard devCard) {
 
                 devCard.startPlayingCard();
-                devCard.gameplay.playMonopolyCard();
+                devCard.playMonopolyCard();
                 devCard.log("Player " + player.getPlayerId() + " played a monopoly development card");
             }
 
@@ -97,7 +97,7 @@ public class DevelopmentCard {
                 for (Edge edge : gameplay.getBoard().getEdges()) {
                     if (placed == 2) break;
                     if (gameplay.isValidRoadPlacement(edge)) {
-                        if (gameplay.buildRoad(edge) == BuildResult.SUCCESS) {
+                        if (gameplay.placeFreeRoad(ai, edge) == BuildResult.SUCCESS) {
                             placed++;
                             devCard.log("AI placed a free road.");
                         }
@@ -120,7 +120,6 @@ public class DevelopmentCard {
                 selected.forEach((res, amt) ->
                         ai.getResources().merge(res, amt, Integer::sum)
                 );
-
                 String gained = selected.entrySet().stream()
                         .map(e -> "+ " + e.getValue() + " " + e.getKey())
                         .collect(Collectors.joining(", "));
@@ -186,6 +185,15 @@ public class DevelopmentCard {
         }
     }
 
+    public void playMonopolyCard() {
+        Player currentPlayer = this.gameplay.getCurrentPlayer();
+        String chosenResource = drawOrDisplay.showMonopolyDialog();
+        if (chosenResource == null) return;
+        int taken = monopolizeResource(chosenResource, currentPlayer);
+        catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a Monopoly card and took " + taken + " " + chosenResource + " from other players." );
+        catanBoardGameView.refreshSidebar();
+        finishPlayingCard();
+    }
 
     // ------------------------
     // Utility Methods

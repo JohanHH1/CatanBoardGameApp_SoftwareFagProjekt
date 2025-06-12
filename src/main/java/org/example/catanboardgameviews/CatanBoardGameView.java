@@ -469,10 +469,9 @@ public class CatanBoardGameView {
                         try {
                             gameplay.playDevelopmentCard(player, type);
                         } catch (IllegalArgumentException ex) {
-                            gameplay.getCatanBoardGameView().logToGameLog("Invalid card: " + type);
+                            logToGameLog("Invalid card: " + type);
                         }
                     });
-
                     devCardDetailsBox.getChildren().add(cardButton);
                 }
             }
@@ -494,14 +493,11 @@ public class CatanBoardGameView {
             devCardTotal.setFont(Font.font("Georgia", infoFontSize));
             playerBox.getChildren().add(devCardTotal);
         }
-
-        LongestRoadManager longestRoadManager = gameplay.getLongestRoadManager();
-
         Text roadText = new Text("Longest road: " + player.getLongestRoad());
         roadText.setFont(Font.font("Georgia", infoFontSize));
 
         if (player == gameplay.getLongestRoadManager().getCurrentHolder()) {
-            roadText.setText("🏅 Longest road: " + player.getLongestRoad());
+            roadText.setText("🏅 LONGEST ROAD: " + player.getLongestRoad());
             roadText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
         }
 
@@ -512,7 +508,7 @@ public class CatanBoardGameView {
 
         BiggestArmyManager biggestArmy = gameplay.getBiggestArmy();
         if (player == biggestArmy.getCurrentHolder()) {
-            armyText.setText("Knights Played: " + player.getPlayedKnights() + " 🏅 Largest army");
+            armyText.setText("🏅 BIGGEST ARMY: " + player.getPlayedKnights());
             armyText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
         }
 
@@ -759,22 +755,28 @@ public class CatanBoardGameView {
 
     public void logToGameLog(String message) {
         System.out.println(message);
-        Platform.runLater(() -> {
-            gameLogArea.appendText(message + "\n");
-
-            // Force scroll to bottom after layout using timeline delay
-            javafx.animation.Timeline scrollTimeline = new javafx.animation.Timeline(
-                    new javafx.animation.KeyFrame(
-                            javafx.util.Duration.millis(50),
-                            ae -> {
-                                gameLogArea.setScrollTop(Double.MAX_VALUE);
-                                gameLogArea.positionCaret(gameLogArea.getLength());
-                            }
-                    )
-            );
-            scrollTimeline.play();
-        });
+        if (Platform.isFxApplicationThread()) {
+            appendToGameLog(message);
+        } else {
+            Platform.runLater(() -> appendToGameLog(message));
+        }
     }
+
+    private void appendToGameLog(String message) {
+        gameLogArea.appendText(message + "\n");
+
+        javafx.animation.Timeline scrollTimeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(
+                        javafx.util.Duration.millis(50),
+                        ae -> {
+                            gameLogArea.setScrollTop(Double.MAX_VALUE);
+                            gameLogArea.positionCaret(gameLogArea.getLength());
+                        }
+                )
+        );
+        scrollTimeline.play();
+    }
+
 
     public void showAITurnOverlay(Player aiPlayer) {
         Platform.runLater(() -> {

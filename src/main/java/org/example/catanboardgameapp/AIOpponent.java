@@ -629,13 +629,11 @@ public class AIOpponent extends Player {
         }
         return false;
     }
-
+    
     //_____________________________DEVELOPMENT CARD LOGIC________________________________//
     private boolean tryBuyDevCard(Gameplay gameplay) {
         if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1) || !gameplay.hasRolledDice()) {return false;}
         gameplay.buyDevelopmentCard();
-        gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +" has "+  gameplay.getCurrentPlayer().getDevelopmentCards().toString()));
-
         return true;
     }
 
@@ -723,7 +721,7 @@ public class AIOpponent extends Player {
                     .max().orElse(0);
 
             // If someone else is close to stealing it, defend it
-            return maxOpponentKnights + 1 >= myKnights && canBuyDevCard();
+            return maxOpponentKnights + 1 > myKnights && canBuyDevCard();
         }
 
         int holderKnights = currentHolder.getPlayedKnights();
@@ -734,10 +732,10 @@ public class AIOpponent extends Player {
         }
 
         // Case: late game, and stealing biggest army could win the game
-        if (lateGame()) {
+        if (lateGame() && gameplay.getCurrentPlayer().getPlayerScore() >= 8) {
+            System.out.println("Trying to win the game RIGHT NOW by buying DEV CARD!");
             return myKnights + 1 > holderKnights && canBuyDevCard();
         }
-
         // General case: don't go for it unless you can beat the holder right away
         boolean canOvertake = myKnights + 1 > holderKnights;
         return canOvertake && canBuyDevCard();
@@ -825,6 +823,75 @@ public class AIOpponent extends Player {
         }
         return productionScore;
     }
+    private int getSmartSettlementScore(Vertex vertex, Gameplay gameplay) {
+        int diceValue = getSettlementDiceValue(vertex, gameplay);     // Primary: total dice probability
+        int diversity = getResourceDiversityScore(vertex, gameplay);  // Secondary: unique resource types
+        int newResources = countMissingResourcesCovered(vertex, gameplay); // Bonus: new types for player
+        boolean blocked = isBlocked(vertex, gameplay);
+
+        // Weighted scoring (Denne kan måske ændres eller gøres bedre)
+        int score = (diceValue * 8) + (diversity * 3) + (newResources * 2);
+
+        // Heavily penalize blocked vertices (should never pick them)
+        if (blocked) score -= 100;
+        return score;
+    }
+
+
+    public int getSettlementDiceValue(Vertex v, Gameplay gameplay) {
+        int total = 0;
+        for (Tile tile : gameplay.getBoard().getTiles()) {
+            if (tile.getVertices().contains(v)) {
+                total += getDiceProbabilityValue(tile.getTileDiceNumber());
+            }
+        }
+        return total;
+    }
+
+    private int getResourceDiversityScore(Vertex vertex, Gameplay gameplay) {
+        Set<Resource.ResourceType> resourceTypes = new HashSet<>();
+        for (Tile tile : gameplay.getBoard().getTiles()) {
+            if (tile.getVertices().contains(vertex)) {
+                resourceTypes.add(tile.getResourcetype());
+            }
+        }
+        return resourceTypes.size();
+    }
+
+    private int countMissingResourcesCovered(Vertex vertex, Gameplay gameplay) {
+        Set<String> ownedTypes = new HashSet<>();
+        for (Vertex settlement : getSettlements()) {
+            for (Tile tile : gameplay.getBoard().getTiles()) {
+                if (tile.getVertices().contains(settlement)) {
+                    ownedTypes.add(tile.getResourcetype().toString());
+                }
+            }
+        }
+
+        Set<String> newTypes = new HashSet<>();
+        for (Tile tile : gameplay.getBoard().getTiles()) {
+            if (tile.getVertices().contains(vertex)) {
+                newTypes.add(tile.getResourcetype().toString());
+            }
+        }
+
+        int missingCovered = 0;
+        for (String type : newTypes) {
+            if (!ownedTypes.contains(type)) {
+                missingCovered++;
+            }
+        }
+        return missingCovered;
+    }
+
+    private boolean isBlocked(Vertex vertex, Gameplay gameplay) {
+        for (Player player : gameplay.getPlayerList()) {
+            if (player != this && player.getSettlements().contains(vertex)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private int getSmartRoadScore(Edge edge, Vertex source, Gameplay gameplay) {
         Vertex target = edge.getVertex1().equals(source) ? edge.getVertex2() : edge.getVertex1();
@@ -849,17 +916,6 @@ public class AIOpponent extends Player {
         // Total score (weights can be tweaked)
         int score = (settlementScore * 3) + (tileCount * 2) - (int)(friendlyRoads * 2);
         return score;
-    }
-
-    private boolean canCompleteBuildWithOneTrade(Map<String, Integer> currentResources, Map<String, Integer> targetCost) {
-        int missingCount = 0;
-        for (Map.Entry<String, Integer> entry : targetCost.entrySet()) {
-            int owned = currentResources.getOrDefault(entry.getKey(), 0);
-            if (owned < entry.getValue()) {
-                missingCount += (entry.getValue() - owned);
-            }
-        }
-        return missingCount == 1;
     }
 
     private boolean shouldUseResources(Gameplay gameplay) {
@@ -1007,15 +1063,6 @@ public class AIOpponent extends Player {
         return getResources().getOrDefault(type, 0) >= amount;
     }
 
-    private boolean isBlocked(Vertex vertex, Gameplay gameplay) {
-        for (Player player : gameplay.getPlayerList()) {
-            if (player != this && player.getSettlements().contains(vertex)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private List<Vertex> getValidSettlementSpots(Gameplay gameplay) {
         Set<Vertex> validSpots = new HashSet<>();
         for (Edge road : getRoads()) {
@@ -1025,33 +1072,6 @@ public class AIOpponent extends Player {
             if (gameplay.isValidSettlementPlacement(v2)) validSpots.add(v2);
         }
         return new ArrayList<>(validSpots);
-    }
-
-    private int getResourceDiversityScore(Vertex vertex, Gameplay gameplay) {
-        Set<String> resourceTypes = new HashSet<>();
-        for (Tile tile : gameplay.getBoard().getTiles()) {
-            if (tile.getVertices().contains(vertex)) {
-                resourceTypes.add(tile.getResourcetype().toString());
-            }
-        }
-        return resourceTypes.size();
-    }
-
-    // THIS FUNCTION NEEDS IMPROVEMENTS!!
-    private int getSmartSettlementScore(Vertex vertex, Gameplay gameplay) {
-        int diceValue = getSettlementDiceValue(vertex, gameplay);     // Sum of dice probabilities
-        int diversity = getResourceDiversityScore(vertex, gameplay);  // Unique resource types
-        int newResources = countMissingResourcesCovered(vertex, gameplay);
-        boolean blocked = isBlocked(vertex, gameplay);
-
-        long landTileCount = vertex.getAdjacentTiles().stream()
-                .filter(t -> !t.isSea())
-                .count();
-
-        // New weight: reward more adjacent land
-        int score = (int)((diceValue * 2) + (diversity * 3) +(newResources * 4) +(landTileCount * 3));
-        if (blocked) score -= 100;
-        return score;
     }
 
     public String chooseSmartResourceToReceive(Gameplay gameplay) {
@@ -1294,44 +1314,6 @@ public class AIOpponent extends Player {
         return result;
     }
 
-
-    private int countMissingResourcesCovered(Vertex vertex, Gameplay gameplay) {
-        Set<String> ownedTypes = new HashSet<>();
-        for (Vertex settlement : getSettlements()) {
-            for (Tile tile : gameplay.getBoard().getTiles()) {
-                if (tile.getVertices().contains(settlement)) {
-                    ownedTypes.add(tile.getResourcetype().toString());
-                }
-            }
-        }
-
-        Set<String> newTypes = new HashSet<>();
-        for (Tile tile : gameplay.getBoard().getTiles()) {
-            if (tile.getVertices().contains(vertex)) {
-                newTypes.add(tile.getResourcetype().toString());
-            }
-        }
-
-        int missingCovered = 0;
-        for (String type : newTypes) {
-            if (!ownedTypes.contains(type)) {
-                missingCovered++;
-            }
-        }
-
-        return missingCovered;
-    }
-
-    public int getSettlementDiceValue(Vertex v, Gameplay gameplay) {
-        int total = 0;
-        for (Tile tile : gameplay.getBoard().getTiles()) {
-            if (tile.getVertices().contains(v)) {
-                total += getDiceProbabilityValue(tile.getTileDiceNumber());
-            }
-        }
-        return total;
-    }
-
     private int getDiceProbabilityValue(int dice) {
         return switch (dice) {
             case 6, 8 -> 5;
@@ -1394,6 +1376,15 @@ public class AIOpponent extends Player {
     private boolean hasLessThanMaxAllowedRoads() {
         return getRoads().size() < menuView.getMaxRoads();
     }
-
+    private boolean canCompleteBuildWithOneTrade(Map<String, Integer> currentResources, Map<String, Integer> targetCost) {
+        int missingCount = 0;
+        for (Map.Entry<String, Integer> entry : targetCost.entrySet()) {
+            int owned = currentResources.getOrDefault(entry.getKey(), 0);
+            if (owned < entry.getValue()) {
+                missingCount += (entry.getValue() - owned);
+            }
+        }
+        return missingCount == 1;
+    }
 
 }

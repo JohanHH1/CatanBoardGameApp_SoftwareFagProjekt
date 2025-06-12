@@ -6,7 +6,7 @@ import org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType;
 
 public class Player {
 
-    private static final boolean DEBUG_MODE = false; // Set to false for normal game
+    private static final boolean DEBUG_MODE = true; // Set to false for normal game
 
     private final Gameplay gameplay;
     private final int playerId;
@@ -134,7 +134,7 @@ public class Player {
     public DevelopmentCardType getFirstDevelopmentCard() {
         for (Map.Entry<DevelopmentCard.DevelopmentCardType, Integer> entry : developmentCards.entrySet()) {
             if (entry.getValue() > 0) {
-                return entry.getKey(); // ✅ Return the first card type without modifying the map
+                return entry.getKey(); // Return the first card type without modifying the map
             }
         }
         return null;

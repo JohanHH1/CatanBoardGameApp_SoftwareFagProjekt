@@ -158,8 +158,6 @@ public class Gameplay {
     //____________________________TURN MANAGEMENT______________________________//
     public void nextPlayerTurn() {
         stopAllAIThreads(); // Stop any in-progress AI thread before advancing
-
-        turnCounter++;
         crashGameIfMaxTurnsExceeded(500, turnCounter);
         startOfTurnEffects();
 
@@ -229,7 +227,7 @@ public class Gameplay {
         }
 
         // UI refresh applies in both phases
-        catanBoardGameView.refreshSidebar();
+        catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
         catanBoardGameView.hideTurnButton();
         setHasRolledThisTurn(false);
 
@@ -266,6 +264,7 @@ public class Gameplay {
 
     //_____________________________DICE________________________________//
     public void rollDice() {
+        turnCounter++;
         setHasRolledThisTurn(true);
 
         // Logic part (no FX)
@@ -280,7 +279,7 @@ public class Gameplay {
             catanBoardGameView.logToGameLog("\n" + currentPlayer + " ROLLED " + roll + "!");
             catanBoardGameView.hideDiceButton();
             catanBoardGameView.showTurnButton();
-            catanBoardGameView.refreshSidebar();
+            catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
 
             // Handle robber or distribute resources
             if (roll == 7) {
@@ -291,7 +290,7 @@ public class Gameplay {
                 catanBoardGameView.logToGameLog("Distributing resources:");
                 distributeResources(roll);
             }
-            catanBoardGameView.refreshSidebar();
+            catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
         });
     }
 
@@ -365,14 +364,14 @@ public class Gameplay {
 
             // Store the card in the player's development card map
             currentPlayer.getDevelopmentCards().merge(cardType, 1, Integer::sum);
-            System.out.println("DEV CARDS AFTER MERGE: " + currentPlayer.getDevelopmentCards());// removed before hand in
-            System.out.println("Current player class: " + currentPlayer.getClass().getSimpleName());// removed before hand in
-            System.out.println("Current player ID: " + currentPlayer.getPlayerId()); // removed before hand in
-
-            String log = currentPlayer + " bought a development card: " + cardType.getDisplayName(); // removed before hand in 
+//            System.out.println("DEV CARDS AFTER MERGE: " + currentPlayer.getDevelopmentCards());// removed before hand in
+//            System.out.println("Current player class: " + currentPlayer.getClass().getSimpleName());// removed before hand in
+//            System.out.println("Current player ID: " + currentPlayer.getPlayerId()); // removed before hand in
+//
+            String log = currentPlayer + " bought a development card: " + cardType.getDisplayName(); // removed before hand in
             catanBoardGameView.runOnFX(() -> {
                 catanBoardGameView.logToGameLog(log);
-                catanBoardGameView.refreshSidebar();
+                catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
             });
         } else {
             catanBoardGameView.runOnFX(drawOrDisplay::showFailToBuyDevelopmentCardPopup);
@@ -391,24 +390,10 @@ public class Gameplay {
         player.getDevelopmentCards().computeIfPresent(type, (k, v) -> (v > 1) ? v - 1 : 0);
 
         catanBoardGameView.runOnFX(() -> {
-            catanBoardGameView.logToGameLog(player + " played " + type.getDisplayName() + " card.");
-            catanBoardGameView.logToGameLog(player + " now has " + getDevelopmentCard().toString()); // needs to be removed at some point
-            catanBoardGameView.refreshSidebar();
+//            catanBoardGameView.logToGameLog(player + " played " + type.getDisplayName() + " card.");
+            catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
         });
     }
-
-    public void playMonopolyCard() {
-        Player currentPlayer = getCurrentPlayer();
-        String chosenResource = drawOrDisplay.showMonopolyDialog();
-        if (chosenResource == null) return;
-
-        int taken = developmentCard.monopolizeResource(chosenResource, currentPlayer);
-
-        catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a Monopoly card and took " + taken + " " + chosenResource + " from other players." );
-        catanBoardGameView.refreshSidebar();
-        developmentCard.finishPlayingCard();
-    }
-
 
 
     public DevelopmentCard getDevelopmentCard() {
@@ -494,8 +479,7 @@ public class Gameplay {
 
             // update longest road for currentPlayer
             longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer, playerList);
-
-
+            catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
             return BuildResult.SUCCESS;
         }
 
@@ -514,8 +498,7 @@ public class Gameplay {
 
             // update longest road for currentPlayer
             longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer, playerList);
-
-
+            catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
             return BuildResult.SUCCESS;
         }
 
@@ -567,6 +550,17 @@ public class Gameplay {
         }
         drawOrDisplay.notEnoughResourcesPopup("Not enough resources to build a city");
         return BuildResult.INSUFFICIENT_RESOURCES;
+    }
+
+    public BuildResult placeFreeRoad(Player player, Edge edge) {
+        if (!isValidRoadPlacement(edge)) return BuildResult.INVALID_EDGE;
+        if (player.getRoads().size() >= menuView.getMaxRoads()) return BuildResult.TOO_MANY_ROADS;
+        player.getRoads().add(edge);
+        // Recalculate longest road
+        longestRoadManager.calculateAndUpdateLongestRoad(player, playerList);
+        // Update sidebar/UI
+        catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
+        return BuildResult.SUCCESS;
     }
 
     //______________________VALID BUILD CHECKS___________________________//
@@ -672,7 +666,7 @@ public class Gameplay {
             popup.initStyle(StageStyle.UNDECORATED);
             popup.setTitle("Game Over");
 
-            VBox content = new VBox(10);
+            VBox content = new VBox(15);
             content.setPadding(new Insets(15));
             content.setAlignment(Pos.TOP_CENTER);
             content.setStyle("""
@@ -683,18 +677,20 @@ public class Gameplay {
             -fx-background-radius: 10;
         """);
 
-            Label header = new Label("🏆 Player " + winner.getPlayerId() + " has won the game!");
+            Label header = new Label("🏆 Player " + winner.getPlayerId() + " has won the game! (It took them " + turnCounter + " turns)");
             header.setFont(Font.font("Georgia", FontWeight.BOLD, 18));
             header.setTextFill(Color.DARKGREEN);
 
-            VBox playerStats = new VBox(10);
+            VBox playerStats = new VBox(12);
             playerStats.setPadding(new Insets(10));
 
-            for (Player player : playerList.stream()
+            // Sort by score, descending
+            List<Player> sortedPlayers = playerList.stream()
                     .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
-                    .toList()) {
+                    .toList();
 
-                VBox box = new VBox(4);
+            for (Player player : sortedPlayers) {
+                VBox box = new VBox(6);
                 box.setPadding(new Insets(10));
                 box.setStyle("""
                 -fx-background-color: linear-gradient(to bottom, #f3e2c7, #e0b97d);
@@ -713,12 +709,38 @@ public class Gameplay {
                 name.setFill(player.getColor());
                 box.getChildren().add(name);
 
+                // Base stats
+                int resources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
+                int devCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
+
+                Text resText = new Text("Current Resources: " + resources);
+                Text devText = new Text("Current Development Cards: " + devCards);
+                Text lroadText = new Text("Longest Road: " + player.getLongestRoad());
+                Text knightText = new Text("Biggest Army: " + player.getPlayedKnights());
+
+                Text cityText = new Text("Cities: " + player.getCities().size());
+                Text settlementText = new Text("Settlements: " + player.getSettlements().size());
+                Text roadText = new Text("Roads: " + player.getRoads().size());
+
+                List<Text> baseStats = List.of(
+                        resText, devText, lroadText, knightText,
+                        cityText, settlementText, roadText
+                );
+                baseStats.forEach(stat -> stat.setFont(Font.font("Georgia", 12)));
+                box.getChildren().addAll(baseStats);
+
                 if (player instanceof AIOpponent ai) {
+                    VBox strategyBox = new VBox(4);
                     for (Map.Entry<AIOpponent.Strategy, Integer> entry : ai.getStrategyUsageMap().entrySet()) {
                         Text stat = new Text("• " + entry.getKey().name() + ": " + entry.getValue() + " times");
                         stat.setFont(Font.font("Georgia", 12));
-                        box.getChildren().add(stat);
+                        strategyBox.getChildren().add(stat);
                     }
+
+                    TitledPane togglePane = new TitledPane("Strategy Usage", strategyBox);
+                    togglePane.setExpanded(false);
+                    togglePane.setFont(Font.font("Georgia", FontWeight.NORMAL, 12));
+                    box.getChildren().add(togglePane);
                 }
 
                 playerStats.getChildren().add(box);
@@ -726,7 +748,7 @@ public class Gameplay {
 
             ScrollPane scrollPane = new ScrollPane(playerStats);
             scrollPane.setFitToWidth(true);
-            scrollPane.setPrefViewportHeight(400);
+            scrollPane.setPrefViewportHeight(500);
             scrollPane.setStyle("""
             -fx-background: transparent;
             -fx-border-color: #a86c1f;
@@ -745,13 +767,11 @@ public class Gameplay {
             });
 
             content.getChildren().addAll(header, scrollPane, closeBtn);
-
             Scene scene = new Scene(content, menuView.getGAME_WIDTH(), menuView.getGAME_HEIGHT());
             popup.setScene(scene);
             popup.show();
         });
     }
-
 
     public boolean isActionBlockedByDevelopmentCard() {
         return developmentCard.isPlayingCard();
