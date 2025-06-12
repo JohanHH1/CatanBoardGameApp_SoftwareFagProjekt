@@ -259,19 +259,13 @@ public class AIOpponent extends Player {
 
         boolean hasCityResources = hasResources("Ore", 3) && hasResources("Grain", 2);
         boolean canUpgrade = getSettlements().stream().anyMatch(v -> !v.isCity());
-        Player holder = gameplay.getCurrentBiggestArmyHolder();
-        boolean oneLessOrSameThanBiggestArmy = false;
 
         if (hasCityResources && canUpgrade) {
             selected = Strategy.CITYUPGRADER;
         } else if (!getValidSettlementSpots(gameplay).isEmpty()) {
             selected = Strategy.SETTLEMENTPLACER;
-        } else if (holder != null && holder != this) {
-        int holderKnights = holder.getPlayedKnights();
-        int myKnights = getPlayedKnights();
-        oneLessOrSameThanBiggestArmy = (myKnights == holderKnights || myKnights == holderKnights - 1 || myKnights == holderKnights - 2);
-        } if (oneLessOrSameThanBiggestArmy && hasResources("Wool", 1) && hasResources("Grain", 1) && hasResources("Ore", 1)) {
-        selected = Strategy.BIGGESTARMY;
+        } else if (shouldGoForBiggestArmy(gameplay)) {
+            selected = Strategy.BIGGESTARMY;
         } else if (shouldGoForLongestRoad(gameplay)) {
             selected = Strategy.LONGESTROAD;
         } else if (hasResources("Ore", 1) && hasResources("Grain", 1) && hasResources("Wool", 1)
@@ -288,6 +282,20 @@ public class AIOpponent extends Player {
         strategyUsageMap.merge(selected, 1, Integer::sum);
         return selected;
     }
+
+    private boolean shouldGoForBiggestArmy(Gameplay gameplay) {
+        Player holder = gameplay.getCurrentBiggestArmyHolder();
+        if (holder == null || holder == this) return false;
+
+        int holderKnights = holder.getPlayedKnights();
+        int myKnights = getPlayedKnights();
+
+        boolean closeToBiggest = (myKnights == holderKnights || myKnights == holderKnights-1 || myKnights == holderKnights-2);
+        boolean hasKnightResources = hasResources("Wool", 1) && hasResources("Grain", 1) && hasResources("Ore", 1);
+
+        return closeToBiggest && hasKnightResources;
+    }
+
     private void makeEasyLevelMove(Gameplay gameplay, Group boardGroup) {
         CatanBoardGameView view = gameplay.getCatanBoardGameView();
         int attempts = getMaxStrategyAttempts();
@@ -474,12 +482,12 @@ public class AIOpponent extends Player {
     }
 public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType, Gameplay gameplay) {
     switch (cardType) {
-        case MONOPOLY -> {/*
+        case MONOPOLY -> {
             String resource = chooseSmartResourceToReceive(gameplay);
             int total = gameplay.getDevelopmentCard().monopolizeResource(resource, this);
             gameplay.getCatanBoardGameView().logToGameLog("AI played Monopoly and took " + total + " " + resource);
-        */}
-        case KNIGHT -> {/*
+        }
+        case KNIGHT -> {
             increasePlayedKnights();
             gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(this);
 
@@ -503,9 +511,9 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
                 } else {
                     gameplay.getCatanBoardGameView().logToGameLog("AI played Knight but " + victim + " had no resources.");
                 }
-            }*/
+            }
         }
-        case ROADBUILDING -> {/*
+        case ROADBUILDING -> {
             int placed = 0;
             for (Edge edge : gameplay.getBoard().getEdges()) {
                 if (placed == 2) break;
@@ -515,7 +523,7 @@ public void playDevelopmentCardAsAI(DevelopmentCard.DevelopmentCardType cardType
                         gameplay.getCatanBoardGameView().logToGameLog("AI placed a free road.");
                     }
                 }
-            }*/
+            }
         }
         case YEAROFPLENTY -> {
             Map<String, Integer> selected = chooseResourcesForYearOfPlenty();

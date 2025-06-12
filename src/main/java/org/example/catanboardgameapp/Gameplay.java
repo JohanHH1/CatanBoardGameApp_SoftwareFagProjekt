@@ -46,17 +46,17 @@ public class Gameplay {
     private Board board;
     private Vertex lastInitialSettlement = null;
     private DevelopmentCard developmentCard;
-   /* private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
+    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
             MONOPOLY, MONOPOLY,
             ROADBUILDING, ROADBUILDING,
             YEAROFPLENTY, YEAROFPLENTY,
             VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT
-    };*/
-    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
-            VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT
     };
+    /*private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
+            VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT
+    };*/
 
     private List<DevelopmentCard.DevelopmentCardType> shuffledDevelopmentCards;
 
