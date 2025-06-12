@@ -1,10 +1,18 @@
 package org.example.catanboardgameapp;
 
 import javafx.application.Platform;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import java.util.*;
 
@@ -36,6 +44,7 @@ public class Gameplay {
     private volatile boolean gamePaused = false;
     private Thread activeAIThread;
     private boolean isRobberMoveRequired = false;
+    private boolean gameOver = false;
 
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
@@ -447,7 +456,6 @@ public class Gameplay {
         return ratio; // success, return ratio used
     }
 
-
     //_____________________________BUILDING FUNCTIONS____________________________//
     public BuildResult buildInitialSettlement(Vertex vertex) {
         if (vertex == null || !isValidSettlementPlacement(vertex)) return BuildResult.INVALID_VERTEX;
@@ -627,25 +635,24 @@ public class Gameplay {
         currentPlayer.playerScorePlusOne();
         if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
             if (isGamePaused()) return;
-
-            Player winner = currentPlayer; // <- Freeze the winning player here
-            handleEndOfGame(winner);       // <- pass it down
+            Player winner = currentPlayer;  // <- Freeze the winning player here
+            endOfGameWinnerPopup(winner);       // <- pass it down
         }
     }
 
-    // SKAL BRUGES TIL LONGEST ROAD BIGGEST ARMY
+    // For Longest Road and Biggest Army
     public void decreasePlayerScoreByTwo(Player player) {
-        currentPlayer.playerScoreMinusOne();
-        currentPlayer.playerScoreMinusOne();
+        player.playerScoreMinusOne();
+        player.playerScoreMinusOne();
     }
-    public void increasePlayerScoreByTwo(Player player) {
-        currentPlayer.playerScorePlusOne();
-        currentPlayer.playerScorePlusOne();
-        if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
-            if (isGamePaused()) return;
 
-            Player winner = currentPlayer; // <- Freeze the winning player here
-            handleEndOfGame(winner);       // <- pass it down
+    // For Longest Road and Biggest Army
+    public void increasePlayerScoreByTwo(Player player) {
+        player.playerScorePlusOne();
+        player.playerScorePlusOne();
+        if (player.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
+            if (isGamePaused()) return;
+            endOfGameWinnerPopup(player);
         }
     }
 
@@ -655,37 +662,96 @@ public class Gameplay {
         return selection.values().stream().mapToInt(Integer::intValue).sum();
     }
 
-    private void handleEndOfGame(Player winner) {
-        StringBuilder scoreboard = new StringBuilder("Final Scores:\n\n");
+    private void endOfGameWinnerPopup(Player winner) {
+        if (gameOver) return;
+        gameOver = true;
 
-        playerList.stream()
-                .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
-                .forEach(player -> {
-                    if (player instanceof AIOpponent ai) {
-                        String name = "AI Player " + ai.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")";
-                        scoreboard.append(String.format("%-25s : %d points%n", name, ai.getPlayerScore()));
-                        ai.getStrategyUsageMap().forEach((strategy, count) -> {
-                            scoreboard.append(String.format("   • %-20s : %d times%n", strategy.name(), count));
-                        });
-                        scoreboard.append("\n");
-                    } else {
-                        String name = "Player " + player.getPlayerId();
-                        scoreboard.append(String.format("%-25s : %d points%n%n", name, player.getPlayerScore()));
+        Platform.runLater(() -> {
+            Stage popup = new Stage();
+            popup.initModality(Modality.APPLICATION_MODAL);
+            popup.initStyle(StageStyle.UNDECORATED);
+            popup.setTitle("Game Over");
+
+            VBox content = new VBox(10);
+            content.setPadding(new Insets(15));
+            content.setAlignment(Pos.TOP_CENTER);
+            content.setStyle("""
+            -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+            -fx-border-color: #8c5b1a;
+            -fx-border-width: 2;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+        """);
+
+            Label header = new Label("🏆 Player " + winner.getPlayerId() + " has won the game!");
+            header.setFont(Font.font("Georgia", FontWeight.BOLD, 18));
+            header.setTextFill(Color.DARKGREEN);
+
+            VBox playerStats = new VBox(10);
+            playerStats.setPadding(new Insets(10));
+
+            for (Player player : playerList.stream()
+                    .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
+                    .toList()) {
+
+                VBox box = new VBox(4);
+                box.setPadding(new Insets(10));
+                box.setStyle("""
+                -fx-background-color: linear-gradient(to bottom, #f3e2c7, #e0b97d);
+                -fx-border-color: #a86c1f;
+                -fx-border-width: 1.5;
+                -fx-background-radius: 8;
+                -fx-border-radius: 8;
+            """);
+
+                String displayName = (player instanceof AIOpponent ai)
+                        ? "AI Player " + ai.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
+                        : "Player " + player.getPlayerId();
+
+                Text name = new Text(displayName + " : " + player.getPlayerScore() + " points");
+                name.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
+                name.setFill(player.getColor());
+                box.getChildren().add(name);
+
+                if (player instanceof AIOpponent ai) {
+                    for (Map.Entry<AIOpponent.Strategy, Integer> entry : ai.getStrategyUsageMap().entrySet()) {
+                        Text stat = new Text("• " + entry.getKey().name() + ": " + entry.getValue() + " times");
+                        stat.setFont(Font.font("Georgia", 12));
+                        box.getChildren().add(stat);
                     }
-                });
+                }
 
-        scoreboard.append("\nTotal Turns Played: ").append(turnCounter);
+                playerStats.getChildren().add(box);
+            }
 
-        String message = "Player " + winner.getPlayerId() + " has won the game!\n\n" + scoreboard;
+            ScrollPane scrollPane = new ScrollPane(playerStats);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setPrefViewportHeight(400);
+            scrollPane.setStyle("""
+            -fx-background: transparent;
+            -fx-border-color: #a86c1f;
+            -fx-border-radius: 8;
+        """);
 
-        drawOrDisplay.showAlert(
-                Alert.AlertType.INFORMATION,
-                "Game Over",
-                "We have a winner!",
-                message,
-                () -> menuView.showMainMenu()  // on close
-        );
+            Button closeBtn = new Button("Back to Main Menu");
+            closeBtn.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
+            closeBtn.setStyle("""
+            -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
+            -fx-text-fill: black;
+        """);
+            closeBtn.setOnAction(e -> {
+                popup.close();
+                menuView.showMainMenu();
+            });
+
+            content.getChildren().addAll(header, scrollPane, closeBtn);
+
+            Scene scene = new Scene(content, menuView.getGAME_WIDTH(), menuView.getGAME_HEIGHT());
+            popup.setScene(scene);
+            popup.show();
+        });
     }
+
 
     public boolean isActionBlockedByDevelopmentCard() {
         return developmentCard.isPlayingCard();
@@ -722,7 +788,7 @@ public class Gameplay {
     }
 
     public LongestRoadManager getLongestRoadManager() {
-        return  longestRoadManager;
+        return longestRoadManager;
     }
 
 //__________________________GETTERS________________________//

@@ -507,12 +507,12 @@ public class CatanBoardGameView {
 
         playerBox.getChildren().add(roadText);
 
-        Text armyText = new Text("Largest army: " + player.getPlayedKnights());
+        Text armyText = new Text("Knights Played: " + player.getPlayedKnights());
         armyText.setFont(Font.font("Georgia", infoFontSize));
 
         BiggestArmyManager biggestArmy = gameplay.getBiggestArmy();
         if (player == biggestArmy.getCurrentHolder()) {
-            armyText.setText("🏅 Largest army: " + player.getPlayedKnights());
+            armyText.setText("Knights Played: " + player.getPlayedKnights() + " 🏅 Largest army");
             armyText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
         }
 

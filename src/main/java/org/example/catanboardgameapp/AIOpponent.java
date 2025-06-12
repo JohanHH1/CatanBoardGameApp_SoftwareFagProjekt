@@ -7,13 +7,12 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.catanboardgameviews.CatanBoardGameView;
+import org.example.catanboardgameviews.MenuView;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType.YEAROFPLENTY;
 
 public class AIOpponent extends Player {
 
@@ -35,6 +34,7 @@ public class AIOpponent extends Player {
     private final StrategyLevel strategyLevel;
     private final Random random = new Random();
     private final DrawOrDisplay drawOrDisplay;
+    private final MenuView menuView;
     private final EnumMap<Strategy, Integer> strategyUsageMap = new EnumMap<>(Strategy.class);
     private ThinkingSpeed thinkingSpeed = ThinkingSpeed.EXTREME; // Default
     private static final int MAX_STRATEGY_ATTEMPTS = 20;
@@ -45,6 +45,7 @@ public class AIOpponent extends Player {
         this.strategyLevel = level;
         this.drawOrDisplay = gameplay.getDrawOrDisplay();
         this.gameplay = gameplay;
+        this.menuView = gameplay.getMenuView();
         for (Strategy strategy : Strategy.values()) {
             strategyUsageMap.put(strategy, 0);
         }
@@ -216,34 +217,21 @@ public class AIOpponent extends Player {
     private Strategy determineEasyStrategy(Gameplay gameplay) {
         Strategy selected;
 
-        boolean hasCityResources = hasResources("Ore", 3) && hasResources("Grain", 2);
-        boolean canUpgrade = getSettlements().stream().anyMatch(v -> !v.isCity());
-        if (hasCityResources && canUpgrade) {
+        if (hasLessThanMaxAllowedCities() && canUpgradeToCityNow()) {
             selected = Strategy.CITYUPGRADER;
-        } else if (!getValidSettlementSpots(gameplay).isEmpty()) {
-            selected = Strategy.SETTLEMENTPLACER;
-        } else if (gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
-            selected = Strategy.ROADBUILDER;
-        } else {
-            selected = Strategy.NONE;
         }
-
-        strategyUsageMap.merge(selected, 1, Integer::sum);
-        return selected;
-    }
-    private Strategy determineMediumStrategy(Gameplay gameplay) {
-        Strategy selected;
-
-        boolean hasCityResources = hasResources("Ore", 3) && hasResources("Grain", 2);
-        boolean canUpgrade = getSettlements().stream().anyMatch(v -> !v.isCity());
-        if (hasCityResources && canUpgrade) {
+        else if (hasLessThanMaxAllowedCities() &&
+                hasAlmostEnoughResourcesForCityUpgrade() &&
+                hasSettlementThatCanBeUpgradedToCity() &&
+                hasOreAndWheatTiles()) {
             selected = Strategy.CITYUPGRADER;
-        } else if (!getValidSettlementSpots(gameplay).isEmpty()) {
+        }
+        else if (hasLessThanMaxAllowedSettlements() && !getValidSettlementSpots(gameplay).isEmpty()) {
             selected = Strategy.SETTLEMENTPLACER;
-        } else if (gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
+        }
+        else if (hasLessThanMaxAllowedRoads() &&
+                gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
             selected = Strategy.ROADBUILDER;
-        } else if (shouldUseResources(gameplay)) {
-            selected = Strategy.USERESOURCES;
         }
         else {
             selected = Strategy.NONE;
@@ -252,28 +240,30 @@ public class AIOpponent extends Player {
         strategyUsageMap.merge(selected, 1, Integer::sum);
         return selected;
     }
-    private Strategy determineHardStrategy(Gameplay gameplay) {
+
+    private Strategy determineMediumStrategy(Gameplay gameplay) {
         Strategy selected;
 
-        boolean hasCityResources = hasResources("Ore", 3) && hasResources("Grain", 2);
-        boolean canUpgrade = getSettlements().stream().anyMatch(v -> !v.isCity());
-
-        if (hasCityResources && canUpgrade) {
+        if (hasLessThanMaxAllowedCities() && canUpgradeToCityNow()) {
             selected = Strategy.CITYUPGRADER;
-        } else if (!getValidSettlementSpots(gameplay).isEmpty()) {
+        }
+        else if (hasLessThanMaxAllowedCities() &&
+                hasAlmostEnoughResourcesForCityUpgrade() &&
+                hasSettlementThatCanBeUpgradedToCity() &&
+                hasOreAndWheatTiles()) {
+            selected = Strategy.CITYUPGRADER;
+        }
+        else if (hasLessThanMaxAllowedSettlements() && !getValidSettlementSpots(gameplay).isEmpty()) {
             selected = Strategy.SETTLEMENTPLACER;
-        } else if (shouldGoForBiggestArmy(gameplay)) {
-            selected = Strategy.BIGGESTARMY;
-        } else if (shouldGoForLongestRoad(gameplay)) {
-            selected = Strategy.LONGESTROAD;
-        } else if (hasResources("Ore", 1) && hasResources("Grain", 1) && hasResources("Wool", 1)
-                && !gameplay.getShuffledDevelopmentCards().isEmpty()) {
-            selected = Strategy.DEVELOPMENTCARDBYER;
-        } else if (shouldUseResources(gameplay)) {
+        }
+        else if (shouldUseResources(gameplay)) {
             selected = Strategy.USERESOURCES;
-        } else if (gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
-                selected = Strategy.ROADBUILDER;
-        } else {
+        }
+        else if (hasLessThanMaxAllowedRoads() &&
+                gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
+            selected = Strategy.ROADBUILDER;
+        }
+        else {
             selected = Strategy.NONE;
         }
 
@@ -281,35 +271,63 @@ public class AIOpponent extends Player {
         return selected;
     }
 
-    private boolean shouldGoForBiggestArmy(Gameplay gameplay) {
-        Player holder = gameplay.getCurrentBiggestArmyHolder();
-        if (holder == null || holder == this) return false;
+    private Strategy determineHardStrategy(Gameplay gameplay) {
+        Strategy selected;
 
-        int holderKnights = holder.getPlayedKnights();
-        int myKnights = getPlayedKnights();
+        // Priority: biggest army or longest road (if late game)
+        if (!earlyGame()) {
+            if (shouldGoForBiggestArmy(gameplay)) {
+                selected = Strategy.BIGGESTARMY;
+            }
+            else if (shouldGoForLongestRoad(gameplay)) {
+                selected = Strategy.LONGESTROAD;
+            }
+            else {
+                selected = Strategy.NONE;
+            }
+        }
 
-        boolean closeToBiggest = (myKnights == holderKnights || myKnights == holderKnights-1 || myKnights == holderKnights-2);
-        boolean hasKnightResources = hasResources("Wool", 1) && hasResources("Grain", 1) && hasResources("Ore", 1);
-
-        return closeToBiggest && hasKnightResources;
+        // Else, continue with other viable strategies
+        else if (hasLessThanMaxAllowedCities() && canUpgradeToCityNow()) {
+            selected = Strategy.CITYUPGRADER;
+        }
+        else if (hasLessThanMaxAllowedCities() &&
+                hasAlmostEnoughResourcesForCityUpgrade() &&
+                hasSettlementThatCanBeUpgradedToCity() &&
+                hasOreAndWheatTiles()) {
+            selected = Strategy.CITYUPGRADER;
+        }
+        else if (hasLessThanMaxAllowedSettlements() && !getValidSettlementSpots(gameplay).isEmpty()) {
+            selected = Strategy.SETTLEMENTPLACER;
+        }
+        else if (canBuyDevCard() && !gameplay.getShuffledDevelopmentCards().isEmpty()) {
+            selected = Strategy.DEVELOPMENTCARDBYER;
+        }
+        else if (shouldUseResources(gameplay)) {
+            selected = Strategy.USERESOURCES;
+        }
+        else if (hasLessThanMaxAllowedRoads() &&
+                gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
+            selected = Strategy.ROADBUILDER;
+        }
+        else {
+            selected = Strategy.NONE;
+        }
+        strategyUsageMap.merge(selected, 1, Integer::sum);
+        return selected;
     }
 
     private void makeEasyLevelMove(Gameplay gameplay, Group boardGroup) {
         CatanBoardGameView view = gameplay.getCatanBoardGameView();
         int attempts = getMaxStrategyAttempts();
         boolean moveMade;
-
         do {
             Strategy strategy = determineStrategy();
-            view.runOnFX(() -> view.logToGameLog("\n" + gameplay.getCurrentPlayer() + " (EASY) is using strategy: " + strategy));
-
             moveMade = false;
-
             switch (strategy) {
                 case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
                 case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
                 case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
-                case USERESOURCES -> moveMade = tryBankTrade(gameplay, strategy);
             }
         } while (moveMade && --attempts > 0);
         view.runOnFX(() -> {
@@ -317,6 +335,7 @@ public class AIOpponent extends Player {
             gameplay.nextPlayerTurn();
         });
     }
+
     private void makeMediumLevelMove(Gameplay gameplay, Group boardGroup) {
         CatanBoardGameView view = gameplay.getCatanBoardGameView();
         int attempts = getMaxStrategyAttempts();
@@ -324,13 +343,12 @@ public class AIOpponent extends Player {
 
         do {
             Strategy strategy = determineStrategy();
-            view.runOnFX(() -> view.logToGameLog(gameplay.getCurrentPlayer() + " (MEDIUM) is using strategy: " + strategy));
             moveMade = false;
             switch (strategy) {
                 case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
                 case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
-                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
                 case USERESOURCES -> moveMade = tryBankTrade(gameplay, strategy);
+                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
             }
         } while (moveMade && --attempts > 0);
         view.runOnFX(() -> {
@@ -338,6 +356,7 @@ public class AIOpponent extends Player {
             gameplay.nextPlayerTurn();
         });
     }
+
     private void makeHardLevelMove(Gameplay gameplay, Group boardGroup) {
         CatanBoardGameView view = gameplay.getCatanBoardGameView();
         int attempts = getMaxStrategyAttempts();
@@ -345,21 +364,19 @@ public class AIOpponent extends Player {
 
         do {
             Strategy strategy = determineStrategy();
-            view.runOnFX(() -> view.logToGameLog(gameplay.getCurrentPlayer() + " (HARD) is using strategy: " + strategy));
-
             moveMade = false;
-
             switch (strategy) {
                 case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
                 case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup);
-                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
-                case DEVELOPMENTCARDBYER -> moveMade = tryBuyDevCard(gameplay);
+                case DEVELOPMENTCARDBYER, BIGGESTARMY -> moveMade = tryBuyDevCard(gameplay);
                 case USERESOURCES -> moveMade = tryBankTrade(gameplay, strategy);
-                case BIGGESTARMY -> moveMade = tryPlayDevCard(gameplay, boardGroup);
                 case LONGESTROAD -> moveMade = tryBuildConnectedRoad(gameplay, boardGroup);
+                case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
+
             }
         } while (moveMade && --attempts > 0);
 
+        // before finishing their turn, always try to play development card if they have any
         tryPlayDevCard(gameplay, boardGroup);
         view.runOnFX(() -> {
             view.logToGameLog(gameplay.getCurrentPlayer() + " (" + strategyLevel.name() + ") has ended their turn.");
@@ -368,31 +385,34 @@ public class AIOpponent extends Player {
     }
 
     private boolean tryBuildCity(Gameplay gameplay, Group boardGroup) {
-        if (!hasResources("Ore", 3) || !hasResources("Grain", 2)) return false;
-        List<Vertex> settlements = getSettlements();
-        if (settlements.isEmpty()) return false;
-
+        // Most important is to have a settlement that can be upgraded
+        if (!hasSettlementThatCanBeUpgradedToCity()) return false;
+        // Then check if you have enough resources
+        if (!hasResources("Ore", 3) || !hasResources("Grain", 2)) {
+            // Attempt trade to fix the missing resources
+            if (!tryBankTrade(gameplay, Strategy.CITYUPGRADER)) return false;
+            // Retry after trade
+            if (!hasResources("Ore", 3) || !hasResources("Grain", 2)) return false;
+        }
         Vertex best = null;
         int bestScore = Integer.MIN_VALUE;
 
-        for (Vertex v : settlements) {
+        for (Vertex v : getSettlements()) {
             int score = getSettlementDiceValue(v, gameplay);
             if (score > bestScore) {
                 best = v;
                 bestScore = score;
             }
         }
-
         if (best != null) {
             BuildResult result = gameplay.buildCity(best);
             if (result == BuildResult.UPGRADED_TO_CITY) {
-                String msg = gameplay.getCurrentPlayer() +  " UPGRADED TO A CITY";
+                String msg = gameplay.getCurrentPlayer() + " UPGRADED TO A CITY";
                 Vertex finalBest = best;
                 gameplay.getCatanBoardGameView().runOnFX(() -> {
                     drawOrDisplay.drawCity(finalBest, boardGroup);
                     gameplay.getCatanBoardGameView().logToGameLog(msg);
                 });
-
                 return true;
             }
         }
@@ -400,32 +420,31 @@ public class AIOpponent extends Player {
     }
 
     private boolean tryBuildSettlement(Gameplay gameplay, Group boardGroup) {
-        // Check if AI has enough resources for a settlement
-        if (!hasResources("Brick", 1) || !hasResources("Wood", 1)
-                || !hasResources("Wool", 1) || !hasResources("Grain", 1)) {
-            return false;
+        // Most important: Check if there is a spot available to build a settlement
+        if (getValidSettlementSpots(gameplay).isEmpty()) return false;
+        // Check if having all the resources
+        if (!hasResources("Brick", 1) || !hasResources("Wood", 1) ||
+                !hasResources("Wool", 1) || !hasResources("Grain", 1)) {
+            // Try trading for missing resources
+            if (!tryBankTrade(gameplay, Strategy.SETTLEMENTPLACER)) return false;
+            // Retry check if have all resources
+            if (!hasResources("Brick", 1) || !hasResources("Wood", 1) ||
+                    !hasResources("Wool", 1) || !hasResources("Grain", 1)) return false;
         }
-
-        // Get all valid build spots connected to current roads
-        List<Vertex> validSpots = getValidSettlementSpots(gameplay);
-        if (validSpots.isEmpty()) return false;
-
-        // Pick the best scoring vertex
         Vertex bestSpot = null;
         int bestScore = Integer.MIN_VALUE;
 
-        for (Vertex v : validSpots) {
+        for (Vertex v : getValidSettlementSpots(gameplay)) {
             int score = getSmartSettlementScore(v, gameplay);
             if (score > bestScore) {
                 bestScore = score;
                 bestSpot = v;
             }
         }
-
         if (bestSpot != null) {
             BuildResult result = gameplay.buildSettlement(bestSpot);
             if (result == BuildResult.SUCCESS) {
-                String msg = gameplay.getCurrentPlayer() + " succesfully built a Settlement";
+                String msg = gameplay.getCurrentPlayer() + " successfully built a Settlement";
                 Circle circle = new Circle(bestSpot.getX(), bestSpot.getY(), 16.0 / gameplay.getBoardRadius());
                 Vertex finalBestSpot = bestSpot;
                 gameplay.getCatanBoardGameView().runOnFX(() -> {
@@ -438,71 +457,27 @@ public class AIOpponent extends Player {
         }
         return false;
     }
-    private boolean shouldGoForLongestRoad(Gameplay gameplay) {
-        Player currentHolder = gameplay.getLongestRoadManager().getCurrentHolder();
-        int myLongest = gameplay.getLongestRoadManager().calculateLongestRoad(this, gameplay.getPlayerList());
-        // if no one is LongestRoadManager
-        if (currentHolder == null) {
-            return myLongest >= 3 && hasResources("Wood", 1)  && hasResources("Brick", 1);
-        }
-        // If someone is LongestRoadManager, how close is AI for overtaking?
-        int holderLength = gameplay.getLongestRoadManager().calculateLongestRoad(currentHolder, gameplay.getPlayerList());
-        boolean closeEnough = myLongest == holderLength ||  myLongest == holderLength - 1;boolean hasResources = hasResources("Wood", 1) && hasResources("Brick", 1);
-        boolean hasResourcesLR = hasResources("Wood", 1) && hasResources("Brick", 1);
-        
-        return currentHolder != this && closeEnough && hasResourcesLR;
-    }
-
-
-
-    private boolean tryBuyDevCard(Gameplay gameplay) {
-        if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1) || !gameplay.hasRolledDice()) {return false;}
-            gameplay.buyDevelopmentCard();
-
-        return true;
-    }
-
-    private boolean tryPlayDevCard(Gameplay gameplay, Group boardGroup) {
-        if (hasNoDevelopmentCards()) {
-            return false;
-        } else {
-            DevelopmentCard.DevelopmentCardType devCardType = getFirstDevelopmentCard();
-            if (devCardType != null) {
-                // Call the enum-based AI method
-                System.out.println(gameplay.getCurrentPlayer() +"HAS PLAYED A DEVELOPMENT!!!!!!! " + devCardType);
-                devCardType.playAsAI(this, gameplay.getDevelopmentCard(), gameplay);
-                // Remove it from inventory AFTER play
-                getDevelopmentCards().computeIfPresent(devCardType, (k, v) -> (v > 1) ? v - 1 : 0);
-                return true;
-            }
-        }
-        return false;
-    }
 
     private boolean tryBuildRoad(Gameplay gameplay, Group boardGroup) {
-        // Ensure resources for road
-        if (!hasResources("Brick", 1) || !hasResources("Wood", 1)) return false;
-
-        List<Edge> validRoads = new ArrayList<>();
-        for (Edge edge : gameplay.getBoard().getEdges()) {
-            if (gameplay.isValidRoadPlacement(edge)) {
-                validRoads.add(edge);
-            }
-        }
-
+        // Check if there is any place to build a Road available
+        List<Edge> validRoads = gameplay.getBoard().getEdges().stream()
+                .filter(gameplay::isValidRoadPlacement)
+                .toList();
         if (validRoads.isEmpty()) return false;
 
-        // Score and select the best road
+        boolean hasRoadResources = hasResources("Wood", 1) && hasResources("Brick", 1);
+        if (!hasRoadResources) {
+            if (!tryBankTrade(gameplay, Strategy.ROADBUILDER)) return false;
+            if (!hasResources("Brick", 1) || !hasResources("Wood", 1)) return false;
+        }
+
         Edge bestEdge = null;
         int bestScore = Integer.MIN_VALUE;
 
         for (Edge edge : validRoads) {
-            Vertex source = (getSettlements().contains(edge.getVertex1())) ? edge.getVertex1() :
-                    (getSettlements().contains(edge.getVertex2())) ? edge.getVertex2() : null;
-
-            if (source == null) {
-                source = edge.getVertex1(); // fallback
-            }
+            Vertex source = (getSettlements().contains(edge.getVertex1())) ? edge.getVertex1()
+                    : (getSettlements().contains(edge.getVertex2())) ? edge.getVertex2()
+                    : edge.getVertex1(); // fallback
 
             int score = getSmartRoadScore(edge, source, gameplay);
             if (score > bestScore) {
@@ -514,7 +489,7 @@ public class AIOpponent extends Player {
         if (bestEdge != null) {
             BuildResult result = gameplay.buildRoad(bestEdge);
             if (result == BuildResult.SUCCESS) {
-                String msg = gameplay.getCurrentPlayer() + " succesfully built a road";
+                String msg = gameplay.getCurrentPlayer() + " successfully built a road";
                 Edge finalBestEdge = bestEdge;
                 gameplay.getCatanBoardGameView().runOnFX(() -> {
                     Line line = new Line(
@@ -628,7 +603,7 @@ public class AIOpponent extends Player {
             default -> { return false; }
         }
 
-        // 💡 Don't restrict to trades that complete the full cost – allow partial help
+        // Don't restrict to trades that complete the full cost – allow partial help
         for (String need : targetCost.keySet()) {
             int owned = resources.getOrDefault(need, 0);
             int required = targetCost.get(need);
@@ -654,7 +629,120 @@ public class AIOpponent extends Player {
         }
         return false;
     }
-    //______________________________ROBBER LOGIC____________________________//
+
+    //_____________________________DEVELOPMENT CARD LOGIC________________________________//
+    private boolean tryBuyDevCard(Gameplay gameplay) {
+        if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1) || !gameplay.hasRolledDice()) {return false;}
+        gameplay.buyDevelopmentCard();
+        gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +" has "+  gameplay.getCurrentPlayer().getDevelopmentCards().toString()));
+
+        return true;
+    }
+
+    private boolean tryPlayDevCard(Gameplay gameplay, Group boardGroup) {
+        if (hasNoDevelopmentCards()) {
+            return false;
+        }
+        else {
+            DevelopmentCard.DevelopmentCardType devCardType = removeFirstDevelopmentCard();
+            if (devCardType != null) {
+                gameplay.getCatanBoardGameView().runOnFX(() -> gameplay.getCatanBoardGameView().logToGameLog(
+                                gameplay.getCurrentPlayer() + " has " + gameplay.getCurrentPlayer().getDevelopmentCards().toString()
+                        )
+                );
+
+                // Call the enum-based AI method
+                devCardType.playAsAI(this, gameplay.getDevelopmentCard(), gameplay);
+
+                // Remove it from inventory AFTER play
+                getDevelopmentCards().computeIfPresent(devCardType, (k, v) -> (v > 1) ? v - 1 : 0);
+
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //__________________________________LONGEST ROAD AND BIGGEST ARMY_________________________________//
+    private boolean shouldGoForLongestRoad(Gameplay gameplay) {
+        if (earlyGame()) {
+            return false;   // dont go for longest road in the early game, it can ruin your game
+        }
+        boolean closeEnough;
+        boolean hasRoadResources = hasResources("Wood", 1) && hasResources("Brick", 1);
+        Player currentHolder = gameplay.getLongestRoadManager().getCurrentHolder();
+        int myLongest = gameplay.getLongestRoadManager().calculateLongestRoad(this, gameplay.getPlayerList());
+
+        // if no one is LongestRoadManager, try to get longest road right away if already have 4
+        if (currentHolder == null) {
+            return myLongest == 4 && hasRoadResources;
+        }
+
+        int holderLength = gameplay.getLongestRoadManager().calculateLongestRoad(currentHolder, gameplay.getPlayerList());
+
+        // if current longestRoadManager is almost winning - Try sabotage them by overtaking longest road
+        if (gameplay.getLongestRoadManager().getCurrentHolder().getPlayerScore() >= 8) {
+            System.out.println("current Longest Road manager is a big thread, i want to steal it from them!");
+            closeEnough = myLongest + 2 >= holderLength;
+            return closeEnough;
+        }
+
+        // Out-commented for now since it might fuck up the AI logic
+//        // If lateGame (i have 8 points or someone else have 7 points)
+//        if (lateGame() && getPlayerScore()>=8) {
+//            System.out.println("If i get longest Road right now i win the game!!");
+//            closeEnough = myLongest + 2 >= holderLength;
+//            return closeEnough;
+//        }
+
+        // Otherwise, only go for it if you can overtake longest road immediately
+        closeEnough = myLongest == holderLength;
+        return currentHolder != this && closeEnough && hasRoadResources;
+    }
+
+    private boolean shouldGoForBiggestArmy(Gameplay gameplay) {
+        if (earlyGame()) {
+            return false; // Early game: don’t chase biggest army
+        }
+
+        Player currentHolder = gameplay.getBiggestArmy().getCurrentHolder();
+        int myKnights = getPlayedKnights();
+
+        // If no one has it, go for it if we're at 2 and can buy a card
+        if (currentHolder == null) {
+            return myKnights == 2 && canBuyDevCard(); // Setting up for the 3rd knight
+        }
+
+        // If I already hold it, no need to "go for it"
+        if (currentHolder == this) {
+            // But if someone else is threatening my title, maybe play more
+            int maxOpponentKnights = gameplay.getPlayerList().stream()
+                    .filter(p -> p != this)
+                    .mapToInt(Player::getPlayedKnights)
+                    .max().orElse(0);
+
+            // If someone else is close to stealing it, defend it
+            return maxOpponentKnights + 1 >= myKnights && canBuyDevCard();
+        }
+
+        int holderKnights = currentHolder.getPlayedKnights();
+
+        // Case: current holder is near victory – steal for 2 points
+        if (currentHolder.getPlayerScore() >= 8) {
+            return myKnights + 1 > holderKnights && canBuyDevCard();
+        }
+
+        // Case: late game, and stealing biggest army could win the game
+        if (lateGame()) {
+            return myKnights + 1 > holderKnights && canBuyDevCard();
+        }
+
+        // General case: don't go for it unless you can beat the holder right away
+        boolean canOvertake = myKnights + 1 > holderKnights;
+        return canOvertake && canBuyDevCard();
+    }
+
+    //_____________________________________ROBBER LOGIC_____________________________________//
     // for AI use and for auto-discard for human players
     public Map<String, Integer> chooseDiscardCards() {
         Map<String, Integer> resources = new HashMap<>(getResources());
@@ -724,6 +812,7 @@ public class AIOpponent extends Player {
         return discardMap;
     }
 
+    //__________________________________HELPER / CALCULATION FUNCTIONS____________________________________//
     private int getProductionScore(String res, int productionScore) {
         for (Vertex v : getSettlements()) {
             for (Tile t : gameplay.getBoard().getTiles()) {
@@ -793,7 +882,6 @@ public class AIOpponent extends Player {
         return false;
     }
 
-
     public Set<String> getNeededResourcesForStrategy(Strategy strategy) {
         Set<String> needed = new HashSet<>();
 
@@ -846,12 +934,24 @@ public class AIOpponent extends Player {
     }
 
     public boolean lateGame() {
+        // if current player has 8 points or more, its lateGame
         if (getPlayerScore() >= 8) return true;
+        // or if someone else has 7 points or more
         return gameplay.getPlayerList().stream()
                 .anyMatch(p -> p != this && p.getPlayerScore() >= 7);
     }
 
-    private boolean shouldPlanCityUpgrade() {
+    public boolean earlyGame() {
+        // Current player has 4 or fewer points → early game
+        if (getPlayerScore() <= 4) return true;
+
+        // No other player has more than 4 points → still early game
+        return gameplay.getPlayerList().stream()
+                .filter(p -> p != this)
+                .noneMatch(p -> p.getPlayerScore() > 4);
+    }
+
+    private boolean hasAlmostEnoughResourcesForCityUpgrade() {
         int ore = getResources().getOrDefault("Ore", 0);
         int grain = getResources().getOrDefault("Grain", 0);
         int total = ore + grain;
@@ -860,21 +960,46 @@ public class AIOpponent extends Player {
         if (ore >= 3 && grain >= 2) return true;
 
         // Has 3 out of 5 needed resources → consider planning
-        return total >= 3 && !getSettlements().isEmpty();
+        return total >= 3;
     }
 
-    private boolean hasSettlementPath(Gameplay gameplay) {
-        List<Vertex> validSpots = getValidSettlementSpots(gameplay);
-        return !validSpots.isEmpty();
+    private boolean hasSettlementThatCanBeUpgradedToCity() {
+        return getSettlements().stream().anyMatch(v -> !v.isCity());
     }
 
-    private boolean canAfford(Map<String, Integer> cost) {
-        for (Map.Entry<String, Integer> entry : cost.entrySet()) {
-            if (getResources().getOrDefault(entry.getKey(), 0) < entry.getValue()) {
-                return false;
+    public boolean canUpgradeToCityNow() {
+        if (!hasSettlementThatCanBeUpgradedToCity()) {return false;}
+        int ore = getResources().getOrDefault("Ore", 0);
+        int grain = getResources().getOrDefault("Grain", 0);
+        // Already has full resources → return true
+        return ore >= 3 && grain >= 2;
+    }
+
+    public boolean hasOreAndWheatTiles() {
+        boolean hasOre = false;
+        boolean hasGrain = false;
+
+        // Combine settlements and cities into a single list of owned vertices
+        List<Vertex> ownedStructures = new ArrayList<>();
+        ownedStructures.addAll(getSettlements());
+        ownedStructures.addAll(getCities());
+
+        for (Vertex vertex : ownedStructures) {
+            for (Tile tile : vertex.getAdjacentTiles()) {
+                if (tile.isSea()) continue;
+
+                Resource.ResourceType resource = tile.getResourcetype();
+                if (resource == Resource.ResourceType.ORE) {
+                    hasOre = true;
+                } else if (resource == Resource.ResourceType.GRAIN) {
+                    hasGrain = true;
+                }
+                if (hasOre && hasGrain) {
+                    return true;
+                }
             }
         }
-        return true;
+        return false;
     }
 
     private boolean hasResources(String type, int amount) {
@@ -928,129 +1053,6 @@ public class AIOpponent extends Player {
         return score;
     }
 
-    public String chooseSmartResourceToMonopoly(Gameplay gameplay){
-        //by
-        ///settelment
-        // hvad den kan bytte frest til via havn eller 4:1
-
-        List<Player> opponents = gameplay.getPlayerList().stream()
-                .filter(p -> p != this)
-                .toList();
-
-        Map<String, Integer> totalOpponentResources = new HashMap<>();
-
-        for (Player p : opponents) {
-            for (Map.Entry<String, Integer> entry : p.getResources().entrySet()) {
-                totalOpponentResources.merge(entry.getKey(), entry.getValue(), Integer::sum);
-            }
-        }
-
-
-        // --- Step 1: Check if we can steal enough to build a full city ---
-        int oreHave = this.getResources().getOrDefault("Ore", 0);
-        int grainHave = this.getResources().getOrDefault("Grain", 0);
-        int woolHave = this.getResources().getOrDefault("Wool", 0);
-        int woodHave = this.getResources().getOrDefault("Wood", 0);
-        int brickHave = this.getResources().getOrDefault("Brick", 0);
-
-
-
-        int oreFromOpponents = totalOpponentResources.getOrDefault("Ore", 0);
-        int grainFromOpponents = totalOpponentResources.getOrDefault("Grain", 0);
-        int woolFromOpponents = totalOpponentResources.getOrDefault("Wool", 0);
-        int woodFromOpponents = totalOpponentResources.getOrDefault("Wood", 0);
-        int brickFromOpponents = totalOpponentResources.getOrDefault("Brick", 0);
-        System.out.println("ore to steal: " +oreFromOpponents );
-        System.out.println("Grain to steal: " +grainFromOpponents );
-        System.out.println("Wool to steal: " +woolFromOpponents );
-        System.out.println("Wood to steal: " +woodFromOpponents );
-        System.out.println("Brick to steal: " +brickFromOpponents );
-
-        // enough to build a city
-        int oreNeed = Math.max(0, 3 - oreHave);
-        int grainNeed = Math.max(0, 2 - grainHave);
-
-        if ((oreFromOpponents >= oreNeed) && grainNeed==0 ){
-            System.out.println("steals ore for city");
-            return "Ore";
-        } else if (grainFromOpponents >= grainNeed && oreNeed==0) {
-            System.out.println("steals grain for city");
-            return"Grain";
-        }
-
-        // enought to build a settelment:
-        grainNeed = Math.max(0, 1 - grainHave);
-        int woodNeed = Math.max(0, 1 - woodHave);
-        int woolNeed = Math.max(0, 1 - woolHave);
-        int brickNeed = Math.max(0, 1 - brickHave);
-        if (grainNeed > 0 && grainNeed <= grainFromOpponents
-                && woodNeed == 0 && woolNeed == 0 && brickNeed == 0) {
-            System.out.println("steals grain for settlement");
-            return "Grain";
-        } else if (woodNeed > 0 && woodNeed <= woodFromOpponents
-                && grainNeed == 0 && woolNeed == 0 && brickNeed == 0) {
-            System.out.println("steals Wood for settlement");
-            return "Wood";
-        } else if (woolNeed > 0 && woolNeed <= woolFromOpponents
-                && grainNeed == 0 && woodNeed == 0 && brickNeed == 0) {
-            System.out.println("steals Wool for settlement");
-            return "Wool";
-        } else if (brickNeed > 0 && brickNeed <= brickFromOpponents
-                && grainNeed == 0 && woolNeed == 0 && woodNeed == 0) {
-            System.out.println("steals Brick for settlement");
-            return "Brick";
-        }
-        Map.Entry<String, Integer> mostCommon = getMostCommonOpponentResourceWithCount(totalOpponentResources);
-        String mostCommonResourceName = mostCommon.getKey();
-        int count = mostCommon.getValue();
-        List<Harbor.HarborType> harborTypes = new ArrayList<>();
-        for (Harbor harbor : gameplay.getBoard().getHarbors()) {
-            if (harbor.usableBy(this)) {
-                harborTypes.add(harbor.getType());
-            }
-        }
-        String bestTradeResource = null;
-        int bestTradeValue = 0;
-
-        for (String resource : List.of("Ore", "Grain", "Wool", "Wood", "Brick")) {
-            int available = totalOpponentResources.getOrDefault(resource, 0);
-            int tradeRatio = 4; // default (not tradable)
-
-            // Check for specific 2:1 harbor
-            for (Harbor.HarborType type : harborTypes) {
-                if (type.specific != null && type.specific.name().equalsIgnoreCase(resource)) {
-                    tradeRatio = 2;
-                    break;
-                }
-            }
-
-            // If no 2:1 harbor, check for generic 3:1
-            if (tradeRatio == 4) {
-                for (Harbor.HarborType type : harborTypes) {
-                    if (type == Harbor.HarborType.GENERIC) {
-                        tradeRatio = 3;
-                        break;
-                    }
-                }
-            }
-
-            // If we have a usable harbor (2:1 or 3:1), compute trades
-            if (tradeRatio < 4) {
-                int tradeCount = available / tradeRatio;
-                if (tradeCount > bestTradeValue) {
-                    bestTradeValue = tradeCount;
-                    bestTradeResource = resource;
-                }
-            }
-        }
-        System.out.println("steals the best resource: " + bestTradeResource);
-        return bestTradeResource;
-    }
-    private Map.Entry<String, Integer> getMostCommonOpponentResourceWithCount(Map<String, Integer> totalOpponentResources) {
-        return totalOpponentResources.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .orElse(Map.entry("Grain", 0)); // fallback
-    }
     public String chooseSmartResourceToReceive(Gameplay gameplay) {
         List<String> allTypes = List.of("Brick", "Wood", "Ore", "Grain", "Wool");
         List<String> priority = List.of("Ore", "Grain", "Brick", "Wood", "Wool");
@@ -1219,8 +1221,13 @@ public class AIOpponent extends Player {
             default -> 0;
         };
     }
+
     public StrategyLevel getStrategyLevel() {
         return strategyLevel;
+    }
+
+    public boolean canBuyDevCard() {
+        return hasResources("Wool", 1) && hasResources("Grain", 1) && hasResources("Ore", 1);
     }
 
     private void pauseBeforeMove() {
@@ -1256,5 +1263,16 @@ public class AIOpponent extends Player {
     public int getMaxStrategyAttempts() {
         return MAX_STRATEGY_ATTEMPTS;
     }
+
+    private boolean hasLessThanMaxAllowedCities() {
+        return getCities().size() < menuView.getMaxCities();
+    }
+    private boolean hasLessThanMaxAllowedSettlements() {
+        return getSettlements().size() < menuView.getMaxSettlements();
+    }
+    private boolean hasLessThanMaxAllowedRoads() {
+        return getRoads().size() < menuView.getMaxRoads();
+    }
+
 
 }
