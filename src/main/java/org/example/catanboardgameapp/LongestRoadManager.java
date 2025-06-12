@@ -10,6 +10,7 @@ public class LongestRoadManager {
 
     public void calculateAndUpdateLongestRoad(Player player, List<Player> allPlayers) {
         int roadLength = calculateLongestRoad(player, allPlayers);
+        player.setLongestRoad(roadLength);
 
         if (roadLength >= MIN_LENGTH_FOR_LONGEST) {
             if (currentHolder == null || roadLength > calculateLongestRoad(currentHolder, allPlayers)) {

@@ -493,19 +493,26 @@ public class CatanBoardGameView {
 
         LongestRoadManager longestRoadManager = gameplay.getLongestRoadManager();
 
-        if (player == longestRoadManager.getCurrentHolder()) {
-            Text longestRoadText = new Text("🏅 Longest road");;
-            longestRoadText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
-            playerBox.getChildren().add(longestRoadText);
+        Text roadText = new Text("Longest road: " + player.getLongestRoad());
+        roadText.setFont(Font.font("Georgia", infoFontSize));
+
+        if (player == gameplay.getLongestRoadManager().getCurrentHolder()) {
+            roadText.setText("🏅 Longest road: " + player.getLongestRoad());
+            roadText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
         }
+
+        playerBox.getChildren().add(roadText);
+
+        Text armyText = new Text("Largest army: " + player.getPlayedKnights());
+        armyText.setFont(Font.font("Georgia", infoFontSize));
 
         BiggestArmy biggestArmy = gameplay.getBiggestArmy();
-
         if (player == biggestArmy.getCurrentHolder()) {
-            Text biggestArmyText = new Text("🏅 Largest army");
-            biggestArmyText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
-            playerBox.getChildren().add(biggestArmyText);
+            armyText.setText("🏅 Largest army: " + player.getPlayedKnights());
+            armyText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
         }
+
+        playerBox.getChildren().add(armyText);
 
         Text pointsText = new Text("Victory points: " + player.getPlayerScore());
         pointsText.setFont(Font.font("Georgia", infoFontSize));

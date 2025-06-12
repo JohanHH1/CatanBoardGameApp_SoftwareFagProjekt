@@ -19,6 +19,7 @@ public class Player {
     private Vertex secondSettlement; // Used to validate the second free road connection
     private int playerScore;
     private int playedKnights;
+    private int longestRoad;
 
     //_____________________________Constructor_____________________________//
     public Player(int playerId, Color color, Gameplay gameplay) {
@@ -32,6 +33,7 @@ public class Player {
         this.cities = new ArrayList<>();
         this.playerScore = 0;
         this.playedKnights = 0;
+        this.longestRoad = 0;
 
         initializeResources();
         initializeDevelopmentCards();
@@ -101,6 +103,8 @@ public class Player {
 
     public void increasePlayedKnights() { playedKnights += 1; }
 
+    public void setLongestRoad(int longestRoad) { this.longestRoad = longestRoad; }
+
     public void setSecondSettlement(Vertex secondSettlement) {
         this.secondSettlement = secondSettlement;
     }
@@ -158,6 +162,8 @@ public class Player {
     public int getPlayerScore() { return playerScore; }
 
     public int getPlayedKnights() { return playedKnights; }
+
+    public int getLongestRoad() { return longestRoad; }
 
     public Vertex getSecondSettlement() {
         return secondSettlement;
