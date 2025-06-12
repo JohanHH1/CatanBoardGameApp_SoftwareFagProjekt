@@ -41,7 +41,6 @@ public class TradeController {
                 for (String res : Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool")) {
                     bestRatios.put(res, 4);
                 }
-
                 // Update trade ratios based on harbors the player has access to
                 for (Harbor harbor : harbors) {
                     if (harbor.usableBy(gameplay.getCurrentPlayer())) {
@@ -56,7 +55,6 @@ public class TradeController {
                         }
                     }
                 }
-
                 // Filter resources the player has enough of to trade
                 List<String> tradeableResources = new ArrayList<>();
                 for (Map.Entry<String, Integer> entry : gameplay.getCurrentPlayer().getResources().entrySet()) {
@@ -102,7 +100,7 @@ public class TradeController {
                 // Perform the trade
                 gameplay.removeResource(giveResource, ratio);
                 gameplay.addResource(receiveResource, 1);
-                gameplay.getCatanBoardGameView().logToGameLog("Traded " + ratio + " " + giveResource + " for 1 " + receiveResource);
+                gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() + " traded " + ratio + " " + giveResource + " for 1 " + receiveResource);
                 gameplay.getCatanBoardGameView().refreshSidebar();
             }
         });

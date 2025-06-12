@@ -99,7 +99,7 @@ public class DevelopmentCard {
                     if (gameplay.isValidRoadPlacement(edge)) {
                         if (gameplay.placeFreeRoad(ai, edge) == BuildResult.SUCCESS) {
                             placed++;
-                            devCard.log("AI placed a free road.");
+                            devCard.log("AI " + devCard.gameplay.getCurrentPlayer() + " placed a free road.");
                         }
                     }
                 }

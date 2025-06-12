@@ -177,7 +177,7 @@ public class BuildController {
         };
     }
 
-    private void buildRoad(Edge edge, Player currentPlayer) {
+    public void buildRoad(Edge edge, Player currentPlayer) {
         Line playerRoadLine = new Line(
                 edge.getVertex1().getX(), edge.getVertex1().getY(),
                 edge.getVertex2().getX(), edge.getVertex2().getY()

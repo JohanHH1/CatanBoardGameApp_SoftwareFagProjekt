@@ -6,7 +6,7 @@ import org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType;
 
 public class Player {
 
-    private static final boolean DEBUG_MODE = true; // Set to false for normal game
+    private static final boolean DEBUG_MODE = false; // Set to false for normal game
 
     private final Gameplay gameplay;
     private final int playerId;
@@ -51,6 +51,7 @@ public class Player {
             developmentCards.put(cardType, DEBUG_MODE ? 2 : 0);
         }
     }
+
     //______________________________ROBBER LOGIC____________________________//
     // for AI use and for auto-discard for human players
     public Map<String, Integer> chooseDiscardCards() {

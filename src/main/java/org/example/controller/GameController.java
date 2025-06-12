@@ -115,7 +115,9 @@ public class GameController {
     public TradeController getTradeController() {
         return tradeController;
     }
-
+    public BuildController getBuildController() {
+        return buildController;
+    }
     public CatanBoardGameView getGameView() {
         return gameView;
     }
@@ -124,9 +126,6 @@ public class GameController {
         return menuView;
     }
 
-    public BuildController getBuildController() {
-        return buildController;
-    }
 
     //___________________________BOOLEAN__________________________________//
     public boolean hasSavedSession() {

@@ -40,7 +40,6 @@ public class Gameplay {
     private boolean forwardOrder = true;
     private boolean hasRolledThisTurn = false;
     private boolean waitingForInitialRoad = false;
-    private int turnCounter = 0;
     private volatile boolean gamePaused = false;
     private Thread activeAIThread;
     private boolean isRobberMoveRequired = false;
@@ -56,28 +55,17 @@ public class Gameplay {
             VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT
-
     };
-//    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
-//           KNIGHT, KNIGHT
-//private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
- //       MONOPOLY, MONOPOLY,
-   //     ROADBUILDING, ROADBUILDING,
-    //    YEAROFPLENTY, YEAROFPLENTY,
-    //    VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT,
-    //    KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT,
-    //    KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT
-//
-//    };
 
     private List<DevelopmentCard.DevelopmentCardType> shuffledDevelopmentCards;
 
     private final LongestRoadManager longestRoadManager;
     private final BiggestArmyManager biggestArmy;
 
-    //__________________________DICE ROLL TRACKING_____________________________//
     private int lastRolledDie1;
     private int lastRolledDie2;
+    private int tradeCounter;
+    private int turnCounter = 0;
 
     //__________________________CONSTRUCTOR_____________________________//
     public Gameplay(Stage primaryStage, int boardRadius, GameController gameController) {
@@ -87,16 +75,6 @@ public class Gameplay {
         this.longestRoadManager = new LongestRoadManager(this);
         this.biggestArmy = new BiggestArmyManager(this);
     }
-
-    public DrawOrDisplay getDrawOrDisplay() {
-        return drawOrDisplay;
-    }
-
-    public void setDrawOrDisplay(DrawOrDisplay drawOrDisplay) {
-        this.drawOrDisplay = drawOrDisplay;
-    }
-
-
     //________________________INITIALIZE_______________________________//
     public void initializeDevelopmentCards() {
         if (catanBoardGameView == null) {
@@ -418,29 +396,6 @@ public class Gameplay {
                 currentPlayer.getResources().getOrDefault(resource, 0) + amount);
     }
 
-    public int getBestTradeRatio(String resource, Player player) {
-        int bestRatio = 4;
-        for (Harbor harbor : board.getHarbors()) {
-            if (harbor.usableBy(player)) {
-                if (harbor.getType() == Harbor.HarborType.GENERIC) {
-                    bestRatio = Math.min(bestRatio, 3);
-                } else if (harbor.getType().specific.getName().equals(resource)) {
-                    bestRatio = Math.min(bestRatio, 2);
-                }
-            }
-        }
-        return bestRatio;
-    }
-
-    public int tradeWithBank(String give, String receive, Player player) {
-        int ratio = getBestTradeRatio(give, player);
-        if (player.getResources().getOrDefault(give, 0) < ratio) return -1;
-
-        player.getResources().put(give, player.getResources().get(give) - ratio);
-        player.getResources().put(receive, player.getResources().getOrDefault(receive, 0) + 1);
-        return ratio; // success, return ratio used
-    }
-
     //_____________________________BUILDING FUNCTIONS____________________________//
     public BuildResult buildInitialSettlement(Vertex vertex) {
         if (vertex == null || !isValidSettlementPlacement(vertex)) return BuildResult.INVALID_VERTEX;
@@ -528,7 +483,6 @@ public class Gameplay {
             increasePlayerScore();
             return BuildResult.SUCCESS;
         }
-
         return BuildResult.INSUFFICIENT_RESOURCES;
     }
 
@@ -555,6 +509,9 @@ public class Gameplay {
     public BuildResult placeFreeRoad(Player player, Edge edge) {
         if (!isValidRoadPlacement(edge)) return BuildResult.INVALID_EDGE;
         if (player.getRoads().size() >= menuView.getMaxRoads()) return BuildResult.TOO_MANY_ROADS;
+        catanBoardGameView.runOnFX(() -> {
+            getGameController().getBuildController().buildRoad(edge, player);
+        });
         player.getRoads().add(edge);
         // Recalculate longest road
         longestRoadManager.calculateAndUpdateLongestRoad(player, playerList);
@@ -661,6 +618,7 @@ public class Gameplay {
         gameOver = true;
 
         Platform.runLater(() -> {
+            System.out.println("FINAL TRADES WITH BANK IN THIS GAME: " + tradeCounter);
             Stage popup = new Stage();
             popup.initModality(Modality.APPLICATION_MODAL);
             popup.initStyle(StageStyle.UNDECORATED);
@@ -797,6 +755,7 @@ public class Gameplay {
     public void resetCounters() {
         turnCounter=0;
         drawOrDisplay.resetCounters();
+        tradeCounter=0;
     }
 
     public BiggestArmyManager getBiggestArmy() {
@@ -811,7 +770,17 @@ public class Gameplay {
         return longestRoadManager;
     }
 
-//__________________________GETTERS________________________//
+    //__________________________GETTERS________________________//
+    public GameController getGameController() {
+        return gameController;
+    }
+    public DrawOrDisplay getDrawOrDisplay() {
+        return drawOrDisplay;
+    }
+
+    public void setDrawOrDisplay(DrawOrDisplay drawOrDisplay) {
+        this.drawOrDisplay = drawOrDisplay;
+    }
 
     public boolean isRobberMoveRequired() {
         return isRobberMoveRequired;
@@ -908,5 +877,16 @@ public class Gameplay {
         return playerList.stream().anyMatch(p -> !(p instanceof AIOpponent));
     }
 
+
+    public void increaseTradeCounter() {
+        tradeCounter++;
+    }
+
+    public int getTradeCounter() {
+        return tradeCounter;
+    }
+    public void resetTradeCounter() {
+        tradeCounter = 0;
+    }
 
 }

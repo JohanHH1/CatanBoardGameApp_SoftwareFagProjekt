@@ -821,14 +821,7 @@ public class CatanBoardGameView {
         nextTurnButton.setDisable(true);
     }
 
-
     //__________________________GETTERS_____________________________//
-    public ImageView getDiceImage1() {
-        return diceImage1;
-    }
-    public ImageView getDiceImage2() {
-        return diceImage2;
-    }
     public Scene getScene() {
         return scene;
     }
@@ -837,12 +830,6 @@ public class CatanBoardGameView {
     }
     public Group getBoardGroup() {
         return boardGroup;
-    }
-    public Button getRollDiceButton() {
-        return rollDiceButton;
-    }
-    public Button getNextTurnButton() {
-        return nextTurnButton;
     }
     public Group getEdgeBaseLayer() {
         return edgeBaseLayer;
@@ -856,8 +843,4 @@ public class CatanBoardGameView {
     public Group getEdgeClickLayer() {
         return edgeClickLayer;
     }
-    public Stage getPrimaryStage() {
-        return primaryStage;
-    }
-
 }
