@@ -36,6 +36,9 @@ public class MenuView {
     private int maxCities = 4;
     private int maxVictoryPoints = 10;
     private AIOpponent.ThinkingSpeed aiSpeed = AIOpponent.ThinkingSpeed.MEDIUM;
+    private int[] humanPlayers = {3}, boardSizeVal = {3}, easyAI = {0}, mediumAI = {0}, hardAI = {0},
+            maxRoadsVal = {15}, maxSettlementsVal = {5}, maxCitiesVal = {4}, maxVictoryPointsVal = {10};
+
 
     private final GameController gameController;
     private Gameplay gameplay;
@@ -152,10 +155,7 @@ public class MenuView {
         Label totalNote = new Label("Choose 2–6 Total Players");
         totalNote.setFont(Font.font("Arial", 16));
         totalNote.setTextFill(Color.LIGHTGRAY);
-
-        int[] humanPlayers = {3}, boardSizeVal = {3}, easyAI = {0}, mediumAI = {0}, hardAI = {0},
-                maxRoadsVal = {15}, maxSettlementsVal = {5}, maxCitiesVal = {4}, maxVictoryPointsVal = {10};
-
+        
         Font labelFont = Font.font("Arial", FontWeight.BOLD, 14);
         Color fontColor = Color.WHITE;
 
@@ -328,7 +328,7 @@ public class MenuView {
         );
         button.setOnMouseEntered(e -> button.setStyle(
                 "-fx-background-color: #873600;" +
-                        "-fx-text-fill: white;" +
+                        "-fx-text-fill: #fceabb;" +
                         "-fx-background-radius: 10;"
         ));
         button.setOnMouseExited(e -> button.setStyle(
