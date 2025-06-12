@@ -284,7 +284,6 @@ public class MenuView {
         primaryStage.setScene(scene);
     }
 
-
     public void showCreditsScreen(Stage primaryStage) {
         VBox creditsLayout = new VBox(15);
         creditsLayout.setAlignment(Pos.CENTER);

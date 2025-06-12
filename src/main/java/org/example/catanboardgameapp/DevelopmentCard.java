@@ -6,6 +6,7 @@ import org.example.controller.TradeController;
 
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,8 +16,8 @@ public class DevelopmentCard {
     private final List<Player> playerList;
     private final CatanBoardGameView view;
     private final TradeController tradeController;
-    private DrawOrDisplay drawOrDisplay;
-    private CatanBoardGameView catanBoardGameView;
+    private final DrawOrDisplay drawOrDisplay;
+    private final CatanBoardGameView catanBoardGameView;
     private boolean placingFreeRoads = false;
     private boolean playingCard = false;
     private int freeRoadsLeft = 0;
@@ -26,6 +27,8 @@ public class DevelopmentCard {
         this.playerList = playerList;
         this.view = view;
         this.tradeController = tradeController;
+        this.drawOrDisplay = gameplay.getDrawOrDisplay();
+        this.catanBoardGameView = gameplay.getCatanBoardGameView();
     }
 
     public enum DevelopmentCardType {
@@ -101,7 +104,8 @@ public class DevelopmentCard {
         if (currentPlayer instanceof AIOpponent ai && ai.getStrategyLevel() == AIOpponent.StrategyLevel.HARD) {
             selected = ai.chooseResourcesForYearOfPlenty();
         } else {
-            selected = drawOrDisplay.showYearOfPlentyDialog();
+            Map<String, Integer> playerResources = new HashMap<>(currentPlayer.getResources());
+            selected = drawOrDisplay.showYearOfPlentyDialog(playerResources);
         }
 
         if (selected != null) {

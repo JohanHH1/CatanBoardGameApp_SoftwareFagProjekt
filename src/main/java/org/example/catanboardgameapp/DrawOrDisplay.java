@@ -369,7 +369,6 @@ public class DrawOrDisplay {
             }
             return null; // Not possible unless dialog is forcibly closed
         });
-
         Optional<Player> result = dialog.showAndWait();
         return result;
     }
@@ -415,35 +414,56 @@ public class DrawOrDisplay {
 
     public Map<String, Integer> showDiscardDialog(Player player, int toDiscard, Map<String, Integer> playerResources, Gameplay gameplay) {
         List<String> resources = new ArrayList<>(playerResources.keySet());
-
         return showResourceSelectionDialog(
                 "Discard Resources",
                 player + ", you must discard " + toDiscard + " resource cards.",
                 resources,
                 toDiscard,
-                true,
-                player::chooseDiscardCards
+                true,       // allowAutoSelection
+                player::chooseDiscardCards, // auto-selection function
+                playerResources
         );
     }
 
     public String showMonopolyDialog() {
         List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
 
-        Map<String, Integer> result = showResourceSelectionDialog(
-                "Monopoly",
-                "Select exactly 1 resource to monopolize:",
-                resources,
-                1,
-                false,
-                null
-        );
-        if (result == null) return null;
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Monopoly");
+        dialog.setHeaderText("Select a resource to monopolize:");
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.UNDECORATED);
 
-        return result.entrySet().stream().filter(entry -> entry.getValue() == 1).map(Map.Entry::getKey).findFirst().orElse(null);
+        // Prevent closing with X button
+        Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
+        stage.setOnCloseRequest(Event::consume);
+
+        ComboBox<String> comboBox = new ComboBox<>();
+        comboBox.getItems().addAll(resources);
+        comboBox.getSelectionModel().selectFirst();
+
+        dialog.getDialogPane().setContent(new VBox(10,
+                new Label("Resource:"), comboBox
+        ));
+
+        ButtonType confirmType = new ButtonType("Confirm", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().add(confirmType);
+
+        Node confirmButton = dialog.getDialogPane().lookupButton(confirmType);
+        confirmButton.setDisable(false); // Always enabled (1 option only)
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == confirmType) {
+                return comboBox.getValue();
+            }
+            return null;
+        });
+
+        Optional<String> result = dialog.showAndWait();
+        return result.orElse(null);
     }
 
-
-    public Map<String, Integer> showYearOfPlentyDialog() {
+    public Map<String, Integer> showYearOfPlentyDialog(Map<String, Integer> playerResources) {
         List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
 
         return showResourceSelectionDialog(
@@ -452,9 +472,11 @@ public class DrawOrDisplay {
                 resources,
                 2,
                 false,
-                null
+                null,
+                playerResources
         );
     }
+
 
     //___________________________________POPUP HELPER FUNCTIONS____________________________________//
     public void showAlert(Alert.AlertType type, String title, String header, String content, Runnable onClose) {
@@ -505,8 +527,9 @@ public class DrawOrDisplay {
             String message,
             List<String> resources,
             int maxSelection,
-            boolean allowRandomSelection,
-            Supplier<Map<String, Integer>> randomSelectionSupplier
+            boolean allowAutoSelection,
+            Supplier<Map<String, Integer>> autoSelectionSupplier,
+            Map<String, Integer> ownedResourceMap
     ) {
         Stage dialogStage = new Stage();
         dialogStage.initModality(Modality.APPLICATION_MODAL);
@@ -517,7 +540,13 @@ public class DrawOrDisplay {
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(10));
-        grid.getColumnConstraints().addAll(new ColumnConstraints(100), new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints());
+        grid.getColumnConstraints().addAll(
+                new ColumnConstraints(100), // Resource label
+                new ColumnConstraints(),    // Minus
+                new ColumnConstraints(),    // Counter
+                new ColumnConstraints(),    // Plus
+                new ColumnConstraints(50)   // Owned count
+        );
 
         Map<String, Integer> selection = new HashMap<>();
         Map<String, Text> counterTexts = new HashMap<>();
@@ -537,10 +566,15 @@ public class DrawOrDisplay {
             counter.setTextAlignment(TextAlignment.CENTER);
             counterTexts.put(resource, counter);
 
+            int owned = ownedResourceMap != null ? ownedResourceMap.getOrDefault(resource, 0) : -1;
+            Text ownedLabel = new Text(owned >= 0 ? "(" + owned + ")" : "");
+            ownedLabel.setWrappingWidth(30);
+            ownedLabel.setTextAlignment(TextAlignment.CENTER);
+
             plus.setOnAction(e -> {
                 if (selection.get(resource) < maxSelection && getTotalSelected(selection) < maxSelection) {
                     selection.put(resource, selection.get(resource) + 1);
-                    counter.setText(selection.get(resource).toString());
+                    counter.setText(String.valueOf(selection.get(resource)));
                     confirmButton.setDisable(getTotalSelected(selection) != maxSelection);
                 }
             });
@@ -548,12 +582,12 @@ public class DrawOrDisplay {
             minus.setOnAction(e -> {
                 if (selection.get(resource) > 0) {
                     selection.put(resource, selection.get(resource) - 1);
-                    counter.setText(selection.get(resource).toString());
+                    counter.setText(String.valueOf(selection.get(resource)));
                     confirmButton.setDisable(getTotalSelected(selection) != maxSelection);
                 }
             });
 
-            grid.addRow(row++, label, minus, counter, plus);
+            grid.addRow(row++, label, minus, counter, plus, ownedLabel);
         }
 
         final Map<String, Integer>[] result = new Map[]{null};
@@ -564,25 +598,29 @@ public class DrawOrDisplay {
         });
 
         VBox container = new VBox(15, new Text(message), grid);
-
         HBox buttons = new HBox(10, confirmButton);
-        if (allowRandomSelection && randomSelectionSupplier != null) {
-            Button randomButton = new Button("Random Selection");
-            randomButton.setOnAction(e -> {
-                result[0] = randomSelectionSupplier.get();
-                dialogStage.close();
+
+        if (allowAutoSelection && autoSelectionSupplier != null) {
+            Button autoButton = new Button("Auto-Discard");
+            autoButton.setOnAction(e -> {
+                Map<String, Integer> autoResult = autoSelectionSupplier.get();
+                if (autoResult != null && !autoResult.isEmpty()) {
+                    result[0] = new HashMap<>(autoResult);
+                    dialogStage.close();
+                }
             });
-            buttons.getChildren().add(randomButton);
+            buttons.getChildren().add(autoButton);
         }
 
         container.getChildren().add(buttons);
         container.setPadding(new Insets(15));
         container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
-
+        
         dialogStage.setScene(new Scene(container));
         dialogStage.showAndWait();
         return result[0];
     }
+
     //___________________________________GETTERS____________________________________//
     public StackPane getOverlayPane() {
         return aiOverlayPane;
