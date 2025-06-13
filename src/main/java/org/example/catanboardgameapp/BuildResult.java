@@ -1,5 +1,6 @@
 package org.example.catanboardgameapp;
 
+// All possible outcomes when trying to build something
 public enum BuildResult {
     SUCCESS,
     TOO_MANY_ROADS,

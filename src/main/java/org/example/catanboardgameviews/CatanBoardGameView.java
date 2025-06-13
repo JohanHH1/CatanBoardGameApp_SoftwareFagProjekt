@@ -171,8 +171,8 @@ public class CatanBoardGameView {
 
 
         // Overlay for when AI is making a move (thinking)
-        drawOrDisplay.buildFancyAIOverlay();
-        StackPane aiTurnOverlay = drawOrDisplay.buildFancyAIOverlay();
+        drawOrDisplay.buildAIOverlay();
+        StackPane aiTurnOverlay = drawOrDisplay.buildAIOverlay();
         StackPane layeredRoot = new StackPane(root, aiTurnOverlay);
         scene.setRoot(layeredRoot);
 

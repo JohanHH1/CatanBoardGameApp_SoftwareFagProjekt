@@ -5,12 +5,12 @@ public class BiggestArmyManager {
     private Player biggestArmy;
     private final Gameplay gameplay;
 
-    // ---------------- Constructor ---------------- //
+    //____________________________CONSTRUCTOR___________________________________//
     public BiggestArmyManager(Gameplay gameplay) {
         this.gameplay = gameplay;
     }
 
-    // ---------------- Public API ---------------- //
+    //_____________________________FUNCTIONS____________________________________//
     public void calculateAndUpdateBiggestArmy(Player currentPlayer) {
         int currentKnights = currentPlayer.getPlayedKnights();
 
@@ -32,6 +32,7 @@ public class BiggestArmyManager {
         }
     }
 
+    //______________________________GETTERS_________________________________//
     public Player getCurrentHolder() {
         return biggestArmy;
     }

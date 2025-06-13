@@ -713,10 +713,8 @@ public class Gameplay {
     }
     public void resetCounters() {
         turnCounter=0;
-        drawOrDisplay.resetCounters();
         tradeCounter=0;
     }
-
 
     //__________________________GETTERS________________________//
     public GameController getGameController() {

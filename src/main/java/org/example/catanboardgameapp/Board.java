@@ -15,19 +15,21 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Board {
-    // Initialize and create lists of tile, vertex, and edge classes
+
+    // Init lists and maps of all board related objects
     private final List<Tile> tiles = new ArrayList<>();
     private final List<Vertex> vertices = new ArrayList<>();
     private final List<Edge> edges = new ArrayList<>();
-    private final Map<Point2D, Vertex> vertexMap = new HashMap<>(); // For unifying shared Vertex objects
-    private final Map<String, Edge> edgeMap = new HashMap<>();      // For unifying shared Edge objects
+    private final Map<Point2D, Vertex> vertexMap = new HashMap<>();
+    private final Map<String, Edge> edgeMap = new HashMap<>();
 
+    // Init terrain types with same proportions as in standard Catan game.
     private  final String[] TERRAIN_TYPES = {
             "Grain", "Grain", "Grain", "Grain", "Wood", "Wood", "Wood", "Wood",
             "Wool", "Wool", "Wool", "Wool", "Brick", "Brick", "Brick",
             "Ore", "Ore", "Ore"
     };
-
+    // Init number tokens in 8 different specific orders for fair gameplay on standard (19 tiles) Board Size
     private final List<List<Integer>> originalNumberTokensAll = List.of(
             new ArrayList<>(List.of(8, 4, 9, 11, 3, 5, 10, 6, 2, 12, 6, 3, 9, 10, 5, 4, 8, 11)),
             new ArrayList<>(List.of(6, 4, 5, 11, 3, 9, 10, 6, 2, 12, 8, 3, 5, 10, 9, 4, 8, 11)),
@@ -38,13 +40,13 @@ public class Board {
             new ArrayList<>(List.of(3, 6, 4, 5, 10, 9, 11, 6, 2, 12, 8, 10, 5, 11, 3, 9, 4, 8)),
             new ArrayList<>(List.of(3, 6, 10, 5, 4, 9, 11, 8, 12, 2, 8, 4, 5, 11, 3, 9, 10, 6))
     );
-
     // Board size parameters
     private final int radius;      // e.g., 2 for standard 19-hex
     private final double hexSize;  // distance from hex center to a corner
     private final double GAME_WIDTH;
     private final double GAME_HEIGHT;
     private final int boardSize;
+
     private final DrawOrDisplay drawOrDisplay;
 
     //___________________________CONSTRUCTOR___________________________//
@@ -59,33 +61,18 @@ public class Board {
         this.drawOrDisplay = gameplay.getDrawOrDisplay();    }
 
     //___________________________FUNCTIONS___________________________//
-
-    private double calculateHexSize(int radius, double screenWidth, double screenHeight) {
-        double maxCols = 2 * radius + 1.5;
-        double maxRows = 2 * radius * 1.5 + 1;
-        double maxHexWidth = screenWidth / maxCols;
-        double maxHexHeight = screenHeight / maxRows;
-        return Math.round(Math.min(maxHexWidth / Math.sqrt(3), maxHexHeight / 1.5));
-    }
-
-    public void clearBoard() {
-        tiles.clear();
-        edges.clear();
-    }
-
     private void initializeBoard() {
+        // Clear everything from previous games, if there is any
         tiles.clear();
         edges.clear();
         vertices.clear();
         vertexMap.clear();
         edgeMap.clear();
 
+        // create board logic, variables/numbers/tiles etc
         List<Tile> allTiles = new ArrayList<>();
-
         int tileCountMultiplier = ((3 * boardSize * boardSize - (3 * boardSize) + 1)) / 18;
-
-        // Desert count depends on board size
-        String[] desertArray = (boardSize % 3 == 2) ?
+        String[] desertArray = (boardSize % 3 == 2) ?       // Desert count depends on board size
                 new String[]{"Desert", "Desert", "Desert", "Desert", "Desert", "Desert", "Desert"} :
                 new String[]{"Desert"};
 
@@ -98,15 +85,14 @@ public class Board {
             System.arraycopy(TERRAIN_TYPES, 0, terrainPool, i * TERRAIN_TYPES.length, TERRAIN_TYPES.length);
             numberTokens.addAll(originalNumberTokensAll.get((int) (Math.random() * originalNumberTokensAll.size())));
         }
+        // Shuffling terrains and number tokens for randomized board setups
         System.arraycopy(desertArray, 0, terrainPool, TERRAIN_TYPES.length * tileCountMultiplier, desertArray.length);
-
         List<String> shuffledTerrains = new ArrayList<>(Arrays.asList(terrainPool));
         Collections.shuffle(shuffledTerrains);
         if (boardSize != 3) Collections.shuffle(numberTokens);
-
         Set<String> landCoords = new HashSet<>();
 
-        // === Create core land/desert tiles === //
+        //Create core land/desert tiles
         int terrainIndex = 0;
         for (int q = -radius; q <= radius; q++) {
             int r1 = Math.max(-radius, -q - radius);
@@ -116,7 +102,6 @@ public class Board {
                 Resource.ResourceType resourceType = Resource.ResourceType.fromString(terrainStr);
                 int diceNumber = resourceType == Resource.ResourceType.DESERT ? 7 : numberTokens.remove(0);
                 Point2D center = axialToPixel(q, r);
-
                 Tile tile = new Tile(q, r, resourceType, diceNumber, center, radius);
                 tile.setSea(false);
                 allTiles.add(tile);
@@ -124,7 +109,7 @@ public class Board {
             }
         }
 
-        // === Create surrounding sea tiles === //
+        // Create surrounding sea tiles
         int seaRingRadius = radius + 1;
         for (int q = -seaRingRadius; q <= seaRingRadius; q++) {
             int r1 = Math.max(-seaRingRadius, -q - seaRingRadius);
@@ -132,7 +117,6 @@ public class Board {
             for (int r = r1; r <= r2; r++) {
                 String coordKey = q + "," + r;
                 if (landCoords.contains(coordKey)) continue; // skip existing land
-
                 Resource.ResourceType seaType = Resource.ResourceType.SEA;
                 Point2D center = axialToPixel(q, r);
                 Tile seaTile = new Tile(q, r, seaType, 0, center, radius);
@@ -141,7 +125,7 @@ public class Board {
             }
         }
 
-        // === Link tiles to shared vertices and edges === //
+        // Link tiles to shared vertices and edges
         for (Tile tile : allTiles) {
             Point2D center = axialToPixel(tile.getQ(), tile.getR());
             Vertex[] corners = new Vertex[6];
@@ -158,7 +142,6 @@ public class Board {
                 vertex.addAdjacentTile(tile);
                 corners[i] = vertex;
             }
-
             List<Edge> tileEdges = new ArrayList<>();
             for (int i = 0; i < 6; i++) {
                 Vertex v1 = corners[i];
@@ -168,7 +151,6 @@ public class Board {
                 edge.addAdjacentTile(tile);
                 tileEdges.add(edge);
             }
-
             tile.setVertices(List.of(corners));
             tile.setEdges(tileEdges);
         }
@@ -179,7 +161,18 @@ public class Board {
         edges.addAll(edgeMap.values());
     }
 
+    // Calculate size of hexes for Parametric board with different size options
+    private double calculateHexSize(int radius, double screenWidth, double screenHeight) {
+        double maxCols = 2 * radius + 1.5;
+        double maxRows = 2 * radius * 1.5 + 1;
+        double maxHexWidth = screenWidth / maxCols;
+        double maxHexHeight = screenHeight / maxRows;
+        return Math.round(Math.min(maxHexWidth / Math.sqrt(3), maxHexHeight / 1.5));
+    }
+
+    // Assigning board Tiles to Harbors
     private void assignHarbors() {
+        // List of all the Harbors in standard game of catan:
         List<Harbor.HarborType> harborTypes = new ArrayList<>(List.of(
                 Harbor.HarborType.BRICK, Harbor.HarborType.WOOL, Harbor.HarborType.ORE,
                 Harbor.HarborType.GRAIN, Harbor.HarborType.WOOD,
@@ -187,7 +180,6 @@ public class Board {
                 Harbor.HarborType.GENERIC, Harbor.HarborType.GENERIC
         ));
         Collections.shuffle(harborTypes);
-
         List<Edge> candidateEdges = edges.stream()
                 .filter(edge -> {
                     List<Tile> adj = edge.getAdjacentTiles();
@@ -203,7 +195,7 @@ public class Board {
             Harbor harbor = new Harbor(type, edge);
             edge.setHarbor(harbor);
 
-            // 🔽 Assign harbor to the sea tile so we can render on it later
+            // Assign harbor to the sea tile so it can be rendered later
             Tile seaTile = edge.getAdjacentTiles().stream()
                     .filter(Tile::isSea)
                     .findFirst()
@@ -222,7 +214,6 @@ public class Board {
             Polygon hexShape = drawOrDisplay.createTilePolygon(tile);
             hexShape.setFill(tile.getTileColor(tile.getResourcetype()));
             hexShape.setStroke(Color.BLACK);
-
             Point2D center = tile.getCenter();
             double centerX = center.getX();
             double centerY = center.getY();
@@ -236,21 +227,18 @@ public class Board {
                 boardGroup.getChildren().add(icon);
             }
 
-            // Dice number (skip sea tiles)
+            // Dice numbers on tiles (skip sea tiles)
             if (!tile.isSea() && tile.getTileDiceNumber() != 7) {
                 Text numberText = new Text(centerX, centerY, String.valueOf(tile.getTileDiceNumber()));
                 numberText.setFont(Font.font("Arial", FontWeight.BOLD, 40.0 / radius));
                 numberText.setTextAlignment(TextAlignment.CENTER);
                 numberText.setFill((tile.getTileDiceNumber() == 6 || tile.getTileDiceNumber() == 8)
                         ? Color.RED : Color.DARKGREEN);
-
                 Text sample = new Text("12");
                 sample.setFont(Font.font("Arial", FontWeight.BOLD, 40.0 / radius));
                 Rectangle background = drawOrDisplay.createBoxBehindDiceNumber(sample, centerX, centerY);
-
                 numberText.setX(centerX - numberText.getLayoutBounds().getWidth() / 2);
                 numberText.setY(centerY + numberText.getLayoutBounds().getHeight() / 4);
-
                 boardGroup.getChildren().addAll(background, numberText);
             }
         }
@@ -260,7 +248,7 @@ public class Board {
         return boardGroup;
     }
 
-
+    // Helper for coordinates in axial/pixel relation
     private Point2D axialToPixel(int q, int r) {
         double offsetX = GAME_WIDTH / 2;
         double offsetY = GAME_HEIGHT / 2;
@@ -269,6 +257,7 @@ public class Board {
         return new Point2D(x, y);
     }
 
+    // Avoid duplicated edges based on vertices A and B (A-B edge == B-A edge)
     private String sortEdgeVertices(Vertex v1, Vertex v2) {
         if (v1.getX() > v2.getX() || (v1.getX() == v2.getX() && v1.getY() > v2.getY())) {
             Vertex temp = v1;
@@ -279,7 +268,6 @@ public class Board {
     }
 
     //___________________________GETTERS___________________________
-
     public List<Tile> getTiles() {
         return tiles;
     }

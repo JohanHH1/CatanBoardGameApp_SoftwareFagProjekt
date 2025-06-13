@@ -35,30 +35,31 @@ import java.util.function.Supplier;
 
 public class DrawOrDisplay {
 
-    private final int boardRadius;
-    private final List<Circle> vertexClickHighlights = new ArrayList<>();
-    private final List<Line> edgeClickHighlights = new ArrayList<>();
-    private static int settlementCounter = 0;
     private static final boolean SHOW_SETTLEMENT_ORDER = true;
+
+    // UI components
     private StackPane aiOverlayPane;
     private Label thinkingLabel;
     private ImageView thinkingImage;
     private RotateTransition rotateAnimation;
 
+    // Click highlights
+    private final List<Circle> vertexClickHighlights = new ArrayList<>();
 
-    //___________________________________________CONSTRUCTOR__________________________________________//
+    private final int boardRadius;
+
+    //______________________________CONSTRUCTOR________________________________//
     public DrawOrDisplay(int boardRadius) {
         this.boardRadius = boardRadius;
     }
 
-    //___________________________________________CLICK INITIALIZATION__________________________________________//
+    //___________________________CLICK INITIALIZATION_____________________________//
     public void initEdgesClickHandlers(Board board, Group boardGroup, BuildController controller, int radius) {
         Group edgeBaseLayer = controller.getGameController().getGameView().getEdgeBaseLayer();
         Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
 
         for (Edge edge : board.getEdges()) {
             if (edge.isSeaOnly()) continue;
-
             Line visible = new Line(edge.getVertex1().getX(), edge.getVertex1().getY(),
                     edge.getVertex2().getX(), edge.getVertex2().getY());
             visible.setStroke(Color.WHITE);
@@ -81,7 +82,6 @@ public class DrawOrDisplay {
         Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
 
         boolean DEBUG_VISUALIZE_CLICKS = true;
-
         for (Vertex vertex : board.getVertices()) {
             if (vertex.isSeaOnly()) continue;
 
@@ -145,8 +145,7 @@ public class DrawOrDisplay {
         }
         return new Image(stream);
     }
-
-    public StackPane buildFancyAIOverlay() {
+    public StackPane buildAIOverlay() {
         thinkingLabel = new Label("Waiting for AI...");
         thinkingLabel.setStyle("-fx-font-size: 26px; -fx-text-fill: white; -fx-font-weight: bold;");
         thinkingLabel.setOpacity(0.85);
@@ -173,17 +172,12 @@ public class DrawOrDisplay {
         return aiOverlayPane;
     }
 
-    public void resetCounters() {
-        settlementCounter = 0;
-    }
-
     //_____________________________________DRAWING_________________________________________//
     public void drawRoad(Line line, Player player, Group boardGroup) {
         line.setStroke(player.getColor());
         line.setStrokeWidth(1.5 * (10.0 / boardRadius));
         boardGroup.getChildren().add(line);
     }
-
     public void drawSettlement(Circle circle, Vertex vertex, Group boardGroup) {
         if (vertex.getOwner() != null) {
             circle.setFill(vertex.getOwner().getColor());
@@ -206,9 +200,7 @@ public class DrawOrDisplay {
 
         // Example shape: a hexagon to represent a city
         double height = radius * Math.sqrt(3) / 2;
-
         double yOffset = 0.0; // pixels downward
-
         cityShape.getPoints().addAll(
                 x,             y - radius + yOffset,
                 x + height,    y - radius / 2 + yOffset,
@@ -217,7 +209,6 @@ public class DrawOrDisplay {
                 x - height,    y + radius / 2 + yOffset,
                 x - height,    y - radius / 2 + yOffset
         );
-
         if (vertex.getOwner() != null) {
             cityShape.setFill(vertex.getOwner().getColor());
         } else {
@@ -237,20 +228,16 @@ public class DrawOrDisplay {
         boardGroup.getChildren().add(circle);
         return circle;
     }
-
     public void drawHarbors(List<Tile> tiles, Group boardGroup) {
         for (Tile tile : tiles) {
             Harbor harbor = tile.getHarbor();
             if (harbor == null) continue;
-
             Edge edge = harbor.getEdge();
             Vertex v1 = edge.getVertex1();
             Vertex v2 = edge.getVertex2();
-
             Point2D center = tile.getCenter();
             double centerX = center.getX();
             double centerY = center.getY();
-
             String text = (harbor.getType().specific == null)
                     ? "3:1"
                     : "2:1\n" + harbor.getType().specific.getName().toUpperCase();
@@ -277,10 +264,8 @@ public class DrawOrDisplay {
             boardGroup.getChildren().addAll(dock1, dock2, box, label);
         }
     }
-
     public void drawErrorCross(Group boardGroup, double x, double y) {
         double size = 10.0 / boardRadius;
-
         Line line1 = new Line(x - size, y - size, x + size, y + size);
         Line line2 = new Line(x - size, y + size, x + size, y - size);
 
@@ -390,10 +375,8 @@ public class DrawOrDisplay {
                     togglePane.setFont(Font.font("Georgia", FontWeight.NORMAL, 12));
                     box.getChildren().add(togglePane);
                 }
-
                 playerStats.getChildren().add(box);
             }
-
             ScrollPane scrollPane = new ScrollPane(playerStats);
             scrollPane.setFitToWidth(true);
             scrollPane.setPrefViewportHeight(500);
@@ -402,7 +385,6 @@ public class DrawOrDisplay {
             -fx-border-color: #a86c1f;
             -fx-border-radius: 8;
         """);
-
             Button closeBtn = new Button("Back to Main Menu");
             closeBtn.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
             closeBtn.setStyle("""
@@ -413,7 +395,6 @@ public class DrawOrDisplay {
                 popup.close();
                 onClose.run();
             });
-
             content.getChildren().addAll(header, scrollPane, closeBtn);
             Scene scene = new Scene(content, gameWidth, gameHeight);
             popup.setScene(scene);
@@ -583,7 +564,6 @@ public class DrawOrDisplay {
 
     public Map<String, Integer> showYearOfPlentyDialog(Map<String, Integer> playerResources) {
         List<String> resources = Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool");
-
         return showResourceSelectionDialog(
                 "Year of Plenty",
                 "Select exactly 2 resources to gain from the bank:",
@@ -619,7 +599,6 @@ public class DrawOrDisplay {
             alert.showAndWait();
         });
     }
-
     public void showCustomPopup(String title, String message, boolean runLater) {
         Runnable task = () -> {
             Stage popup = new Stage();
@@ -636,7 +615,6 @@ public class DrawOrDisplay {
                 -fx-border-radius: 10;
                 -fx-background-radius: 10;
             """);
-
             Label label = new Label(message);
             Button closeButton = new Button("OK");
             closeButton.setOnAction(e -> popup.close());
@@ -655,7 +633,7 @@ public class DrawOrDisplay {
             task.run();
         }
     }
-    // Helper function to create NON-closable Dialog boxes
+    // Helper function to create NON-closable Dialog boxes for multiple recourse selections
     private Map<String, Integer> showResourceSelectionDialog(
             String title,
             String message,
@@ -686,7 +664,6 @@ public class DrawOrDisplay {
         Map<String, Text> counterTexts = new HashMap<>();
         Button confirmButton = new Button("Confirm");
         confirmButton.setDisable(true);
-
         int row = 0;
         for (String resource : resources) {
             selection.put(resource, 0);
@@ -712,7 +689,6 @@ public class DrawOrDisplay {
                     confirmButton.setDisable(getTotalSelected(selection) != maxSelection);
                 }
             });
-
             minus.setOnAction(e -> {
                 if (selection.get(resource) > 0) {
                     selection.put(resource, selection.get(resource) - 1);
@@ -720,12 +696,9 @@ public class DrawOrDisplay {
                     confirmButton.setDisable(getTotalSelected(selection) != maxSelection);
                 }
             });
-
             grid.addRow(row++, label, minus, counter, plus, ownedLabel);
         }
-
         final Map<String, Integer>[] result = new Map[]{null};
-
         confirmButton.setOnAction(e -> {
             result[0] = new HashMap<>(selection);
             dialogStage.close();
@@ -740,7 +713,6 @@ public class DrawOrDisplay {
             -fx-border-radius: 10;
             -fx-background-radius: 10;
         """);
-
         if (allowAutoSelection && autoSelectionSupplier != null) {
             Button autoButton = new Button("Auto-Discard");
             autoButton.setOnAction(e -> {
@@ -752,27 +724,14 @@ public class DrawOrDisplay {
             });
             buttons.getChildren().add(autoButton);
         }
-
         container.getChildren().add(buttons);
         container.setPadding(new Insets(15));
-
         dialogStage.setScene(new Scene(container));
         dialogStage.showAndWait();
         return result[0];
     }
 
-    //___________________________________GETTERS____________________________________//
-    public StackPane getOverlayPane() {
-        return aiOverlayPane;
-    }
-    private int getTotalSelected(Map<String, Integer> map) {
-        return map.values().stream().mapToInt(Integer::intValue).sum();
-    }
-    public Label getThinkingLabel() {
-        return thinkingLabel;
-    }
-
-    //___________________________________AI THINKING OVERLAY FUNCTIONS____________________________________//
+    //__________________________AI OVERLAY FUNCTIONS______________________________//
     public void setThinkingMessage(String text) {
         thinkingLabel.setText(text);
     }
@@ -791,5 +750,13 @@ public class DrawOrDisplay {
         if (rotateAnimation != null) {
             draw.rotateAnimation.play();
         }
+    }
+
+    //___________________________________GETTERS____________________________________//
+    public StackPane getOverlayPane() {
+        return aiOverlayPane;
+    }
+    private int getTotalSelected(Map<String, Integer> map) {
+        return map.values().stream().mapToInt(Integer::intValue).sum();
     }
 }
