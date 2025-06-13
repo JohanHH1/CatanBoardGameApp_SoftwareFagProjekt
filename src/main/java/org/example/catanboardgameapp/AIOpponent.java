@@ -816,10 +816,9 @@ public class AIOpponent extends Player {
 
         for (String res : resources.keySet()) {
             int amountOwned = resources.getOrDefault(res, 0);
-            int productionScore = 0;
 
             // Production score: total dice weight from settlements
-            productionScore = getProductionScore(res, productionScore);
+            int productionScore = getProductionScore(res);
 
             // Base score: more owned = more discardable
             int score = amountOwned * 3;
@@ -868,17 +867,19 @@ public class AIOpponent extends Player {
     }
 
     //__________________________________HELPER / CALCULATION FUNCTIONS____________________________________//
-    private int getProductionScore(String res, int productionScore) {
+    private int getProductionScore(String resourceType) {
+        int productionScore = 0;
         for (Vertex v : getSettlements()) {
             for (Tile t : gameplay.getBoard().getTiles()) {
                 if (t.getVertices().contains(v) &&
-                        t.getResourcetype().toString().equals(res)) {
+                        t.getResourcetype().toString().equals(resourceType)) {
                     productionScore += getDiceProbabilityValue(t.getTileDiceNumber());
                 }
             }
         }
         return productionScore;
     }
+
     private int getSmartSettlementScore(Vertex vertex, Gameplay gameplay) {
         int diceValue = getSettlementDiceValue(vertex, gameplay);     // Primary: total dice probability
         int diversity = getResourceDiversityScore(vertex, gameplay);  // Secondary: unique resource types
@@ -1123,15 +1124,8 @@ public class AIOpponent extends Player {
         if (lowestResources.size() > 1) {
             Map<String, Integer> productionMap = new HashMap<>();
             for (String res : lowestResources) {
-                int totalProd = 0;
-                for (Vertex v : getSettlements()) {
-                    for (Tile tile : gameplay.getBoard().getTiles()) {
-                        if (tile.getVertices().contains(v) &&
-                                tile.getResourcetype().toString().equals(res)) {
-                            totalProd += getDiceProbabilityValue(tile.getTileDiceNumber());
-                        }
-                    }
-                }
+
+                int totalProd = getProductionScore(res);
                 productionMap.put(res, totalProd);
             }
 
@@ -1169,15 +1163,7 @@ public class AIOpponent extends Player {
         // Prioritize based on abundance minus production value
         Map<String, Integer> productionScore = new HashMap<>();
         for (String res : tradable) {
-            int score = 0;
-            for (Vertex v : getSettlements()) {
-                for (Tile tile : gameplay.getBoard().getTiles()) {
-                    if (tile.getVertices().contains(v)
-                            && tile.getResourcetype().toString().equals(res)) {
-                        score += getDiceProbabilityValue(tile.getTileDiceNumber());
-                    }
-                }
-            }
+            int score = getProductionScore(res);
             productionScore.put(res, score);
         }
 
@@ -1316,8 +1302,8 @@ public class AIOpponent extends Player {
         Map<String, Integer> priorityMap = new HashMap<>();
         for (String res : needed) {
             int owned = getResources().getOrDefault(res, 0);
-            int prodScore = 0;
-            prodScore = getProductionScore(res, prodScore);
+
+            int prodScore = getProductionScore(res);
             int tradeRatio = getBestTradeRatio(res, this);
             int score = (5 - owned) * 3 + (5 - prodScore) * 2 + tradeRatio * 2;
             priorityMap.put(res, score);
