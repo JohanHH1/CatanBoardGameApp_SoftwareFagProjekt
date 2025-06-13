@@ -302,6 +302,17 @@ public class CatanBoardGameView {
         exitButton.setOnAction(e -> {
             gameplay.pauseGame();
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
+            DialogPane pane = alert.getDialogPane();
+            pane.setStyle("""
+                -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+                -fx-border-color: #8c5b1a;
+                -fx-border-width: 2;
+                -fx-border-radius: 10;
+                -fx-background-radius: 10;
+                -fx-font-family: 'Georgia';
+                -fx-font-size: 14px;
+                -fx-text-fill: #3e2b1f;
+            """);
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.YES) {
                 gameController.returnToMenu(gameplay.getMenuView());
@@ -463,7 +474,18 @@ public class CatanBoardGameView {
                     DevelopmentCardType type = entry.getKey(); // capture outside lambda
 
                     Button cardButton = new Button(type.getDisplayName() + " (" + entry.getValue() + ")");
-                    cardButton.setFont(Font.font("Georgia", infoFontSize));
+                    //cardButton.setFont(Font.font("Georgia", infoFontSize));
+                    cardButton.setStyle("""
+                        -fx-font-family: 'Georgia';
+                        -fx-background-color: #d8b173;
+                        -fx-background-radius: 6;
+                        -fx-border-radius: 6; 
+                        -fx-border-color: #8c5b1a; 
+                        -fx-border-width: 1;
+                        -fx-padding: 4 10 4 10;
+                        -fx-cursor: hand;
+                    """);
+
 
                     cardButton.setOnAction(e -> {
                         try {

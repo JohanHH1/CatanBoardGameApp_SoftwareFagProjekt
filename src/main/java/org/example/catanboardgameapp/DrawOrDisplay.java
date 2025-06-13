@@ -433,6 +433,18 @@ public class DrawOrDisplay {
         dialog.setHeaderText("Select a resource to monopolize:");
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initStyle(StageStyle.UNDECORATED);
+        DialogPane pane = dialog.getDialogPane();
+        pane.setStyle("""
+            -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+            -fx-border-color: #8c5b1a;
+            -fx-border-width: 2;
+            -fx-border-radius: 8;
+            -fx-background-radius: 8;
+            -fx-font-family: 'Georgia';
+            -fx-font-size: 14px;
+            -fx-text-fill: #3e2b1f;
+        """);
+
 
         // Prevent closing with X button
         Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
@@ -487,6 +499,15 @@ public class DrawOrDisplay {
             alert.setContentText(content);
             alert.setResizable(true);
             alert.getDialogPane().setPrefWidth(400);
+            DialogPane pane = alert.getDialogPane();
+            pane.setStyle("""
+                -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+                -fx-border-color: #8c5b1a;
+                -fx-border-width: 2;
+                -fx-font-family: 'Georgia';
+                -fx-font-size: 13px;
+                -fx-text-fill: #3e2b1f;
+            """);
             if (onClose != null) {
                 alert.setOnHidden(e -> onClose.run());
             }
@@ -614,7 +635,15 @@ public class DrawOrDisplay {
 
         container.getChildren().add(buttons);
         container.setPadding(new Insets(15));
-        container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
+        //container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
+
+                container.setStyle("""
+            -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+            -fx-border-color: #8c5b1a;
+            -fx-border-width: 2;
+            -fx-border-radius: 0;
+            -fx-background-radius: 0;
+        """);
 
         dialogStage.setScene(new Scene(container));
         dialogStage.showAndWait();
