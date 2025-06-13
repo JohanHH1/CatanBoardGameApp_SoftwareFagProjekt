@@ -37,6 +37,25 @@ public class LongestRoadManager {
     }
 
     public int calculateLongestRoad(Player player, List<Player> allPlayers) {
+        Set<Edge> allRoads = new HashSet<>(player.getRoads());
+        Set<Vertex> allVertices = new HashSet<>();
+
+        for (Edge e : allRoads) {
+            allVertices.add(e.getVertex1());
+            allVertices.add(e.getVertex2());
+        }
+
+        int longest = 0;
+        for (Vertex start : allVertices) {
+            Set<Edge> visited = new HashSet<>();
+            longest = Math.max(longest, dfs(start, visited, player, allPlayers));
+        }
+
+        return longest;
+    }
+
+/*
+    public int calculateLongestRoad(Player player, List<Player> allPlayers) {
         Set<Edge> visited = new HashSet<>();
         int longest = 0;
 
@@ -50,7 +69,7 @@ public class LongestRoadManager {
             visited.remove(road);
         }
         return longest;
-    }
+    }*/
 
     // ---------------- Internal Logic ---------------- //
     private int dfs(Vertex current, Set<Edge> visited, Player player, List<Player> allPlayers) {

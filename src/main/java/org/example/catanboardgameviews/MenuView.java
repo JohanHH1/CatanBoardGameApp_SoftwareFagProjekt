@@ -146,18 +146,37 @@ public class MenuView {
     public void showOptionsMenu(Stage primaryStage) {
         VBox optionsLayout = new VBox(20);
         optionsLayout.setAlignment(Pos.CENTER);
-        optionsLayout.setStyle("-fx-padding: 40; -fx-background-color: linear-gradient(to bottom, #2c2c3f, #505080);");
+        //optionsLayout.setStyle("-fx-padding: 40; -fx-background-color: linear-gradient(to bottom, #2c2c3f, #505080);");
+
+        Image backgroundImage = new Image(
+                getClass().getResource("/backgrounds/optionsMenuBlue.png").toExternalForm()
+        );
+
+        BackgroundSize backgroundSize = new BackgroundSize(
+                100, 100, false, false, false, true
+        );
+
+        BackgroundImage bgImage = new BackgroundImage(
+                backgroundImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                backgroundSize
+        );
+
+        optionsLayout.setBackground(new Background(bgImage));
+
 
         Label optionsTitle = new Label("Game Options");
-        optionsTitle.setFont(new Font("Arial Black", 28));
-        optionsTitle.setTextFill(Color.LIGHTGRAY);
+        optionsTitle.setFont(new Font("Georgia", 28));
+        optionsTitle.setTextFill(Color.DARKRED);
 
         Label totalNote = new Label("Choose 2–6 Total Players");
-        totalNote.setFont(Font.font("Arial", 16));
-        totalNote.setTextFill(Color.LIGHTGRAY);
-        
-        Font labelFont = Font.font("Arial", FontWeight.BOLD, 14);
-        Color fontColor = Color.WHITE;
+        totalNote.setFont(Font.font("Georgia", 16));
+        totalNote.setTextFill(Color.DARKRED);
+
+        Font labelFont = Font.font("Georgia", FontWeight.BOLD, 14);
+        Color fontColor = Color.DARKRED;
 
         Label[] labels = {
                 new Label("Number of Human Players:"),
@@ -259,7 +278,17 @@ public class MenuView {
         grid.add(aiSpeedDropdown, 2, labels.length);
 
         Button accept = new Button("Accept Changes");
-        accept.setStyle("-fx-font-size: 18px; -fx-background-color: #28a745; -fx-text-fill: white; -fx-padding: 10 20 10 20;");
+        //accept.setStyle("-fx-font-size: 18px; -fx-background-color: #28a745; -fx-text-fill: white; -fx-padding: 10 20 10 20;");
+
+        accept.setStyle("""
+    -fx-font-size: 18px;
+    -fx-background-color: white;
+    -fx-text-fill: #7b1e1e;         
+    -fx-padding: 10 20 10 20;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+""");
+
         accept.setOnAction(e -> {
             int total = humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0];
             if (total < 2 || total > 6) {
