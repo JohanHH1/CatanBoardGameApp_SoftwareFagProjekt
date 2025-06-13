@@ -37,7 +37,7 @@ public class GameController {
         turnController = new TurnController(this);
         this.setTurnController(turnController);
 
-        tradeController = new TradeController(this, gameplay.getBoardRadius());
+        tradeController = new TradeController(this);
         this.setTradeController(tradeController);
 
         // THEN create the view

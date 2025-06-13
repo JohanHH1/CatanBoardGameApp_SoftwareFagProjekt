@@ -4,9 +4,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.DialogPane;
 import org.example.catanboardgameapp.*;
-
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class TradeController {
 
@@ -14,31 +12,34 @@ public class TradeController {
     private final DrawOrDisplay drawOrDisplay;
 
     //___________________________CONTROLLER__________________________________//
-    public TradeController(GameController gameController, int boardRadius) {
+
+    // Initialize with references to game logic and UI
+    public TradeController(GameController gameController) {
         this.gameController = gameController;
         this.drawOrDisplay = gameController.getGameplay().getDrawOrDisplay();
     }
 
     //___________________________FUNCTIONS__________________________________//
+
+    // Sets up the trade button with trading logic and UI dialogs
     public void setupTradeButton(Button tradeButton) {
-        // Prevent trading while placing free roads (e.g., from Road Building card)
         tradeButton.setOnAction(e -> {
+            // Block trading if a development card action is pending
             if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
                 drawOrDisplay.showFinishDevelopmentCardActionPopup();
                 return;
             }
             Gameplay gameplay = gameController.getGameplay();
-            // Enforce Humans cant Trade while its AI turn
-            if (gameplay.isBlockedByAITurn()) {System.out.println("AI TURN");}
-            // Enforce dice roll before trading
-            else if (!gameplay.isInInitialPhase() && !gameplay.hasRolledDice()) {
+
+            // Block trading if it's the AI's turn or if dice haven't been rolled yet
+            if (!gameplay.isBlockedByAITurn() && !gameplay.isInInitialPhase() && !gameplay.hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before Trading!");
             }
             else {
                 Map<String, Integer> bestRatios = new HashMap<>();
                 List<Harbor> harbors = gameplay.getBoard().getHarbors();
 
-                // All resources start with default 4:1 bank trade ratio
+                // Default 4:1 trade ratio with the bank
                 for (String res : Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool")) {
                     bestRatios.put(res, 4);
                 }
@@ -46,17 +47,17 @@ public class TradeController {
                 for (Harbor harbor : harbors) {
                     if (harbor.usableBy(gameplay.getCurrentPlayer())) {
                         Harbor.HarborType type = harbor.getType();
-                        if (type == Harbor.HarborType.GENERIC) { // 3:1 harbor applies to all resources
-                            for (String res : bestRatios.keySet()) {
-                                bestRatios.put(res, Math.min(bestRatios.get(res), 3));
-                            }
+                        // 3:1 harbor applies to all resources
+                        if (type == Harbor.HarborType.GENERIC) {
+                            bestRatios.replaceAll((r, v) -> Math.min(bestRatios.get(r), 3));
                         } else {
-                            String specific = type.specific.getName(); // 2:1 harbor for a specific resource
+                            // 2:1 harbor for a specific resource
+                            String specific = type.specific.getName();
                             bestRatios.put(specific, Math.min(bestRatios.get(specific), 2));
                         }
                     }
                 }
-                // Filter resources the player has enough of to trade
+                // Collect tradeable resources the player has enough of
                 List<String> tradeableResources = new ArrayList<>();
                 for (Map.Entry<String, Integer> entry : gameplay.getCurrentPlayer().getResources().entrySet()) {
                     String resource = entry.getKey();
@@ -69,13 +70,12 @@ public class TradeController {
                     drawOrDisplay.showTradeError("You don't have enough resources to trade based on your harbors.");
                     return;
                 }
-                // First dialog: pick what resource to give
+                // Dialog to choose which resource to give
                 ChoiceDialog<String> giveDialog = new ChoiceDialog<>(tradeableResources.get(0), tradeableResources);
                 giveDialog.setTitle("Harbor Trade");
                 giveDialog.setHeaderText("Select the resource you want to give:");
                 giveDialog.setContentText("Give:");
                 gameplay.getCatanBoardGameView().styleDialog(giveDialog);
-                DialogPane givePane = giveDialog.getDialogPane();
                 Optional<String> giveResult = giveDialog.showAndWait();
                 if (giveResult.isEmpty()) return;
 
@@ -85,7 +85,7 @@ public class TradeController {
                 List<String> receiveOptions = new ArrayList<>(Arrays.asList("Ore", "Wood", "Brick", "Grain", "Wool"));
                 receiveOptions.remove(giveResource);
 
-                // Second dialog: pick what resource to receive
+                // Dialog to choose which resource to receive
                 ChoiceDialog<String> receiveDialog = new ChoiceDialog<>(receiveOptions.get(0), receiveOptions);
                 receiveDialog.setTitle("Harbor Trade");
                 receiveDialog.setHeaderText("Select the resource you want to receive:");
@@ -96,7 +96,7 @@ public class TradeController {
 
                 String receiveResource = receiveResult.get();
 
-                // Final validation: check if player has enough to complete the trade
+                // Check if player has enough to trade
                 if (!gameplay.canRemoveResource(giveResource, ratio)) {
                     drawOrDisplay.showTradeError("You don't have enough " + giveResource + " to trade (requires " + ratio + ").");
                     return;
