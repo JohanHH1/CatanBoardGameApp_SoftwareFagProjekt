@@ -153,6 +153,12 @@ public class Player {
     public List<Vertex> getCities() {
         return cities;
     }
+    public List<Vertex> getSettlementsAndCitys() {
+        List<Vertex> all = new ArrayList<>();
+        all.addAll(settlements);
+        all.addAll(cities);
+        return all;
+    }
 
     public int getPlayerScore() { return playerScore; }
 
