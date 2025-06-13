@@ -9,7 +9,7 @@ public class Player {
     private static final boolean DEBUG_MODE = false; // Set to false for normal game
 
     private final Gameplay gameplay;
-    private final int playerId;
+    private int playerId;
     private final Color color;
     private final HashMap<String, Integer> resources;
     private Map<DevelopmentCardType, Integer> developmentCards = new HashMap<>();
@@ -168,6 +168,9 @@ public class Player {
         return false;
     }
 
+    public void setPlayerId(int id) {
+        this.playerId = id;
+    }
     public int getPlayerScore() { return playerScore; }
 
     public int getPlayedKnights() { return playedKnights; }

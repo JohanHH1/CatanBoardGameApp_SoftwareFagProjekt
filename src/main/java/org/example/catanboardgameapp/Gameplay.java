@@ -45,6 +45,7 @@ public class Gameplay {
     private boolean isRobberMoveRequired = false;
     private boolean gameOver = false;
 
+
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;
@@ -98,7 +99,7 @@ public class Gameplay {
     }
 
     // Initialize players and any chosen AI players
-    public void initializeAllPlayers(int humanCount, int aiEasy, int aiMedium, int aiHard) {
+    public void initializeAllPlayers(int humanCount, int aiEasy, int aiMedium, int aiHard,  boolean shuffle) {
         playerList.clear();
         List<Color> colors = new ArrayList<>(List.of(
                 Color.RED, Color.BLUE, Color.GREEN, Color.DARKORANGE, Color.PURPLE, Color.YELLOW
@@ -127,7 +128,15 @@ public class Gameplay {
             ai.setThinkingSpeed(selectedSpeed);
             playerList.add(ai);
         }
+        if (shuffle){
+        // 2. Shuffle final list
+        Collections.shuffle(playerList);
 
+        // 3. Reassign correct player IDs
+        for (int i = 0; i < playerList.size(); i++) {
+            playerList.get(i).setPlayerId(i + 1);
+        } }
+// 4. Set first player
         if (!playerList.isEmpty()) {
             currentPlayerIndex = 0;
             currentPlayer = playerList.get(0);

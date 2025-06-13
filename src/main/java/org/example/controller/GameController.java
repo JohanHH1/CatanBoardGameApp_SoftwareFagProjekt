@@ -16,6 +16,7 @@ public class GameController {
     private Gameplay gameplay;
     private BuildController buildController;
     private MenuView menuView;
+    private boolean shufflePlayers = true; // default true, can be set by options menu
 
     //___________________________CONSTRUCTOR_________________________________//
     public GameController(Stage primaryStage) {
@@ -29,7 +30,7 @@ public class GameController {
         gameplay.setMenuView(this.menuView);
 
         // Add players
-        gameplay.initializeAllPlayers(playerCount, easyAI, medAI, hardAI);
+        gameplay.initializeAllPlayers(playerCount, easyAI, medAI, hardAI, shufflePlayers);
         gameplay.resetCounters();
 
         // Initialize controllers FIRST

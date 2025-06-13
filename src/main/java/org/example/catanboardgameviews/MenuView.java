@@ -4,6 +4,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
@@ -36,6 +37,7 @@ public class MenuView {
     private int maxCities = 4;
     private int maxVictoryPoints = 10;
     private AIOpponent.ThinkingSpeed aiSpeed = AIOpponent.ThinkingSpeed.MEDIUM;
+    private boolean shufflePlayers = true;
     private int[] humanPlayers = {3}, boardSizeVal = {3}, easyAI = {0}, mediumAI = {0}, hardAI = {0},
             maxRoadsVal = {15}, maxSettlementsVal = {5}, maxCitiesVal = {4}, maxVictoryPointsVal = {10};
 
@@ -187,7 +189,7 @@ public class MenuView {
                 new Label("Max Roads per Player:"),
                 new Label("Max Settlements per Player:"),
                 new Label("Max Cities per Player:"),
-                new Label("Max Victory Points per Player:")
+                new Label("Max Victory Points per Player:"),
         };
 
         Label[] values = {
@@ -199,8 +201,9 @@ public class MenuView {
                 new Label(String.valueOf(maxRoadsVal[0])),
                 new Label(String.valueOf(maxSettlementsVal[0])),
                 new Label(String.valueOf(maxCitiesVal[0])),
-                new Label(String.valueOf(maxVictoryPointsVal[0]))
+                new Label(String.valueOf(maxVictoryPointsVal[0])),
         };
+
 
         for (int i = 0; i < labels.length; i++) {
             labels[i].setFont(labelFont);
@@ -208,6 +211,11 @@ public class MenuView {
             values[i].setFont(labelFont);
             values[i].setTextFill(fontColor);
         }
+        CheckBox shufflePlayersCheckbox = new CheckBox("Shuffle Player Turn Order");
+        shufflePlayersCheckbox.setFont(labelFont);
+        shufflePlayersCheckbox.setTextFill(fontColor);
+        shufflePlayersCheckbox.setSelected(true); // default ON
+        shufflePlayers = shufflePlayersCheckbox.isSelected();
 
         ComboBox<AIOpponent.ThinkingSpeed> aiSpeedDropdown = new ComboBox<>();
         aiSpeedDropdown.getItems().addAll(AIOpponent.ThinkingSpeed.values());
@@ -264,12 +272,19 @@ public class MenuView {
         grid.setHgap(10);
         grid.setVgap(15);
         grid.setAlignment(Pos.CENTER);
-        for (int i = 0; i < labels.length; i++) {
+        for (int i = 0; i < 9; i++) {
             grid.add(labels[i], 0, i);
             grid.add(controls[i][0], 1, i);
             grid.add(values[i], 2, i);
             grid.add(controls[i][1], 3, i);
         }
+
+        //Label shuffleLabel = new Label("Shuffle Player Turn Order:!!!!!!!!");
+        //shuffleLabel.setFont(labelFont);
+        //shuffleLabel.setTextFill(fontColor);
+
+        //grid.add(shuffleLabel, 0, 9);
+        grid.add(shufflePlayersCheckbox, 2, 9);
 
         Label aiSpeedLabel = new Label("AI Thinking Speed:");
         aiSpeedLabel.setFont(labelFont);
@@ -308,7 +323,7 @@ public class MenuView {
             showMainMenu();
         });
 
-        optionsLayout.getChildren().addAll(optionsTitle, totalNote, grid, accept);
+        optionsLayout.getChildren().addAll(optionsTitle, totalNote, grid,shufflePlayersCheckbox, accept);
         Scene scene = new Scene(optionsLayout, GAME_WIDTH, GAME_HEIGHT);
         primaryStage.setScene(scene);
     }
@@ -395,5 +410,9 @@ public class MenuView {
 
     public int getMaxVictoryPoints() {
         return maxVictoryPoints;
+    }
+
+    public void setShufflePlayers(boolean shufflePlayers) {
+        this.shufflePlayers = shufflePlayers;
     }
 }

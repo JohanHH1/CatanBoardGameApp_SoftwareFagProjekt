@@ -196,7 +196,7 @@ public class DrawOrDisplay {
 
         // 1. Add circle
         boardGroup.getChildren().add(circle);
-        
+
     }
     public void drawCity(Vertex vertex, Group boardGroup) {
         double radius = 24.0 / boardRadius;
