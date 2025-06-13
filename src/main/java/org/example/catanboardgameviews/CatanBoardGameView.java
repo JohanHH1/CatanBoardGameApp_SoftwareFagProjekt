@@ -152,7 +152,7 @@ public class CatanBoardGameView {
 
         BuildController buildController = new BuildController(gameController);
         gameController.setBuildController(buildController);
-        drawOrDisplay.initEdgesClickHandlers(board, boardGroup, buildController, boardRadius, root);
+        drawOrDisplay.initEdgesClickHandlers(board, boardGroup, buildController, boardRadius);
         drawOrDisplay.initVerticeClickHandlers(board, boardGroup, buildController, boardRadius, root);
 
         VBox gameLogPanel = createGameLogPanel();

@@ -17,9 +17,11 @@ public class BuildController {
     private final Group boardGroup;
     private final DrawOrDisplay drawOrDisplay;
     private final GameController gameController;
-    private boolean confirmBeforeBuild = false; // start with confirmation OFF
+    // start with confirmation OFF
+    private boolean confirmBeforeBuild = false;
 
     //___________________________CONTROLLER__________________________________//
+    // Initialize with references to game controller and display
     public BuildController(GameController gameController) {
         this.gameController = gameController;
         this.drawOrDisplay = gameController.getGameplay().getDrawOrDisplay();
@@ -28,9 +30,10 @@ public class BuildController {
 
     //___________________________ ROAD PLACEMENT HANDLER ___________________________
 
-    // Handles mouse click on road (edge) during gameplay or initial setup
-    public EventHandler<MouseEvent> createRoadClickHandler(Edge edge, Line visibleLine, BorderPane root) {
+    // Handles mouse clicks for placing roads
+    public EventHandler<MouseEvent> createRoadClickHandler(Edge edge) {
         return event -> {
+            // Handle free roads from Road Building card
             if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
                 if (gameController.getGameplay().isValidRoadPlacement(edge)) {
                     gameController.getGameView().logToGameLog("Place your free roads now");
@@ -41,32 +44,37 @@ public class BuildController {
                         gameController.getGameView().logToGameLog("Placed a free road via Road Building card.");
                         gameController.getGameplay().getDevelopmentCard().decrementFreeRoads();
 
+                        // Finish card action if both free roads are placed
                         if (!gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
                             gameController.getGameView().logToGameLog("Finished placing 2 free roads.");
                             gameController.getGameplay().getDevelopmentCard().finishPlayingCard();
                         }
                     }
                 } else {
+                    // Show red cross if placement is invalid
                     double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
                     double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
                     drawOrDisplay.drawErrorCross(boardGroup, midX, midY);
                 }
                 return;
             }
-
+            // Block if a development card is still active
             if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
                 drawOrDisplay.showFinishDevelopmentCardActionPopup();
                 return;
             }
-            // Enforce dice roll in main phase
+            // Enforce dice roll before building
             if (!gameController.getGameplay().isInInitialPhase() && !gameController.getGameplay().hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before building!");
                 return;
             }
-            Player currentPlayer = gameController.getGameplay().getCurrentPlayer();
-            // Enforce dont build Road while its AI turn
+
+            // Block during AI turn
             if (gameController.getGameplay().isBlockedByAITurn()) return;
-            // Confirm action
+
+            Player currentPlayer = gameController.getGameplay().getCurrentPlayer();
+
+            // Optional confirmation dialog
             if (isConfirmBeforeBuildEnabled()) {
                 Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
                 confirmAlert.setTitle("Confirm Build");
@@ -75,26 +83,26 @@ public class BuildController {
                 Optional<ButtonType> result = confirmAlert.showAndWait();
 
                 if (result.isEmpty() || result.get() != ButtonType.OK) {
-                    return; // Player cancelled
+                    return;
                 }
             }
 
+            // Attempt to build the road
             BuildResult result = gameController.getGameplay().buildRoad(edge);
             switch (result) {
                 case SUCCESS -> {
                     buildRoad(edge, currentPlayer);
-
-                    // Proceed only if road was placed AND no longer waiting
+                    // Proceed to next player if in initial phase
                     if (gameController.getGameplay().isInInitialPhase()
                             && !gameController.getGameplay().isWaitingForInitialRoad()) {
                         gameController.getGameplay().nextPlayerTurn();
                     }
                     gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                 }
-
                 case TOO_MANY_ROADS -> drawOrDisplay.showMaxRoadsReachedPopup();
 
                 case NOT_CONNECTED, INVALID_EDGE, INSUFFICIENT_RESOURCES -> {
+                    // Show red cross for failed placement
                     double midX = (edge.getVertex1().getX() + edge.getVertex2().getX()) / 2;
                     double midY = (edge.getVertex1().getY() + edge.getVertex2().getY()) / 2;
                     drawOrDisplay.drawErrorCross(boardGroup, midX, midY);
@@ -108,11 +116,13 @@ public class BuildController {
     // Handles mouse click on a vertex (for building settlement or upgrading to city)
     public EventHandler<MouseEvent> createSettlementClickHandler(Circle circle, Vertex vertex, BorderPane root) {
         return event -> {
+            // Block if a development card is still active
             if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
                 drawOrDisplay.showFinishDevelopmentCardActionPopup();
                 return;
             }
-            if (vertex.isCity()) return; // Don't allow clicking on cities
+            // Don't allow clicking on cities
+            if (vertex.isCity()) return;
 
             // Enforce dice roll in main phase
             if (!gameController.getGameplay().isInInitialPhase() && !gameController.getGameplay().hasRolledDice()) {
@@ -134,9 +144,8 @@ public class BuildController {
                     return; // Player cancelled
                 }
             }
-
+            // Try to place a settlement
             BuildResult result;
-
             if (gameController.getGameplay().isInInitialPhase()) {
                 result = gameController.getGameplay().buildInitialSettlement(vertex);
             } else {
@@ -151,7 +160,7 @@ public class BuildController {
                     gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                 }
                 case INSUFFICIENT_RESOURCES, INVALID_VERTEX -> {
-                    // Try to build city if settlement failed
+                    // Try to upgrade to city if settlement failed
                     BuildResult cityResult = gameController.getGameplay().buildCity(vertex);
                     if (cityResult == BuildResult.TOO_MANY_CITIES) {
                             drawOrDisplay.showMaxCitiesReachedPopup();
@@ -177,6 +186,9 @@ public class BuildController {
         };
     }
 
+    //___________________________HELPERS__________________________________//
+
+    // Draws a road on the board and assigns ownership
     public void buildRoad(Edge edge, Player currentPlayer) {
         Line playerRoadLine = new Line(
                 edge.getVertex1().getX(), edge.getVertex1().getY(),
@@ -185,14 +197,18 @@ public class BuildController {
         drawOrDisplay.drawRoad(playerRoadLine, currentPlayer, boardGroup);
         gameController.getGameView().getRoadLayer().getChildren().add(playerRoadLine);
     }
-
+    // Toggles build confirmation on/off
     public void toggleConfirmBeforeBuild() {
         confirmBeforeBuild = !confirmBeforeBuild;
     }
 
+    // Returns whether build confirmation is enabled
     public boolean isConfirmBeforeBuildEnabled() {
         return confirmBeforeBuild;
     }
+
+
+    //___________________________GETTERS__________________________________//
     public GameController getGameController() {
         return gameController;
     }

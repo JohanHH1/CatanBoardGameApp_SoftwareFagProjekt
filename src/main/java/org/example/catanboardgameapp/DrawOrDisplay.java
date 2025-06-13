@@ -52,7 +52,7 @@ public class DrawOrDisplay {
     }
 
     //___________________________________________CLICK INITIALIZATION__________________________________________//
-    public void initEdgesClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
+    public void initEdgesClickHandlers(Board board, Group boardGroup, BuildController controller, int radius) {
         Group edgeBaseLayer = controller.getGameController().getGameView().getEdgeBaseLayer();
         Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
 
@@ -71,7 +71,7 @@ public class DrawOrDisplay {
             clickable.setOpacity(0);
             clickable.setPickOnBounds(false);
             clickable.setMouseTransparent(false);
-            clickable.setOnMouseClicked(controller.createRoadClickHandler(edge, visible, root));
+            clickable.setOnMouseClicked(controller.createRoadClickHandler(edge));
             edgeClickLayer.getChildren().add(clickable);
         }
     }
