@@ -457,11 +457,11 @@ public class AIOpponent extends Player {
         // Check if having all the resources
         if (!canAffordSettlement()) {
             // Attempt trade to fix the missing resources
-
             boolean successfulTrade = tryBankTrade(gameplay, Strategy.SETTLEMENTPLACER);
             if (!successfulTrade) return false;
             // Retry after trade
             if (!canAffordSettlement()) return false;
+            System.out.println("i couldnt afford to buy settlement");
         }
         Vertex bestSpot = null;
         int bestScore = Integer.MIN_VALUE;
@@ -473,6 +473,7 @@ public class AIOpponent extends Player {
                 bestSpot = v;
             }
         }
+        System.out.println(bestSpot);
         if (bestSpot != null) {
             if (!gameplay.isValidSettlementPlacement(bestSpot)) {
                 System.out.println("Warning: Best spot became invalid before build");
@@ -1348,8 +1349,8 @@ public class AIOpponent extends Player {
     }
     
     public boolean canAffordSettlement() {
-        return (hasResources("Brick", 1) || hasResources("Wood", 1) ||
-                hasResources("Wool", 1) || hasResources("Grain", 1));
+        return (hasResources("Brick", 1) && hasResources("Wood", 1) &&
+                hasResources("Wool", 1) && hasResources("Grain", 1));
     }
     public boolean canAffordCity() {
         return hasResources("Ore", 3) && hasResources("Grain", 2);
