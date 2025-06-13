@@ -48,7 +48,7 @@ public class LongestRoadManager {
         int longest = 0;
         for (Vertex start : allVertices) {
             Set<Edge> visited = new HashSet<>();
-            longest = Math.max(longest, dfs(start, visited, player, allPlayers));
+            longest = Math.max(longest, dfs(start, visited, player));
         }
 
         return longest;
@@ -72,17 +72,17 @@ public class LongestRoadManager {
     }*/
 
     // ---------------- Internal Logic ---------------- //
-    private int dfs(Vertex current, Set<Edge> visited, Player player, List<Player> allPlayers) {
+    private int dfs(Vertex current, Set<Edge> visited, Player player) {
         int maxLength = 0;
 
         for (Edge edge : player.getRoads()) {
             if (!visited.contains(edge) && edge.isConnectedTo(current)) {
                 Vertex next = edge.getVertex1().equals(current) ? edge.getVertex2() : edge.getVertex1();
 
-                if (isBlocked(next, player, allPlayers)) continue;
+                if (player.isBlocked(current, gameplay)) continue;
 
                 visited.add(edge);
-                int pathLength = 1 + dfs(next, visited, player, allPlayers);
+                int pathLength = 1 + dfs(next, visited, player);
                 visited.remove(edge); // backtrack
 
                 maxLength = Math.max(maxLength, pathLength);
@@ -91,12 +91,5 @@ public class LongestRoadManager {
         return maxLength;
     }
 
-    private boolean isBlocked(Vertex vertex, Player player, List<Player> allPlayers) {
-        for (Player p : allPlayers) {
-            if (!p.equals(player) && p.getSettlements().contains(vertex)) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 }

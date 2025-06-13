@@ -290,7 +290,7 @@ public class AIOpponent extends Player {
         if (!earlyGame() && shouldGoForLongestRoad(gameplay)) {
             selected = Strategy.LONGESTROAD;
         }
-        else if (!earlyGame() && shouldGoForBiggestArmy(gameplay)) {
+        else if (!earlyGame() && shouldGoForBiggestArmy(gameplay) && !gameplay.getShuffledDevelopmentCards().isEmpty()) {
             selected = Strategy.BIGGESTARMY;
         }
         else if (hasLessThanMaxAllowedCities() && canUpgradeToCityNow()) {
@@ -511,8 +511,8 @@ public class AIOpponent extends Player {
         int bestScore = Integer.MIN_VALUE;
 
         for (Edge edge : validRoads) {
-            Vertex source = (getSettlements().contains(edge.getVertex1())) ? edge.getVertex1()
-                    : (getSettlements().contains(edge.getVertex2())) ? edge.getVertex2()
+            Vertex source = (getSettlementsAndCities().contains(edge.getVertex1())) ? edge.getVertex1()
+                    : (getSettlementsAndCities().contains(edge.getVertex2())) ? edge.getVertex2()
                     : edge.getVertex1(); // fallback
 
             int score = getSmartRoadScore(edge, source, gameplay);
@@ -928,7 +928,7 @@ public class AIOpponent extends Player {
 
     private int countMissingResourcesCovered(Vertex vertex, Gameplay gameplay) {
         Set<String> ownedTypes = new HashSet<>();
-        for (Vertex settlement : getSettlements()) {
+        for (Vertex settlement : getSettlementsAndCities()) {
             for (Tile tile : gameplay.getBoard().getTiles()) {
                 if (tile.getVertices().contains(settlement)) {
                     ownedTypes.add(tile.getResourcetype().toString());
@@ -950,15 +950,6 @@ public class AIOpponent extends Player {
             }
         }
         return missingCovered;
-    }
-
-    private boolean isBlocked(Vertex vertex, Gameplay gameplay) {
-        for (Player player : gameplay.getPlayerList()) {
-            if (player != this && player.getSettlements().contains(vertex)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     // Denne function skal forbedres så AI altid forsøger at bevæge sig et sted hen hvor de kan bygge settlement.
@@ -1073,7 +1064,7 @@ public class AIOpponent extends Player {
     }
 
     private boolean hasSettlementThatCanBeUpgradedToCity() {
-        return getSettlements().stream().anyMatch(v -> !v.isCity());
+        return !getSettlements().isEmpty();
     }
 
     public boolean canUpgradeToCityNow() {
@@ -1085,12 +1076,7 @@ public class AIOpponent extends Player {
         boolean hasOre = false;
         boolean hasGrain = false;
 
-        // Combine settlements and cities into a single list of owned vertices
-        List<Vertex> ownedStructures = new ArrayList<>();
-        ownedStructures.addAll(getSettlements());
-        ownedStructures.addAll(getCities());
-
-        for (Vertex vertex : ownedStructures) {
+        for (Vertex vertex : getSettlementsAndCities()) {
             for (Tile tile : vertex.getAdjacentTiles()) {
                 if (tile.isSea()) continue;
 

@@ -462,7 +462,7 @@ public class Gameplay {
 
     public BuildResult buildSettlement(Vertex vertex) {
         if (vertex == null || !isValidSettlementPlacement(vertex)) return BuildResult.INVALID_VERTEX;
-        if (currentPlayer.getSettlements().contains(vertex)) return BuildResult.INVALID_VERTEX;
+        if (currentPlayer.getSettlementsAndCities().contains(vertex)) return BuildResult.INVALID_VERTEX;
         if (currentPlayer.getSettlements().size() >= menuView.getMaxSettlements()) {
             return BuildResult.TOO_MANY_SETTLEMENTS;
         }
@@ -556,11 +556,11 @@ public class Gameplay {
         // Block building through opponent's settlements
         for (Player player : playerList) {
             if (player != currentPlayer) {
-                if (player.getSettlements().contains(edge.getVertex1()) &&
+                if (player.getSettlementsAndCities().contains(edge.getVertex1()) &&
                         currentPlayer.getRoads().stream().anyMatch(r -> r.isConnectedTo(edge.getVertex1()))) {
                     return false;
                 }
-                if (player.getSettlements().contains(edge.getVertex2()) &&
+                if (player.getSettlementsAndCities().contains(edge.getVertex2()) &&
                         currentPlayer.getRoads().stream().anyMatch(r -> r.isConnectedTo(edge.getVertex2()))) {
                     return false;
                 }
@@ -568,13 +568,13 @@ public class Gameplay {
         }
 
         // Must connect to a player's own road or settlement
-        boolean connectsToSettlement = currentPlayer.getSettlements().contains(edge.getVertex1()) ||
-                currentPlayer.getSettlements().contains(edge.getVertex2());
+        boolean connectsToSettlementOrCity = currentPlayer.getSettlementsAndCities().contains(edge.getVertex1()) ||
+                currentPlayer.getSettlementsAndCities().contains(edge.getVertex2());
 
         boolean connectsToRoad = currentPlayer.getRoads().stream().anyMatch(r ->
                 r.isConnectedTo(edge.getVertex1()) || r.isConnectedTo(edge.getVertex2()));
 
-        return connectsToSettlement || connectsToRoad;
+        return connectsToSettlementOrCity || connectsToRoad;
     }
 
     public boolean isNotValidCityPlacement(Vertex vertex) {

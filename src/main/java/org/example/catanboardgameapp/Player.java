@@ -153,11 +153,19 @@ public class Player {
     public List<Vertex> getCities() {
         return cities;
     }
-    public List<Vertex> getSettlementsAndCitys() {
+    public List<Vertex> getSettlementsAndCities() {
         List<Vertex> all = new ArrayList<>();
         all.addAll(settlements);
         all.addAll(cities);
         return all;
+    }
+    public boolean isBlocked(Vertex vertex, Gameplay gameplay) {
+        for (Player player : gameplay.getPlayerList()) {
+            if (player != this && player.getSettlementsAndCities().contains(vertex)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public int getPlayerScore() { return playerScore; }
