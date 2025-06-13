@@ -5,7 +5,6 @@ import java.util.*;
 public class LongestRoadManager {
 
     private Player currentHolder;
-    private final int MIN_LENGTH_FOR_LONGEST = 5;
     private final Gameplay gameplay;
 
     // ---------------- Constructor ---------------- //
@@ -18,7 +17,7 @@ public class LongestRoadManager {
         int roadLength = calculateLongestRoad(player, allPlayers);
         player.setLongestRoad(roadLength);
 
-        if (roadLength >= MIN_LENGTH_FOR_LONGEST) {
+        if (roadLength >= 5) {
             if (currentHolder == null || roadLength > calculateLongestRoad(currentHolder, allPlayers)) {
                 if (currentHolder != null && currentHolder != player) {
                     // Old holder loses Longest Road (-2 VP)
@@ -54,36 +53,22 @@ public class LongestRoadManager {
         return longest;
     }
 
-/*
-    public int calculateLongestRoad(Player player, List<Player> allPlayers) {
-        Set<Edge> visited = new HashSet<>();
-        int longest = 0;
-
-        for (Edge road : player.getRoads()) {
-            Vertex v1 = road.getVertex1();
-            Vertex v2 = road.getVertex2();
-
-            visited.add(road);
-            longest = Math.max(longest, 1 + dfs(v1, visited, player, allPlayers));
-            longest = Math.max(longest, 1 + dfs(v2, visited, player, allPlayers));
-            visited.remove(road);
-        }
-        return longest;
-    }*/
-
     // ---------------- Internal Logic ---------------- //
+    // Depth-first search to find the longest path from a starting vertex.
     private int dfs(Vertex current, Set<Edge> visited, Player player) {
         int maxLength = 0;
 
+        // Check all edges belonging to the player
         for (Edge edge : player.getRoads()) {
             if (!visited.contains(edge) && edge.isConnectedTo(current)) {
                 Vertex next = edge.getVertex1().equals(current) ? edge.getVertex2() : edge.getVertex1();
 
+                // Skip if the path is blocked (e.g., by another player's settlement)
                 if (player.isBlocked(current, gameplay)) continue;
 
                 visited.add(edge);
                 int pathLength = 1 + dfs(next, visited, player);
-                visited.remove(edge); // backtrack
+                visited.remove(edge);
 
                 maxLength = Math.max(maxLength, pathLength);
             }
