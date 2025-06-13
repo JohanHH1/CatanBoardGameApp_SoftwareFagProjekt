@@ -3,30 +3,27 @@ package org.example.catanboardgameviews;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-
 import org.example.catanboardgameapp.AIOpponent;
-import org.example.catanboardgameapp.Gameplay;
 import org.example.controller.GameController;
 
-import java.awt.*;
 import java.io.InputStream;
 import java.util.List;
-import javafx.scene.image.Image;
-import javafx.scene.control.ComboBox;
+import java.util.Objects;
+
 
 public class MenuView {
 
     private final double GAME_WIDTH = 1050;
     private final double GAME_HEIGHT = 700;
+
     private int playerCount = 3;
     private int boardSize = 3;
     private int AIOpponentsCountEASY = 0;
@@ -37,20 +34,18 @@ public class MenuView {
     private int maxCities = 4;
     private int maxVictoryPoints = 10;
     private AIOpponent.ThinkingSpeed aiSpeed = AIOpponent.ThinkingSpeed.MEDIUM;
-    private boolean shufflePlayers = true;
-    private int[] humanPlayers = {3}, boardSizeVal = {3}, easyAI = {0}, mediumAI = {0}, hardAI = {0},
+    private final int[] humanPlayers = {3}, boardSizeVal = {3}, easyAI = {0}, mediumAI = {0}, hardAI = {0},
             maxRoadsVal = {15}, maxSettlementsVal = {5}, maxCitiesVal = {4}, maxVictoryPointsVal = {10};
 
-
     private final GameController gameController;
-    private Gameplay gameplay;
     private final Stage primaryStage;
 
+    //__________________________CONSTRUCTOR_____________________________//
     public MenuView(Stage primaryStage, GameController gameController) {
         this.primaryStage = primaryStage;
         this.gameController = gameController;
     }
-
+    //__________________________MAIN MENU_____________________________//
     public void showMainMenu() {
         VBox menuLayout = createMenuLayout();
         Scene menuScene = new Scene(menuLayout, 1050, 700);
@@ -67,6 +62,7 @@ public class MenuView {
         String filename = "/backgrounds/menuViewBackG.png";
         InputStream stream = getClass().getResourceAsStream(filename);
 
+        assert stream != null;
         Image backgroundImage = new Image(stream);
 
         BackgroundImage bgImage = new BackgroundImage(
@@ -107,23 +103,14 @@ public class MenuView {
         );
         return menuLayout;
     }
-
+    //__________________________GAME STARTERS_____________________________//
     private void startGame() {
-        System.out.println("NEW GAME IS STARTING");
-
         // Ensure previous game state and threads are reset
         gameController.resetGame();
-
-        gameController.startGame(
-                playerCount,
-                boardSize,
-                AIOpponentsCountEASY,
-                AIOpponentsCountMEDIUM,
-                AIOpponentsCountHARD
-        );
+        gameController.startGame(playerCount, boardSize, AIOpponentsCountEASY, AIOpponentsCountMEDIUM, AIOpponentsCountHARD);
     }
 
-    private void startAITestMatch() {
+    private void startAITestMatch() {  //REMOVE WHEN TESTING DONE!!!!
         System.out.println("AI VS AI TEST MATCH IS STARTING");
 
         // Set up AI-only test configuration
@@ -145,29 +132,17 @@ public class MenuView {
         );
     }
 
+    //__________________________MENUS_____________________________//
     public void showOptionsMenu(Stage primaryStage) {
         VBox optionsLayout = new VBox(20);
         optionsLayout.setAlignment(Pos.CENTER);
-        //optionsLayout.setStyle("-fx-padding: 40; -fx-background-color: linear-gradient(to bottom, #2c2c3f, #505080);");
 
-        Image backgroundImage = new Image(
-                getClass().getResource("/backgrounds/optionsMenuBlue.png").toExternalForm()
-        );
-
-        BackgroundSize backgroundSize = new BackgroundSize(
-                100, 100, false, false, false, true
-        );
-
+        Image backgroundImage = new Image(Objects.requireNonNull(getClass().getResource("/backgrounds/optionsMenuBlue.png")).toExternalForm());
         BackgroundImage bgImage = new BackgroundImage(
-                backgroundImage,
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundPosition.CENTER,
-                backgroundSize
+                backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER, new BackgroundSize(100, 100, false, false, false, true)
         );
-
         optionsLayout.setBackground(new Background(bgImage));
-
 
         Label optionsTitle = new Label("Game Options");
         optionsTitle.setFont(new Font("Georgia", 28));
@@ -204,7 +179,6 @@ public class MenuView {
                 new Label(String.valueOf(maxVictoryPointsVal[0])),
         };
 
-
         for (int i = 0; i < labels.length; i++) {
             labels[i].setFont(labelFont);
             labels[i].setTextFill(fontColor);
@@ -215,7 +189,6 @@ public class MenuView {
         shufflePlayersCheckbox.setFont(labelFont);
         shufflePlayersCheckbox.setTextFill(fontColor);
         shufflePlayersCheckbox.setSelected(true); // default ON
-        shufflePlayers = shufflePlayersCheckbox.isSelected();
 
         ComboBox<AIOpponent.ThinkingSpeed> aiSpeedDropdown = new ComboBox<>();
         aiSpeedDropdown.getItems().addAll(AIOpponent.ThinkingSpeed.values());
@@ -279,11 +252,6 @@ public class MenuView {
             grid.add(controls[i][1], 3, i);
         }
 
-        //Label shuffleLabel = new Label("Shuffle Player Turn Order:!!!!!!!!");
-        //shuffleLabel.setFont(labelFont);
-        //shuffleLabel.setTextFill(fontColor);
-
-        //grid.add(shuffleLabel, 0, 9);
         grid.add(shufflePlayersCheckbox, 2, 9);
 
         Label aiSpeedLabel = new Label("AI Thinking Speed:");
@@ -292,18 +260,61 @@ public class MenuView {
         grid.add(aiSpeedLabel, 0, labels.length);
         grid.add(aiSpeedDropdown, 2, labels.length);
 
+        Button accept = acceptButton(aiSpeedDropdown);
+
+        optionsLayout.getChildren().addAll(optionsTitle, totalNote, grid,shufflePlayersCheckbox, accept);
+        Scene scene = new Scene(optionsLayout, GAME_WIDTH, GAME_HEIGHT);
+        primaryStage.setScene(scene);
+    }
+
+    public void showCreditsScreen(Stage primaryStage) {
+        VBox creditsLayout = new VBox(20);
+        creditsLayout.setAlignment(Pos.CENTER);
+        creditsLayout.setPadding(new Insets(20));
+
+        Image backgroundImage = new Image(Objects.requireNonNull(getClass().getResource("/backgrounds/optionsMenuBlue.png")).toExternalForm());
+        BackgroundImage bgImage = new BackgroundImage(
+                backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER, new BackgroundSize(100, 100, false, false, false, true)
+        );
+        creditsLayout.setBackground(new Background(bgImage));
+
+        Label title = new Label("Game Credits");
+        title.setFont(new Font("Georgia", 28));
+        title.setTextFill(Color.DARKRED);
+
+        List<String> names = List.of("Johan", "Kajsa", "Lizette", "Patrick");
+        VBox nameBox = new VBox(5);
+        nameBox.setAlignment(Pos.CENTER);
+        for (String name : names) {
+            Label label = new Label("• " + name + " - Game Developer");
+            label.setFont(Font.font("Georgia", FontWeight.NORMAL, 16));
+            label.setTextFill(Color.DARKRED);
+            nameBox.getChildren().add(label);
+        }
+
+        Button backButton = createMenuButton("Back", 180, 50);
+        backButton.setOnAction(e -> showMainMenu());
+
+        creditsLayout.getChildren().addAll(title, nameBox, backButton);
+        Scene creditsScene = new Scene(creditsLayout, GAME_WIDTH, GAME_HEIGHT);
+        primaryStage.setScene(creditsScene);
+    }
+
+    //__________________________HELPER METHODS_____________________________//
+    private Button createMenuButton(String text, int width, int height) {
+        Button button = new Button(text);
+        button.setPrefSize(width, height);
+        button.setFont(new Font("Georgia", 20));
+        button.setStyle("-fx-background-color: #6E2C00; -fx-text-fill: #fceabb; -fx-background-radius: 10;");
+        button.setOnMouseEntered(e -> button.setStyle("-fx-background-color: #873600; -fx-text-fill: #fceabb; -fx-background-radius: 10;"));
+        button.setOnMouseExited(e -> button.setStyle("-fx-background-color: #6E2C00; -fx-text-fill: #fceabb; -fx-background-radius: 10;"));
+        return button;
+    }
+
+    private Button acceptButton(ComboBox<AIOpponent.ThinkingSpeed> aiSpeedDropdown) {
         Button accept = new Button("Accept Changes");
-        //accept.setStyle("-fx-font-size: 18px; -fx-background-color: #28a745; -fx-text-fill: white; -fx-padding: 10 20 10 20;");
-
-        accept.setStyle("""
-    -fx-font-size: 18px;
-    -fx-background-color: white;
-    -fx-text-fill: #7b1e1e;         
-    -fx-padding: 10 20 10 20;
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
-""");
-
+        accept.setStyle(" -fx-font-size: 18px; -fx-background-color: white; -fx-text-fill: #7b1e1e; -fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8;");
         accept.setOnAction(e -> {
             int total = humanPlayers[0] + easyAI[0] + mediumAI[0] + hardAI[0];
             if (total < 2 || total > 6) {
@@ -322,68 +333,11 @@ public class MenuView {
             aiSpeed = aiSpeedDropdown.getValue();
             showMainMenu();
         });
-
-        optionsLayout.getChildren().addAll(optionsTitle, totalNote, grid,shufflePlayersCheckbox, accept);
-        Scene scene = new Scene(optionsLayout, GAME_WIDTH, GAME_HEIGHT);
-        primaryStage.setScene(scene);
+        return accept;
     }
 
-    public void showCreditsScreen(Stage primaryStage) {
-        VBox creditsLayout = new VBox(15);
-        creditsLayout.setAlignment(Pos.CENTER);
-        creditsLayout.setStyle(
-                "-fx-padding: 40;" +
-                        "-fx-background-color: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);" +
-                        "-fx-alignment: center;"
-        );
+    //__________________________GETTERS_____________________________//
 
-        Label title = new Label("CREDITS");
-        title.setFont(new Font("Arial Black", 36));
-        title.setTextFill(Color.WHITE);
-        title.setEffect(new DropShadow());
-
-        Label name1 = new Label("• Johan    - Game Developer");
-        Label name2 = new Label("• Kajsa    - Game Developer");
-        Label name3 = new Label("• Lizette  - Game Developer");
-        Label name4 = new Label("• Patrick  - Game Developer");
-
-        for (Label label : List.of(name1, name2, name3, name4)) {
-            label.setFont(new Font("Arial", 18));
-            label.setTextFill(Color.LIGHTGRAY);
-        }
-
-        Button backButton = createMenuButton("Back", 180, 50);
-        backButton.setOnAction(e -> showMainMenu());
-
-        creditsLayout.getChildren().addAll(title, name1, name2, name3, name4, backButton);
-        Scene creditsScene = new Scene(creditsLayout, GAME_WIDTH, GAME_HEIGHT);
-        primaryStage.setScene(creditsScene);
-    }
-
-    private Button createMenuButton(String text, int width, int height) {
-        Button button = new Button(text);
-        button.setPrefSize(width, height);
-        button.setFont(new Font("Georgia", 20));
-        button.setStyle(
-                "-fx-background-color: #6E2C00;" +
-                        "-fx-text-fill: #fceabb;" +
-                        "-fx-background-radius: 10;" +
-                        "-fx-cursor: hand;"
-        );
-        button.setOnMouseEntered(e -> button.setStyle(
-                "-fx-background-color: #873600;" +
-                        "-fx-text-fill: #fceabb;" +
-                        "-fx-background-radius: 10;"
-        ));
-        button.setOnMouseExited(e -> button.setStyle(
-                "-fx-background-color: #6E2C00;" +
-                        "-fx-text-fill: #fceabb;" +
-                        "-fx-background-radius: 10;"
-        ));
-        return button;
-    }
-
-    // getters
     public AIOpponent.ThinkingSpeed getSelectedAISpeed() {
         return aiSpeed;
     }
@@ -412,7 +366,4 @@ public class MenuView {
         return maxVictoryPoints;
     }
 
-    public void setShufflePlayers(boolean shufflePlayers) {
-        this.shufflePlayers = shufflePlayers;
-    }
 }

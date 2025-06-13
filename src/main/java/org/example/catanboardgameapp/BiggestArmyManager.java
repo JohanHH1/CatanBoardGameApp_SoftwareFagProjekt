@@ -23,6 +23,7 @@ public class BiggestArmyManager {
                 int previousKnights = biggestArmy.getPlayedKnights();
 
                 if (currentKnights > previousKnights && currentPlayer != biggestArmy) {
+                    // New player takes over the title
                     gameplay.decreasePlayerScoreByTwo(biggestArmy);
                     biggestArmy = currentPlayer;
                     gameplay.increasePlayerScoreByTwo(currentPlayer);
