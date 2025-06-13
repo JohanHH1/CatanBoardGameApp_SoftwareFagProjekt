@@ -11,7 +11,9 @@ public class Player {
     private final Gameplay gameplay;
     private int playerId;
     private final Color color;
+    // The resources a player has
     private final HashMap<String, Integer> resources;
+    // The development cards a player has
     private Map<DevelopmentCardType, Integer> developmentCards = new HashMap<>();
     private final List<Vertex> settlements;
     private final List<Edge> roads;
@@ -39,6 +41,7 @@ public class Player {
         initializeDevelopmentCards();
     }
 
+    // Initial resources -> 0 of every resource
     private void initializeResources() {
         List<String> resourceTypes = Arrays.asList("Brick", "Wood", "Ore", "Grain", "Wool");
         for (String resource : resourceTypes) {
@@ -46,14 +49,16 @@ public class Player {
         }
     }
 
+    // Initial development cards -> 0 of each
     private void initializeDevelopmentCards() {
         for (DevelopmentCardType cardType : DevelopmentCardType.values()) {
             developmentCards.put(cardType, DEBUG_MODE ? 2 : 0);
         }
     }
 
-    //______________________________ROBBER LOGIC____________________________//
+    //______________________________Robber Logic____________________________//
     // for AI use and for auto-discard for human players
+
     public Map<String, Integer> chooseDiscardCards() {
         Map<String, Integer> resources = new HashMap<>(getResources());
         int total = resources.values().stream().mapToInt(Integer::intValue).sum();
