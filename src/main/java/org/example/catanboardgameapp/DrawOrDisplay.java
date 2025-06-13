@@ -196,22 +196,7 @@ public class DrawOrDisplay {
 
         // 1. Add circle
         boardGroup.getChildren().add(circle);
-
-        // 2. Add label *after* road is drawn, and ensure it’s last
-
-        if (SHOW_SETTLEMENT_ORDER && vertex.getOwner() != null) {
-            settlementCounter++;
-            Text label = new Text(String.valueOf(settlementCounter));
-            label.setFill(Color.BLACK);
-            label.setStyle("-fx-font-weight: bold;");
-            label.applyCss();
-            label.setX(vertex.getX() - label.getLayoutBounds().getWidth() / 2);
-            label.setY(vertex.getY() + label.getLayoutBounds().getHeight() / 4);
-
-            // Add *after* all game objects
-            Platform.runLater(() -> boardGroup.getChildren().add(label));
-        }
-
+        
     }
     public void drawCity(Vertex vertex, Group boardGroup) {
         double radius = 24.0 / boardRadius;
