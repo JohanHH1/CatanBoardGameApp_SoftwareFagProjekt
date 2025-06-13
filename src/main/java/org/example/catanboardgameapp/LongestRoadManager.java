@@ -30,7 +30,7 @@ public class LongestRoadManager {
                 currentHolder = player;
 
                 // New holder gains Longest Road (+2 VP)
-                gameplay.increasePlayerScoreByTwo(currentHolder);
+                gameplay.increasePlayerScoreByTwo();
             }
         }
     }

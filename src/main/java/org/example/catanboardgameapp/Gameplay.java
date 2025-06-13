@@ -36,20 +36,22 @@ public class Gameplay {
     private Player currentPlayer;
 
     //__________________________TURN & PHASE CONTROL_____________________________//
-    private boolean initialPhase = true;
-    private boolean forwardOrder = true;
-    private boolean hasRolledThisTurn = false;
-    private boolean waitingForInitialRoad = false;
-    private volatile boolean gamePaused = false;
+    private boolean initialPhase = true;               // True until all initial placements are done
+    private boolean forwardOrder = true;               // Direction of placement turn order
+    private boolean hasRolledThisTurn = false;         // Tracks whether dice were rolled this turn
+    private boolean waitingForInitialRoad = false;     // Set to true after placing initial settlement
+    private volatile boolean gamePaused = false;       // Used to pause/resume game (e.g., for menu)
     private Thread activeAIThread;
-    private boolean isRobberMoveRequired = false;
-    private boolean gameOver = false;
+    private boolean isRobberMoveRequired = false;      // Set to true after rolling a 7
+    private boolean gameOver = false;                  // Set true when someone reaches victory
 
 
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
-    private Vertex lastInitialSettlement = null;
+    private Vertex lastInitialSettlement = null;       // Used for checking where to place road
     private DevelopmentCard developmentCard;
+
+    // All available development cards in the deck
     private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
             MONOPOLY, MONOPOLY,
             YEAROFPLENTY, YEAROFPLENTY,
@@ -66,10 +68,11 @@ public class Gameplay {
 
     private int lastRolledDie1;
     private int lastRolledDie2;
-    private int tradeCounter;
-    private int turnCounter = 0;
+    private int tradeCounter;       // Used for analytics/debug/logging !!!!!!!!!!!!!!! skal fjernes???
+    private int turnCounter = 0;    // Used for crash protection & stats
 
     //__________________________CONSTRUCTOR_____________________________//
+    // Create a new game session
     public Gameplay(Stage primaryStage, int boardRadius, GameController gameController) {
         this.drawOrDisplay = new DrawOrDisplay(boardRadius);
         this.boardRadius = boardRadius;
@@ -78,12 +81,13 @@ public class Gameplay {
         this.biggestArmy = new BiggestArmyManager(this);
     }
     //________________________INITIALIZE_______________________________//
+    // Initializes and shuffles the development card deck
     public void initializeDevelopmentCards() {
         if (catanBoardGameView == null) {
             throw new IllegalStateException("CatanBoardGameView must be set before initializing development cards.");
         }
 
-        // Create the development card handler (now that view is valid)
+        // Setup development card handler with game reference
         this.developmentCard = new DevelopmentCard(
                 this,
                 playerList,
@@ -98,7 +102,7 @@ public class Gameplay {
         this.shuffledDevelopmentCards = shuffledDevCards;
     }
 
-    // Initialize players and any chosen AI players
+    // Sets up all human and AI players and assigns them a color and ID
     public void initializeAllPlayers(int humanCount, int aiEasy, int aiMedium, int aiHard,  boolean shuffle) {
         playerList.clear();
         List<Color> colors = new ArrayList<>(List.of(
@@ -107,12 +111,14 @@ public class Gameplay {
 
         int idCounter = 1;
 
+        // Add human players
         for (int i = 0; i < humanCount && !colors.isEmpty(); i++) {
             playerList.add(new Player(idCounter++, colors.remove(0), this));
         }
 
         AIOpponent.ThinkingSpeed selectedSpeed = menuView.getSelectedAISpeed(); // <- retrieve selected speed
 
+        // Add AI players by difficulty level
         for (int i = 0; i < aiEasy && !colors.isEmpty(); i++) {
             AIOpponent ai = new AIOpponent(idCounter++, colors.remove(0), AIOpponent.StrategyLevel.EASY, this);
             ai.setThinkingSpeed(selectedSpeed);
@@ -128,15 +134,17 @@ public class Gameplay {
             ai.setThinkingSpeed(selectedSpeed);
             playerList.add(ai);
         }
+
+        // Optional: shuffle player list for random turn order
         if (shuffle){
-        // 2. Shuffle final list
         Collections.shuffle(playerList);
 
-        // 3. Reassign correct player IDs
+        // Reset player IDs after shuffle
         for (int i = 0; i < playerList.size(); i++) {
             playerList.get(i).setPlayerId(i + 1);
         } }
-// 4. Set first player
+
+        // Set first player
         if (!playerList.isEmpty()) {
             currentPlayerIndex = 0;
             currentPlayer = playerList.get(0);
@@ -144,10 +152,12 @@ public class Gameplay {
     }
 
     //____________________________TURN MANAGEMENT______________________________//
+
+    // Advances the game to the next player's turn
     public void nextPlayerTurn() {
         stopAllAIThreads(); // Stop any in-progress AI thread before advancing
-        crashGameIfMaxTurnsExceeded(500, turnCounter);
-        startOfTurnEffects();
+        crashGameIfMaxTurnsExceeded(500, turnCounter); // Safety check against infinite loops
+        startOfTurnEffects(); // Rotate player and refresh sidebar
 
         // ------------------- INITIAL PLACEMENT PHASE -------------------
         if (initialPhase) {
@@ -156,21 +166,23 @@ public class Gameplay {
                 return;
             }
 
+            // Move to next player (or reverse direction after first loop)
             currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
 
+            // If forward loop finished, switch to backward loop
             if (forwardOrder && currentPlayerIndex >= playerList.size()) {
                 currentPlayerIndex = playerList.size() - 1;
                 forwardOrder = false;
+            // If backward loop finished, start main phase
             } else if (!forwardOrder && currentPlayerIndex < 0) {
                 // Transition from initial to main phase
                 initialPhase = false;
                 forwardOrder = true;
                 currentPlayerIndex = 0;
                 currentPlayer = playerList.get(currentPlayerIndex);
-                waitingForInitialRoad = false;
                 lastInitialSettlement = null;
 
-                // Safe to start turn
+                // Log and prepare first player’s turn
                 Platform.runLater(() -> {
                     catanBoardGameView.logToGameLog("All initial placements complete. Starting first turn...");
                     if (currentPlayer instanceof AIOpponent ai) {
@@ -182,12 +194,12 @@ public class Gameplay {
                 return;
             }
 
+            // Prepare next player for settlement + road placement
             currentPlayer = playerList.get(currentPlayerIndex);
-            waitingForInitialRoad = false;
             lastInitialSettlement = null;
 
             if (currentPlayer instanceof AIOpponent ai) {
-                startAIThread(ai); //always call through here
+                startAIThread(ai); // AI places settlement/road automatically
             } else {
                 catanBoardGameView.prepareForHumanInitialPlacement(currentPlayer);
             }
@@ -199,26 +211,27 @@ public class Gameplay {
         lastInitialSettlement = null;
 
         if (currentPlayer instanceof AIOpponent ai) {
-            startAIThread(ai); // Safe thread init
+            startAIThread(ai);
         } else {
             catanBoardGameView.showDiceButton();
         }
     }
 
-    // Helper function for nextPlayerTurn function above
+    // Helper logic called at the start of every turn
     private void startOfTurnEffects() {
         if (!initialPhase) {
             catanBoardGameView.logToGameLog(getCurrentPlayer() +  " has ended their turn.");
-            // Rotate player index only in main game phase
+            // Rotate to next player
             currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
             currentPlayer = playerList.get(currentPlayerIndex);
         }
 
-        // UI refresh applies in both phases
+        // Update sidebar and hide buttons
         catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
         catanBoardGameView.hideTurnButton();
         setHasRolledThisTurn(false);
 
+        // Center the board if any human players are present
         if (hasHumanPlayers()) {
             catanBoardGameView.centerBoard(
                     catanBoardGameView.getBoardGroup(),
@@ -228,6 +241,7 @@ public class Gameplay {
         }
     }
 
+    // Stops the game and exits if the turn limit is exceeded (e.g., infinite loop)
     public void crashGameIfMaxTurnsExceeded(int MAX_TURNS, int turnCounter) {
         if (turnCounter > MAX_TURNS) {
             pauseGame();
@@ -237,13 +251,12 @@ public class Gameplay {
             // Stop all running threads gracefully
             stopAllAIThreads();
 
-            // Optional: alert the user before killing the app
+            // Alert player before exiting
             Platform.runLater(() -> {
                 Alert alert = new Alert(Alert.AlertType.ERROR, error, ButtonType.OK);
                 alert.setTitle("Game Crash");
                 alert.setHeaderText("Too many turns! Game is terminating.");
                 alert.showAndWait();
-
                 // Now forcefully exit
                 System.exit(1);
             });
@@ -251,6 +264,7 @@ public class Gameplay {
     }
 
     //_____________________________DICE________________________________//
+    // Simulates rolling the dice and triggers effects
     public void rollDice() {
         turnCounter++;
         setHasRolledThisTurn(true);
@@ -262,14 +276,14 @@ public class Gameplay {
         int roll = lastRolledDie1 + lastRolledDie2;
 
         catanBoardGameView.runOnFX(() -> {
-            // Step 1: update visuals
+            // Update dice visuals and logs
             catanBoardGameView.updateDiceImages(lastRolledDie1, lastRolledDie2);
             catanBoardGameView.logToGameLog("\n" + currentPlayer + " ROLLED " + roll + "!");
             catanBoardGameView.hideDiceButton();
             catanBoardGameView.showTurnButton();
             catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
 
-            // Handle robber or distribute resources
+            // Handle robber or resource distribution
             if (roll == 7) {
                 catanBoardGameView.getRobber().requireRobberMove();
                 catanBoardGameView.getRobber().showRobberTargets(catanBoardGameView.getBoardGroup());
@@ -282,11 +296,13 @@ public class Gameplay {
         });
     }
 
+    // Distribute resources to players based on the current dice roll
     public void distributeResources(int diceRoll) {
         for (Tile tile : board.getTiles()) {
             if (tile.getTileDiceNumber() == diceRoll) {
                 Resource.ResourceType type = tile.getResourcetype();
 
+                // Skip sea and desert tiles
                 if (type == Resource.ResourceType.SEA || type == Resource.ResourceType.DESERT) continue;
 
                 for (Vertex vertex : tile.getVertices()) {
@@ -296,21 +312,27 @@ public class Gameplay {
                         int amount = vertex.isCity() ? 2 : 1;
                         owner.getResources().merge(res, amount, Integer::sum);
 
+                        // Log the resource gain
                         String logMsg = "Player " + owner.getPlayerId() + " gets " + res;
                         catanBoardGameView.runOnFX(() -> catanBoardGameView.logToGameLog(logMsg));
                     }
                 }
             }
         }
+        // Separate log entry for clarity
         catanBoardGameView.runOnFX(() -> catanBoardGameView.logToGameLog("\n"));
     }
 
     //_________________________________________ AI THREAD _____________________________________________//
+    // Starts a new AI thread for the current AI player's turn
     public void startAIThread(AIOpponent ai) {
+        // If a thread is already running or the game is over, exit early
         if (activeAIThread != null && activeAIThread.isAlive()) return;
         if (isGameOver()) return;
 
+        // Create a new background thread
         activeAIThread = new Thread(() -> {
+            // Wait if the game is paused
             while (isGamePaused()) {
                 try {
                     Thread.sleep(100);
@@ -320,16 +342,18 @@ public class Gameplay {
                 }
             }
 
+            // Call AI actions depending on the phase
             if (initialPhase) {
                 ai.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
             } else {
                 ai.makeMoveAI(this, getCatanBoardGameView().getBoardGroup());
             }
         });
-        activeAIThread.setDaemon(true);
-        activeAIThread.start();
+        activeAIThread.setDaemon(true); // Ensure JVM can exit even if this thread is running
+        activeAIThread.start();         // Launch thread
     }
 
+    // Interrupts and nulls the AI thread (called before turn switch)
     public void stopAllAIThreads() {
         if (activeAIThread != null && activeAIThread.isAlive()) {
             activeAIThread.interrupt();
@@ -338,74 +362,85 @@ public class Gameplay {
     }
 
     //_________________________________BUY AND PLAY DEVELOPMENT CARDS_____________________________________//
+    // Attempt to buy a development card for the current player
     public void buyDevelopmentCard() {
         if (shuffledDevelopmentCards.isEmpty()) {
+            // No cards left to buy
             catanBoardGameView.runOnFX(drawOrDisplay::showNoMoreDevelopmentCardToBuyPopup);
         } else if (!hasRolledDice()){
+            // Enforce rolling dice before any action
             catanBoardGameView.runOnFX(() -> drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before taking any actions!"));
         } else if (canRemoveResource("Wool", 1) && canRemoveResource("Ore", 1) && canRemoveResource("Grain", 1)) {
+            // Pay resources to buy the card
             removeResource("Wool", 1);
             removeResource("Ore", 1);
             removeResource("Grain", 1);
-            // Correctly remove and use the DevelopmentCardType directly
+            // Draw a development card from the top of the shuffled list
             DevelopmentCard.DevelopmentCardType cardType = shuffledDevelopmentCards.remove(0);
 
-            // Store the card in the player's development card map
+            // Add it to the player's development card map
             currentPlayer.getDevelopmentCards().merge(cardType, 1, Integer::sum);
-//            System.out.println("DEV CARDS AFTER MERGE: " + currentPlayer.getDevelopmentCards());// removed before hand in
-//            System.out.println("Current player class: " + currentPlayer.getClass().getSimpleName());// removed before hand in
-//            System.out.println("Current player ID: " + currentPlayer.getPlayerId()); // removed before hand in
-//
+
+            // Log the purchase to the game log
             String log = currentPlayer + " bought a development card: " + cardType.getDisplayName(); // removed before hand in
             catanBoardGameView.runOnFX(() -> {
                 catanBoardGameView.logToGameLog(log);
                 catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
             });
         } else {
+            // Insufficient resources
             catanBoardGameView.runOnFX(drawOrDisplay::showFailToBuyDevelopmentCardPopup);
         }
     }
 
+    // Attempt to play a specific development card for a given player
     public void playDevelopmentCard(Player player, DevelopmentCard.DevelopmentCardType type) {
         if (isActionBlockedByDevelopmentCard()) {
+            // Disallow playing another card while one is still being processed
             drawOrDisplay.showFinishDevelopmentCardActionPopup();
             return;
         }
-        // Play the card
+
+        // Perform the effect of the development card
         type.play(player, developmentCard);
 
         // Safely remove it from the player's collection
         player.getDevelopmentCards().computeIfPresent(type, (k, v) -> (v > 1) ? v - 1 : 0);
 
+        // UI update
         catanBoardGameView.runOnFX(() -> {
-//            catanBoardGameView.logToGameLog(player + " played " + type.getDisplayName() + " card.");
             catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
         });
     }
 
-
+    // Get the central development card handler
     public DevelopmentCard getDevelopmentCard() {
         return developmentCard;
     }
 
     //_____________________________RESOURCES & TRADING_____________________________//
 
+    // Check if current player has enough of a given resource
     public boolean canRemoveResource(String resource, int amount) {
         return currentPlayer.getResources().getOrDefault(resource, 0) >= amount;
     }
 
+    // Subtract a resource from current player
     public void removeResource(String resource, int amount) {
         int current = currentPlayer.getResources().getOrDefault(resource, 0);
         if (current >= amount) {
             currentPlayer.getResources().put(resource, current - amount);
         }
     }
+
+    // Add a resource to current player
     public void addResource(String resource, int amount) {
         currentPlayer.getResources().put(resource,
                 currentPlayer.getResources().getOrDefault(resource, 0) + amount);
     }
 
     //_____________________________BUILDING FUNCTIONS____________________________//
+    // Attempt to build an initial settlement
     public BuildResult buildInitialSettlement(Vertex vertex) {
         if (vertex == null || !isValidSettlementPlacement(vertex)) return BuildResult.INVALID_VERTEX;
         if (currentPlayer.getSettlements().contains(vertex)) return BuildResult.INVALID_VERTEX;
@@ -419,12 +454,13 @@ public class Gameplay {
         waitingForInitialRoad = true;
         lastInitialSettlement = vertex;
 
+        // Grant initial resources after second settlement
         if (currentPlayer.getSettlements().size() == 2) {
             currentPlayer.setSecondSettlement(vertex);
             for (Tile tile : vertex.getAdjacentTiles()) {
                 Resource.ResourceType type = tile.getResourcetype();
 
-                // Only collect valid resource types
+                // Only valid land tiles provide starting resources
                 if (type != Resource.ResourceType.DESERT && type != Resource.ResourceType.SEA) {
                     currentPlayer.getResources().merge(type.getName(), 1, Integer::sum);
                 }
@@ -433,6 +469,7 @@ public class Gameplay {
         return BuildResult.SUCCESS;
     }
 
+    // Attempt to build a road (either during initial or main phase)
     public BuildResult buildRoad(Edge edge) {
         if (initialPhase && waitingForInitialRoad) {
             if (!edge.isConnectedTo(lastInitialSettlement)) return BuildResult.NOT_CONNECTED;
@@ -441,7 +478,7 @@ public class Gameplay {
             waitingForInitialRoad = false;
             lastInitialSettlement = null;
 
-            // update longest road for currentPlayer
+            // Update longest road tracking
             longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer, playerList);
             catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
             return BuildResult.SUCCESS;
@@ -451,16 +488,17 @@ public class Gameplay {
 
         if (!isValidRoadPlacement(edge)) return BuildResult.INVALID_EDGE;
 
+        // Max road limit check
         if (currentPlayer.getRoads().size() >= menuView.getMaxRoads()) {
             return BuildResult.TOO_MANY_ROADS;
         }
 
+        // Require resources: 1 Brick, 1 Wood
         if (canRemoveResource("Brick", 1) && canRemoveResource("Wood", 1)) {
             removeResource("Brick", 1);
             removeResource("Wood", 1);
             currentPlayer.getRoads().add(edge);
 
-            // update longest road for currentPlayer
             longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer, playerList);
             catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
             return BuildResult.SUCCESS;
@@ -469,13 +507,16 @@ public class Gameplay {
         return BuildResult.INSUFFICIENT_RESOURCES;
     }
 
+    // Build a new settlement (main phase only)
     public BuildResult buildSettlement(Vertex vertex) {
         if (vertex == null || !isValidSettlementPlacement(vertex)) return BuildResult.INVALID_VERTEX;
         if (currentPlayer.getSettlementsAndCities().contains(vertex)) return BuildResult.INVALID_VERTEX;
+        // Enforce max settlements limit
         if (currentPlayer.getSettlements().size() >= menuView.getMaxSettlements()) {
             return BuildResult.TOO_MANY_SETTLEMENTS;
         }
 
+        // Require resources: 1 Brick, 1 Wood, 1 Grain, 1 Wool
         if (canRemoveResource("Brick", 1) &&
                 canRemoveResource("Wood", 1) &&
                 canRemoveResource("Grain", 1) &&
@@ -495,12 +536,16 @@ public class Gameplay {
         return BuildResult.INSUFFICIENT_RESOURCES;
     }
 
+    // Upgrade an existing settlement to a city'
     public BuildResult buildCity(Vertex vertex) {
         if (isNotValidCityPlacement(vertex)) return BuildResult.INVALID_VERTEX;
+
+        // Check if player reached max city limit
         if (currentPlayer.getCities().size() >= menuView.getMaxCities()) {
             return BuildResult.TOO_MANY_CITIES;
         }
 
+        // Require resources: 3 Ore, 2 Grain
         if (canRemoveResource("Ore", 3) && canRemoveResource("Grain", 2)) {
             removeResource("Ore", 3);
             removeResource("Grain", 2);
@@ -511,39 +556,45 @@ public class Gameplay {
             increasePlayerScore();
             return BuildResult.UPGRADED_TO_CITY;
         }
+
+        // Not enough resources
         drawOrDisplay.notEnoughResourcesPopup("Not enough resources to build a city");
         return BuildResult.INSUFFICIENT_RESOURCES;
     }
 
+    // Used by development card to place a road without resource cost
     public BuildResult placeFreeRoad(Player player, Edge edge) {
         if (!isValidRoadPlacement(edge)) return BuildResult.INVALID_EDGE;
         if (player.getRoads().size() >= menuView.getMaxRoads()) return BuildResult.TOO_MANY_ROADS;
+
+        // Call through build controller for shared logic and animations
         catanBoardGameView.runOnFX(() -> {
             getGameController().getBuildController().buildRoad(edge, player);
         });
         player.getRoads().add(edge);
-        // Recalculate longest road
+        // Recalculate longest road for consistency
         longestRoadManager.calculateAndUpdateLongestRoad(player, playerList);
-        // Update sidebar/UI
         catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
         return BuildResult.SUCCESS;
     }
 
     //______________________VALID BUILD CHECKS___________________________//
+
+    // Check if the settlement placement follows all game rules
     public boolean isValidSettlementPlacement(Vertex vertex) {
         if (vertex.hasSettlement()) return false;
 
-        // Must border at least one land tile
+        // Must be adjacent to at least one land tile (not surrounded by sea)
         boolean hasLand = vertex.getAdjacentTiles().stream()
                 .anyMatch(tile -> !tile.isSea());
         if (!hasLand) return false;
 
-        // Distance rule — no adjacent settlements
+        // Distance rule: no adjacent settlements allowed
         for (Vertex neighbor : vertex.getNeighbors()) {
             if (neighbor.hasSettlement()) return false;
         }
 
-        // In main phase: require an adjacent road that belongs to the current player
+        // In main phase: must connect to one of the player's roads
         if (!isInInitialPhase()) {
             boolean hasOwnAdjacentRoad = getCurrentPlayer().getRoads().stream()
                     .anyMatch(edge -> edge.isConnectedTo(vertex));
@@ -553,16 +604,17 @@ public class Gameplay {
         return true;
     }
 
+    // Check if the road placement follows all rules
     public boolean isValidRoadPlacement(Edge edge) {
-        // Reject edges where either end is sea-only
+        // Must connect two vertices with at least one land tile each
         boolean vertex1HasLand = edge.getVertex1().getAdjacentTiles().stream().anyMatch(t -> !t.isSea());
         boolean vertex2HasLand = edge.getVertex2().getAdjacentTiles().stream().anyMatch(t -> !t.isSea());
         if (!vertex1HasLand || !vertex2HasLand) return false;
 
-        // No duplicate road
+        // No duplicate roads allowed
         if (playerList.stream().anyMatch(p -> p.getRoads().contains(edge))) return false;
 
-        // Block building through opponent's settlements
+        // Prevent road from connecting through an opponent’s settlement
         for (Player player : playerList) {
             if (player != currentPlayer) {
                 if (player.getSettlementsAndCities().contains(edge.getVertex1()) &&
@@ -576,7 +628,7 @@ public class Gameplay {
             }
         }
 
-        // Must connect to a player's own road or settlement
+        // Must connect to current player's road or settlement
         boolean connectsToSettlementOrCity = currentPlayer.getSettlementsAndCities().contains(edge.getVertex1()) ||
                 currentPlayer.getSettlementsAndCities().contains(edge.getVertex2());
 
@@ -586,158 +638,56 @@ public class Gameplay {
         return connectsToSettlementOrCity || connectsToRoad;
     }
 
+    // Ensure only own settlements can be upgraded to cities
     public boolean isNotValidCityPlacement(Vertex vertex) {
         return !(vertex.hasSettlement() && vertex.getOwner() == currentPlayer);
     }
 
     //___________________________SCORE MANAGEMENT_____________________________//
+    // Simple increase player score by +1 VP and check for game over
     public void increasePlayerScore() {
         currentPlayer.playerScorePlusOne();
+        // Win check
         if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
             if (isGamePaused()) return;
-            Player winner = currentPlayer;  // <- Freeze the winning player here
-            endOfGameWinnerPopup(winner);       // <- pass it down
+            endOfGameWinnerPopup(currentPlayer);
         }
     }
 
-    // For Longest Road and Biggest Army
+    // For Longest Road and Biggest Army (Decrease the VP's)
     public void decreasePlayerScoreByTwo(Player player) {
         player.playerScoreMinusOne();
         player.playerScoreMinusOne();
     }
 
-    // For Longest Road and Biggest Army
-    public void increasePlayerScoreByTwo(Player player) {
-        player.playerScorePlusOne();
-        player.playerScorePlusOne();
-        if (player.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
+    // For Longest Road and Biggest Army (Increase the VP's)
+    public void increasePlayerScoreByTwo() {
+        currentPlayer.playerScorePlusOne();
+        currentPlayer.playerScorePlusOne();
+        // Win check
+        if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
             if (isGamePaused()) return;
-            endOfGameWinnerPopup(player);
+            endOfGameWinnerPopup(currentPlayer);
         }
     }
 
     //___________________________HELPER FUNCTIONS_____________________________//
 
-    public int getTotalSelectedCards(Map<String, Integer> selection) {
-        return selection.values().stream().mapToInt(Integer::intValue).sum();
-    }
-
+    // Displays end of game winner popup (visuals in class "DrawOrDisplay")
     private void endOfGameWinnerPopup(Player winner) {
+        //Makes sure the popup doesn't open twice.
         if (gameOver) return;
         gameOver = true;
 
-        Platform.runLater(() -> {
-            System.out.println("FINAL TRADES WITH BANK IN THIS GAME: " + tradeCounter);
-            Stage popup = new Stage();
-            popup.initModality(Modality.APPLICATION_MODAL);
-            popup.initStyle(StageStyle.UNDECORATED);
-            popup.setTitle("Game Over");
-
-            VBox content = new VBox(15);
-            content.setPadding(new Insets(15));
-            content.setAlignment(Pos.TOP_CENTER);
-            content.setStyle("""
-            -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
-            -fx-border-color: #8c5b1a;
-            -fx-border-width: 2;
-            -fx-border-radius: 10;
-            -fx-background-radius: 10;
-        """);
-
-            Label header = new Label("🏆 Player " + winner.getPlayerId() + " has won the game! (It took them " + turnCounter + " turns)");
-            header.setFont(Font.font("Georgia", FontWeight.BOLD, 18));
-            header.setTextFill(Color.DARKGREEN);
-
-            VBox playerStats = new VBox(12);
-            playerStats.setPadding(new Insets(10));
-
-            // Sort by score, descending
-            List<Player> sortedPlayers = playerList.stream()
-                    .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
-                    .toList();
-
-            for (Player player : sortedPlayers) {
-                VBox box = new VBox(6);
-                box.setPadding(new Insets(10));
-                box.setStyle("""
-                -fx-background-color: linear-gradient(to bottom, #f3e2c7, #e0b97d);
-                -fx-border-color: #a86c1f;
-                -fx-border-width: 1.5;
-                -fx-background-radius: 8;
-                -fx-border-radius: 8;
-            """);
-
-                String displayName = (player instanceof AIOpponent ai)
-                        ? "AI Player " + ai.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
-                        : "Player " + player.getPlayerId();
-
-                Text name = new Text(displayName + " : " + player.getPlayerScore() + " points");
-                name.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
-                name.setFill(player.getColor());
-                box.getChildren().add(name);
-
-                // Base stats
-                int resources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
-                int devCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
-
-                Text resText = new Text("Current Resources: " + resources);
-                Text devText = new Text("Current Development Cards: " + devCards);
-                Text lroadText = new Text("Longest Road: " + player.getLongestRoad());
-                Text knightText = new Text("Biggest Army: " + player.getPlayedKnights());
-
-                Text cityText = new Text("Cities: " + player.getCities().size());
-                Text settlementText = new Text("Settlements: " + player.getSettlements().size());
-                Text roadText = new Text("Roads: " + player.getRoads().size());
-
-                List<Text> baseStats = List.of(
-                        resText, devText, lroadText, knightText,
-                        cityText, settlementText, roadText
-                );
-                baseStats.forEach(stat -> stat.setFont(Font.font("Georgia", 12)));
-                box.getChildren().addAll(baseStats);
-
-                if (player instanceof AIOpponent ai) {
-                    VBox strategyBox = new VBox(4);
-                    for (Map.Entry<AIOpponent.Strategy, Integer> entry : ai.getStrategyUsageMap().entrySet()) {
-                        Text stat = new Text("• " + entry.getKey().name() + ": " + entry.getValue() + " times");
-                        stat.setFont(Font.font("Georgia", 12));
-                        strategyBox.getChildren().add(stat);
-                    }
-
-                    TitledPane togglePane = new TitledPane("Strategy Usage", strategyBox);
-                    togglePane.setExpanded(false);
-                    togglePane.setFont(Font.font("Georgia", FontWeight.NORMAL, 12));
-                    box.getChildren().add(togglePane);
-                }
-
-                playerStats.getChildren().add(box);
-            }
-
-            ScrollPane scrollPane = new ScrollPane(playerStats);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setPrefViewportHeight(500);
-            scrollPane.setStyle("""
-            -fx-background: transparent;
-            -fx-border-color: #a86c1f;
-            -fx-border-radius: 8;
-        """);
-
-            Button closeBtn = new Button("Back to Main Menu");
-            closeBtn.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
-            closeBtn.setStyle("""
-            -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
-            -fx-text-fill: black;
-        """);
-            closeBtn.setOnAction(e -> {
-                popup.close();
-                menuView.showMainMenu();
-            });
-
-            content.getChildren().addAll(header, scrollPane, closeBtn);
-            Scene scene = new Scene(content, menuView.getGAME_WIDTH(), menuView.getGAME_HEIGHT());
-            popup.setScene(scene);
-            popup.show();
-        });
+        Platform.runLater(() -> drawOrDisplay.showEndGamePopup(
+                winner,
+                playerList,
+                turnCounter,
+                tradeCounter,
+                menuView.getGAME_WIDTH(),
+                menuView.getGAME_HEIGHT(),
+                menuView::showMainMenu
+        ));
     }
 
     public boolean isActionBlockedByDevelopmentCard() {
@@ -767,17 +717,6 @@ public class Gameplay {
         tradeCounter=0;
     }
 
-    public BiggestArmyManager getBiggestArmy() {
-        return biggestArmy;
-    }
-
-    public Player getCurrentBiggestArmyHolder() {
-        return biggestArmy.getCurrentHolder();
-    }
-
-    public LongestRoadManager getLongestRoadManager() {
-        return longestRoadManager;
-    }
 
     //__________________________GETTERS________________________//
     public GameController getGameController() {
@@ -785,14 +724,6 @@ public class Gameplay {
     }
     public DrawOrDisplay getDrawOrDisplay() {
         return drawOrDisplay;
-    }
-
-    public void setDrawOrDisplay(DrawOrDisplay drawOrDisplay) {
-        this.drawOrDisplay = drawOrDisplay;
-    }
-
-    public boolean isRobberMoveRequired() {
-        return isRobberMoveRequired;
     }
 
     public void setRobberMoveRequired(boolean required) {
@@ -805,14 +736,6 @@ public class Gameplay {
 
     public List<Player> getPlayerList() {
         return playerList;
-    }
-
-    public int getLastRolledDie1() {
-        return lastRolledDie1;
-    }
-
-    public int getLastRolledDie2() {
-        return lastRolledDie2;
     }
 
     public boolean isInInitialPhase() {
@@ -847,33 +770,47 @@ public class Gameplay {
         return shuffledDevelopmentCards;
     }
 
+    public BiggestArmyManager getBiggestArmy() {
+        return biggestArmy;
+    }
+
+    public LongestRoadManager getLongestRoadManager() {
+        return longestRoadManager;
+    }
+
+
     public boolean isGamePaused() {
         return gamePaused;
     }
 
     public void pauseGame() {
         if (!gamePaused) {
-            this.drawOrDisplay.pauseThinkingAnimation(this.drawOrDisplay);
+            this.drawOrDisplay.pauseThinkingAnimation(this.drawOrDisplay); // Stop animation
             catanBoardGameView.logToGameLog("Game paused.");
             gamePaused = true;
             stopAllAIThreads();  // interrupt AI thread cleanly
         }
     }
 
+    // Resumes game from paused state
     public void resumeGame() {
         if (!gamePaused) return; // prevent spamming or double-starting
-        this.drawOrDisplay.resumeThinkingAnimation(this.drawOrDisplay);
+        this.drawOrDisplay.resumeThinkingAnimation(this.drawOrDisplay); // resumes paused animations
         catanBoardGameView.logToGameLog("Game resumed.");
         gamePaused = false;
+        // Resumes AI if current player is AI
         if (currentPlayer instanceof AIOpponent ai) {
             startAIThread(ai);
         }
     }
 
+    // Checks if someone has won the game.
     public boolean isGameOver() {
         return playerList.stream().anyMatch(p -> p.getPlayerScore() >= menuView.getMaxVictoryPoints());
     }
 
+
+    // UI Guard -> Checks if it is AI's turn and then blocks actions until AI is done.
     public boolean isBlockedByAITurn() {
         if (gameController.getGameplay().getCurrentPlayer() instanceof AIOpponent) {
             drawOrDisplay.showAITurnPopup();
@@ -882,20 +819,16 @@ public class Gameplay {
         return false;
     }
 
+    // Some of the visuals depend on whether there are human players in the game, so this checks it.
     public boolean hasHumanPlayers() {
         return playerList.stream().anyMatch(p -> !(p instanceof AIOpponent));
     }
 
 
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! skal fjernes???
     public void increaseTradeCounter() {
         tradeCounter++;
-    }
-
-    public int getTradeCounter() {
-        return tradeCounter;
-    }
-    public void resetTradeCounter() {
-        tradeCounter = 0;
     }
 
 }

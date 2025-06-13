@@ -18,7 +18,7 @@ public class BiggestArmyManager {
             if (biggestArmy == null) {
                 // First player to receive Biggest Army
                 biggestArmy = currentPlayer;
-                gameplay.increasePlayerScoreByTwo(currentPlayer);
+                gameplay.increasePlayerScoreByTwo();
             } else {
                 int previousKnights = biggestArmy.getPlayedKnights();
 
@@ -26,7 +26,7 @@ public class BiggestArmyManager {
                     // New player takes over the title
                     gameplay.decreasePlayerScoreByTwo(biggestArmy);
                     biggestArmy = currentPlayer;
-                    gameplay.increasePlayerScoreByTwo(currentPlayer);
+                    gameplay.increasePlayerScoreByTwo();
                 }
             }
         }

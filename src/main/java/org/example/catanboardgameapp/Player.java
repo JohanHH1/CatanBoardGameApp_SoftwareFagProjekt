@@ -6,7 +6,7 @@ import org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType;
 
 public class Player {
 
-    private static final boolean DEBUG_MODE = false; // Set to false for normal game
+    private static final boolean DEBUG_MODE = true; // Set to false for normal game
 
     private final Gameplay gameplay;
     private int playerId;
