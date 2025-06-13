@@ -327,7 +327,6 @@ public class CatanBoardGameView {
                 tradeButton, developmentCardButton, showCostsButton, toggleConfirmBtn, exitButton
         );
 
-
         String baseStyle = """
         -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
         -fx-text-fill: #2b1d0e;
@@ -349,16 +348,6 @@ public class CatanBoardGameView {
             btn.setOnMouseExited(e -> btn.setStyle(baseStyle));
         });
 
-/*
-        String style = "-fx-background-color: linear-gradient(to bottom, #f9f9f9, #e0e0e0); -fx-background-radius: 8;" +
-                "-fx-border-radius: 8; -fx-border-color: #b0b0b0; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 14 8 14;";
-        String hover = "-fx-background-color: linear-gradient(to bottom, #e6e6e6, #cccccc);";
-
-        allButtons.forEach(btn -> {
-            btn.setStyle(style);
-            btn.setOnMouseEntered(e -> btn.setStyle(style + hover));
-            btn.setOnMouseExited(e -> btn.setStyle(style));
-        });*/
         hideTurnButton();
         hideDiceButton();
 
@@ -417,14 +406,6 @@ public class CatanBoardGameView {
         playerBox.setStyle(baseStyle + playerStyle);
         playerBox.getChildren().add(playerName);
 
-        /*
-        if (player == gameplay.getCurrentPlayer()) {
-            playerBox.setStyle("-fx-background-color: lightyellow; -fx-border-color: black; -fx-border-width: 2px;");
-            playerName.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, nameFontSize + 2));
-        } */
-
-        //playerBox.getChildren().add(playerName);
-
         if (player == gameplay.getCurrentPlayer()) {
             // Expandable resource section
             int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
@@ -474,7 +455,6 @@ public class CatanBoardGameView {
                     DevelopmentCardType type = entry.getKey(); // capture outside lambda
 
                     Button cardButton = new Button(type.getDisplayName() + " (" + entry.getValue() + ")");
-                    //cardButton.setFont(Font.font("Georgia", infoFontSize));
                     cardButton.setStyle("""
                         -fx-font-family: 'Georgia';
                         -fx-background-color: #d8b173;
@@ -587,27 +567,43 @@ public class CatanBoardGameView {
             -fx-min-width: 220;
         """);
 
-        /*title.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        playerListVBox.getChildren().add(title);
-
-        for (Player player : gameplay.getPlayerList()) {
-            VBox playerBox = createPlayerBox(player, nameFontSize, infoFontSize);
-            playerListVBox.getChildren().add(playerBox);
-        }
-
-        if (!hasBeenInitialized) {
-            ScrollPane scrollPane = new ScrollPane(playerListVBox);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setPrefHeight(500);
-            scrollPane.setStyle("-fx-background-color: #e0e0e0;");
-
-            VBox container = new VBox(scrollPane);
-            container.setStyle("-fx-background-color: #e0e0e0; -fx-min-width: 200;");*/
             return container;
         }
 
         return null;
     }
+
+    public void styleDialog(Dialog<?> dialog) {
+        DialogPane pane = dialog.getDialogPane();
+        pane.setStyle("""
+        -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+        -fx-border-color: #8c5b1a;
+        -fx-border-width: 2;
+        -fx-border-radius: 10;
+        -fx-background-radius: 10;
+        -fx-font-family: 'Georgia';
+        -fx-font-size: 13px;
+        -fx-text-fill: #3e2b1f;
+    """);
+
+        Platform.runLater(() -> {
+            for (ButtonType bt : pane.getButtonTypes()) {
+                Button btn = (Button) pane.lookupButton(bt);
+                if (btn != null) {
+                    btn.setStyle("""
+                    -fx-background-color: #6e2c00;
+                    -fx-text-fill: #fceabb;
+                    -fx-font-family: 'Georgia';
+                    -fx-font-weight: bold;
+                    -fx-background-radius: 10;
+                    -fx-border-color: #f7c75d;
+                    -fx-border-width: 2;
+                """);
+                }
+            }
+        });
+    }
+
 
     //__________________________INPUT HANDLING_____________________________//
 

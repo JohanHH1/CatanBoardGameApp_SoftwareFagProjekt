@@ -2,6 +2,7 @@ package org.example.controller;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.DialogPane;
 import org.example.catanboardgameapp.*;
 
 import java.util.*;
@@ -73,6 +74,8 @@ public class TradeController {
                 giveDialog.setTitle("Harbor Trade");
                 giveDialog.setHeaderText("Select the resource you want to give:");
                 giveDialog.setContentText("Give:");
+                gameplay.getCatanBoardGameView().styleDialog(giveDialog);
+                DialogPane givePane = giveDialog.getDialogPane();
                 Optional<String> giveResult = giveDialog.showAndWait();
                 if (giveResult.isEmpty()) return;
 
@@ -87,6 +90,7 @@ public class TradeController {
                 receiveDialog.setTitle("Harbor Trade");
                 receiveDialog.setHeaderText("Select the resource you want to receive:");
                 receiveDialog.setContentText("Receive:");
+                gameplay.getCatanBoardGameView().styleDialog(receiveDialog);
                 Optional<String> receiveResult = receiveDialog.showAndWait();
                 if (receiveResult.isEmpty()) return;
 

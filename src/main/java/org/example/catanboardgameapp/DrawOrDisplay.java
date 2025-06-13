@@ -429,8 +429,6 @@ public class DrawOrDisplay {
             -fx-font-size: 14px;
             -fx-text-fill: #3e2b1f;
         """);
-
-
         // Prevent closing with X button
         Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
         stage.setOnCloseRequest(Event::consume);
@@ -474,7 +472,6 @@ public class DrawOrDisplay {
         );
     }
 
-
     //___________________________________POPUP HELPER FUNCTIONS____________________________________//
     public void showAlert(Alert.AlertType type, String title, String header, String content, Runnable onClose) {
         Platform.runLater(() -> {
@@ -509,10 +506,18 @@ public class DrawOrDisplay {
             VBox box = new VBox(10);
             box.setPadding(new Insets(20));
             box.setAlignment(Pos.CENTER);
+            box.setStyle("""
+                -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+                -fx-border-color: #8c5b1a;
+                -fx-border-width: 2;
+                -fx-border-radius: 10;
+                -fx-background-radius: 10;
+            """);
 
             Label label = new Label(message);
             Button closeButton = new Button("OK");
             closeButton.setOnAction(e -> popup.close());
+            closeButton.setFont(Font.font("Georgia", FontWeight.BOLD, 13));
 
             box.getChildren().addAll(label, closeButton);
 
@@ -605,6 +610,13 @@ public class DrawOrDisplay {
 
         VBox container = new VBox(15, new Text(message), grid);
         HBox buttons = new HBox(10, confirmButton);
+        container.setStyle("""
+            -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+            -fx-border-color: #8c5b1a;
+            -fx-border-width: 2;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+        """);
 
         if (allowAutoSelection && autoSelectionSupplier != null) {
             Button autoButton = new Button("Auto-Discard");
@@ -620,15 +632,6 @@ public class DrawOrDisplay {
 
         container.getChildren().add(buttons);
         container.setPadding(new Insets(15));
-        //container.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;");
-
-                container.setStyle("""
-            -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
-            -fx-border-color: #8c5b1a;
-            -fx-border-width: 2;
-            -fx-border-radius: 0;
-            -fx-background-radius: 0;
-        """);
 
         dialogStage.setScene(new Scene(container));
         dialogStage.showAndWait();
