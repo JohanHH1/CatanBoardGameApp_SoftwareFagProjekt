@@ -694,7 +694,7 @@ public class AIOpponent extends Player {
 
     //_____________________________DEVELOPMENT CARD LOGIC________________________________//
     private boolean tryBuyDevCard(Gameplay gameplay) {
-        if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1) || !gameplay.hasRolledDice()) {return false;}
+        if (!hasResources("Wool", 1) || !hasResources("Grain", 1)|| !hasResources("Ore", 1) || !gameplay.hasRolledDice() || gameplay.getShuffledDevelopmentCards().isEmpty() ) {return false;}
         gameplay.buyDevelopmentCard();
         return true;
     }
@@ -709,7 +709,6 @@ public class AIOpponent extends Player {
                 gameplay.getCatanBoardGameView().runOnFX(() ->
                         gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +" just played development card of type: " + devCardType)
                 );
-
                 // Call the enum-based AI method
                 devCardType.playAsAI(this, gameplay.getDevelopmentCard(), gameplay);
 

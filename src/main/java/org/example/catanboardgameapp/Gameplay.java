@@ -52,6 +52,7 @@ public class Gameplay {
     private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
             MONOPOLY, MONOPOLY,
             YEAROFPLENTY, YEAROFPLENTY,
+            ROADBUILDING, ROADBUILDING,
             VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT
@@ -390,7 +391,6 @@ public class Gameplay {
             currentPlayer.getResources().put(resource, current - amount);
         }
     }
-
     public void addResource(String resource, int amount) {
         currentPlayer.getResources().put(resource,
                 currentPlayer.getResources().getOrDefault(resource, 0) + amount);
