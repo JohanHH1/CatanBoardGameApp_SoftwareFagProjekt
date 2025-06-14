@@ -6,12 +6,14 @@ import java.util.Objects;
 
 public class Vertex {
 
+    //___________________________STRUCTURE ENUM___________________________//
     public enum StructureType {
         NONE, SETTLEMENT, CITY
     }
 
-    private Player owner = null;
+    //___________________________FIELDS & STATE___________________________//
     private StructureType structure = StructureType.NONE;
+    private Player owner = null;
 
     private final double x;
     private final double y;
@@ -19,15 +21,13 @@ public class Vertex {
     private final List<Tile> adjacentTiles = new ArrayList<>();
     private final List<Vertex> neighbors = new ArrayList<>();
 
-    // -------------------- Constructor -------------------- //
-
+    //___________________________CONSTRUCTOR___________________________//
     public Vertex(double x, double y) {
         this.x = x;
         this.y = y;
     }
 
-    // -------------------- Placement State -------------------- //
-
+    //___________________________PLACEMENT STATE LOGIC___________________________//
     public void makeSettlement() {
         this.structure = StructureType.SETTLEMENT;
     }
@@ -41,19 +41,10 @@ public class Vertex {
     }
 
     public boolean hasSettlement() {
-        return owner != null; // All placed structures imply ownership
+        return owner != null;
     }
 
-    public boolean hasCity() {
-        return owner != null && structure == StructureType.CITY;
-    }
-
-    public StructureType getStructureType() {
-        return structure;
-    }
-
-    // -------------------- Relationship Logic -------------------- //
-
+    //___________________________RELATIONSHIP LOGIC___________________________//
     public void addNeighbor(Vertex neighbor) {
         if (!neighbors.contains(neighbor)) {
             neighbors.add(neighbor);
@@ -70,7 +61,19 @@ public class Vertex {
         return adjacentTiles.stream().allMatch(Tile::isSea);
     }
 
-    // -------------------- Getters -------------------- //
+    //___________________________SETTERS___________________________//
+    public void setOwner(Player owner) {
+        this.owner = owner;
+    }
+
+    //___________________________GETTERS___________________________//
+    public List<Vertex> getNeighbors() {
+        return neighbors;
+    }
+
+    public Player getOwner() {
+        return owner;
+    }
 
     public double getX() {
         return x;
@@ -84,24 +87,7 @@ public class Vertex {
         return adjacentTiles;
     }
 
-    public List<Vertex> getNeighbors() {
-        return neighbors;
-    }
-
-    public Player getOwner() {
-        return owner;
-    }
-
-    public void setOwner(Player owner) {
-        this.owner = owner;
-    }
-
-    public String getIdOrCoords() {
-        return String.format("(%.2f, %.2f)", x, y);
-    }
-
-    // -------------------- Equality -------------------- //
-
+    //___________________________EQUALITY & HASHING___________________________//
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

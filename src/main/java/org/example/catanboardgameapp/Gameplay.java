@@ -456,7 +456,6 @@ public class Gameplay {
 
         // Grant initial resources after second settlement
         if (currentPlayer.getSettlements().size() == 2) {
-            currentPlayer.setSecondSettlement(vertex);
             for (Tile tile : vertex.getAdjacentTiles()) {
                 Resource.ResourceType type = tile.getResourcetype();
 

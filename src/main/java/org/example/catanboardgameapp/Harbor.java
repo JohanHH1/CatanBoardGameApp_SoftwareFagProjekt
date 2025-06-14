@@ -2,7 +2,16 @@ package org.example.catanboardgameapp;
 
 public class Harbor {
 
+    private final HarborType type;
+    private final Edge edge;  // two coastal vertices
 
+    //_______________________CONSTRUCTOR_____________________//
+    public Harbor(HarborType type, Edge edge) {
+        this.type = type;
+        this.edge = edge;
+    }
+
+    //_____________________ALL HARBORS ENUM___________________//
     // Harbors around the edges of the map used to get improved trades.
     public enum HarborType {
         // 3 : 1 generic resource trading
@@ -26,22 +35,12 @@ public class Harbor {
         }
     }
 
-    private final HarborType type;
-    private final Edge edge;  // two coastal vertices
-
-
-    public Harbor(HarborType type, Edge edge) {
-        this.type = type;
-        this.edge = edge;
-    }
-
-    public HarborType getType() { return type; }
-    public Edge getEdge()       { return edge; }
-    
     // A player can use the harbor if they own a settlement/city on either vertex
     public boolean usableBy(Player player) {
         return edge.getVertex1().getOwner() == player || edge.getVertex2().getOwner() == player;
     }
 
-
+    //___________________________GETTERS_____________________________//
+    public HarborType getType() { return type; }
+    public Edge getEdge()       { return edge; }
 }

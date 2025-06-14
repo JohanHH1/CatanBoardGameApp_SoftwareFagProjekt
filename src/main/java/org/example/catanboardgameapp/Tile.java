@@ -12,16 +12,23 @@ import java.util.List;
 import java.util.Map;
 
 public class Tile {
+
+    // Dependencies
+    private Harbor harbor;
+    private final Resource.ResourceType resourcetype;
+
+    private boolean sea = false; // Tile flag, default = land (!SEA)
+
+    // Tile construction variables
     private final int q;
     private final int r;
-    private final int tileDiceNumber;
     private final Point2D center;
-    private final Resource.ResourceType resourcetype;
     private List<Vertex> vertices;
     private List<Edge> edges;
+
+    // UI / Visuals
+    private final int tileDiceNumber;
     private static final Map<Resource.ResourceType, Image> imageCache = new HashMap<>();
-    private Harbor harbor; // optional
-    private boolean sea = false;          // default = land
 
     //___________________CONSTRUCTOR______________________//
     public Tile(int q, int r, Resource.ResourceType resourcetype,
@@ -37,6 +44,9 @@ public class Tile {
     public void setVertices(List<Vertex> vertices) { this.vertices = vertices; }
     public void setEdges(List<Edge> edges)          { this.edges = edges;     }
     public void setSea(boolean sea)                 { this.sea = sea;         }
+    public void setHarbor(Harbor harbor) {
+        this.harbor = harbor;
+    }
 
     //______________________________GETTERS__________________________________//
     public boolean isSea()            { return sea; }
@@ -47,6 +57,9 @@ public class Tile {
     public int getTileDiceNumber()    { return tileDiceNumber; }
     public Resource.ResourceType getResourcetype() { return resourcetype; }
     public Point2D getCenter()        { return center; }
+    public Harbor getHarbor() {
+        return harbor;
+    }
 
     // Returns a color depending on the tile's resource type
     public Color getTileColor(Resource.ResourceType type) {
@@ -64,9 +77,6 @@ public class Tile {
     // Loads the correct resource icon for a tile
     public ImageView getResourceIcon(Resource.ResourceType type,
                                      double x, double y, double hexSize) {
-        // Don't return icon for SEA tiles
-        //if (type == Resource.ResourceType.SEA) return null;
-
         Image image = imageCache.computeIfAbsent(type, t -> {
             String filename = switch (t) {
                 case BRICK  -> "/Icons/brick.png";
@@ -81,7 +91,6 @@ public class Tile {
             InputStream stream = CatanBoardGameView.class.getResourceAsStream(filename);
             return stream == null ? new Image("/Icons/error.png") : new Image(stream);
         });
-
         ImageView iv = new ImageView(image);
         double w = Math.sqrt(3) * hexSize, h = 2 * hexSize;
         iv.setFitWidth(w);
@@ -92,15 +101,4 @@ public class Tile {
         iv.setY(Math.round(y - h / 2));
         return iv;
     }
-
-
-
-    public void setHarbor(Harbor harbor) {
-        this.harbor = harbor;
-    }
-
-    public Harbor getHarbor() {
-        return harbor;
-    }
-
 }

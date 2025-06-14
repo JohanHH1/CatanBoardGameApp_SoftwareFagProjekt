@@ -1,7 +1,8 @@
 package org.example.catanboardgameapp;
 
 public class Resource {
-
+    
+    // Enum containing all resources (SEA AND DESERT not collectable but has Tile values)
     public enum ResourceType {
         BRICK("Brick"),
         WOOD("Wood"),
@@ -13,6 +14,7 @@ public class Resource {
 
         private final String name;
 
+        // CONSTRUCTOR
         ResourceType(String name) {
             this.name = name;
         }
@@ -31,5 +33,4 @@ public class Resource {
             throw new IllegalArgumentException("Invalid resource type: " + name);
         }
     }
-
 }
