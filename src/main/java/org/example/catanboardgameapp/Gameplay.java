@@ -449,7 +449,7 @@ public class Gameplay {
         currentPlayer.getSettlements().add(vertex);
         vertex.setOwner(currentPlayer);
         vertex.makeSettlement();
-        increasePlayerScore();
+        increasePlayerScore(currentPlayer);
 
         waitingForInitialRoad = true;
         lastInitialSettlement = vertex;
@@ -530,7 +530,7 @@ public class Gameplay {
             currentPlayer.getSettlements().add(vertex);
             vertex.setOwner(currentPlayer);
             vertex.makeSettlement();
-            increasePlayerScore();
+            increasePlayerScore(currentPlayer);
             return BuildResult.SUCCESS;
         }
         return BuildResult.INSUFFICIENT_RESOURCES;
@@ -553,7 +553,7 @@ public class Gameplay {
             currentPlayer.getCities().add(vertex);
             vertex.setOwner(currentPlayer);
             vertex.makeCity();
-            increasePlayerScore();
+            increasePlayerScore(currentPlayer);
             return BuildResult.UPGRADED_TO_CITY;
         }
 
@@ -645,10 +645,10 @@ public class Gameplay {
 
     //___________________________SCORE MANAGEMENT_____________________________//
     // Simple increase player score by +1 VP and check for game over
-    public void increasePlayerScore() {
-        currentPlayer.playerScorePlusOne();
+    public void increasePlayerScore(Player player) {
+        player.playerScorePlusOne();
         // Win check
-        if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
+        if (player.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
             if (isGamePaused()) return;
             endOfGameWinnerPopup(currentPlayer);
         }
