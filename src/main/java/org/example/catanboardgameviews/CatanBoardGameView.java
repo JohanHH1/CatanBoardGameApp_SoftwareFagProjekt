@@ -18,7 +18,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.example.catanboardgameapp.*;
 import org.example.controller.BuildController;
@@ -29,6 +28,7 @@ import org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public class CatanBoardGameView {
@@ -40,7 +40,6 @@ public class CatanBoardGameView {
     private final DrawOrDisplay drawOrDisplay;
     private final Board board;
     private final Robber robber;
-    private final Stage primaryStage;
     private final Gameplay gameplay;
     private final GameController gameController;
     private final TurnController turnController;
@@ -49,7 +48,6 @@ public class CatanBoardGameView {
     //---------------------------- JavaFX Root Scene ----------------------------//
     private final Scene scene;
     private final BorderPane root;
-    private final StackPane aiTurnOverlay = new StackPane();
 
     //---------------------------- Render Layers ----------------------------//
     private final Group edgeBaseLayer;
@@ -68,13 +66,11 @@ public class CatanBoardGameView {
     private final ImageView diceImage2;
 
     //---------------------------- Layout Containers ----------------------------//
-    private ScrollPane scrollPane;
     private SplitPane splitPane;
     private VBox playerListVBox;
 
     //________________________________CONSTRUCTOR____________________________________//
-    public CatanBoardGameView(Stage primaryStage, Gameplay gameplay, GameController gameController, int boardRadius) {
-        this.primaryStage = primaryStage;
+    public CatanBoardGameView(Gameplay gameplay, GameController gameController, int boardRadius) {
         this.gameplay = gameplay;
         this.gameController = gameController;
         this.boardRadius = boardRadius;
@@ -103,27 +99,11 @@ public class CatanBoardGameView {
         gameLogArea.setWrapText(true);
 
         gameLogArea.setFocusTraversable(false);
-        gameLogArea.setPrefRowCount(8); // valfri höjd
-        gameLogArea.setStyle("""
-    -fx-font-family: 'Georgia';
-    -fx-font-size: 12;
-    -fx-text-fill: #3e2b1f;
-    -fx-control-inner-background: #f9f0d2;
-    -fx-highlight-fill: #d4a627;
-    -fx-highlight-text-fill: black;
-    -fx-prompt-text-fill: #a86c1f;
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
-    -fx-border-color: #a86c1f;
-    -fx-border-width: 1.5;
-    -fx-padding: 6;
-""");
-
-
-        /*gameLogArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12;"); */
+        gameLogArea.setPrefRowCount(8);
+        gameLogArea.setStyle(BUTTON_STYLE);
 
         // Drawing/rendering utility
-        this.drawOrDisplay = gameplay.getDrawOrDisplay(); // Get shared instance
+        this.drawOrDisplay = gameplay.getDrawOrDisplay();
 
         // Dice visuals
         this.diceImage1 = new ImageView(drawOrDisplay.loadDiceImage(1));
@@ -184,51 +164,55 @@ public class CatanBoardGameView {
     }
 
     private VBox createGameLogPanel() {
+        // Set fixed size for dice images
         diceImage1.setFitWidth(40);
         diceImage1.setFitHeight(40);
         diceImage2.setFitWidth(40);
         diceImage2.setFitHeight(40);
 
+        // Group both dice images in a horizontal box
         HBox diceImages = new HBox(5, diceImage1, diceImage2);
         diceImages.setAlignment(Pos.CENTER_LEFT);
         diceImages.setPadding(new Insets(0, 0, 0, 5));
 
-        //VBox diceColumn = new VBox(new Label("Dice Roll"), diceImages);
-
+        // Label for the dice section
         Label diceLabel = new Label("Dice Roll");
-        diceLabel.setFont(Font.font("Georgia", FontWeight.BOLD, 14)); // eller valfri storlek/vikt
+        diceLabel.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
 
+        // Vertical container for dice label and images
         VBox diceColumn = new VBox(diceLabel, diceImages);
-
         diceColumn.setAlignment(Pos.TOP_LEFT);
         diceColumn.setPadding(new Insets(5));
 
+        // Label for the game log
         Label logLabel = new Label("Game Log");
         logLabel.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
 
+        // Vertical container for the game log label and text area
         VBox logColumn = new VBox(logLabel, gameLogArea);
         logColumn.setPadding(new Insets(5, 10, 5, 0));
         VBox.setVgrow(gameLogArea, Priority.ALWAYS);
         VBox.setVgrow(logColumn, Priority.ALWAYS);
 
+        // Combine dice and log columns side by side
         HBox bottomContent = new HBox(diceColumn, logColumn);
         HBox.setHgrow(logColumn, Priority.ALWAYS);
 
+        // Wrap everything in a parent VBox
         VBox logBox = new VBox(bottomContent);
         VBox.setVgrow(bottomContent, Priority.ALWAYS);
         VBox.setVgrow(logBox, Priority.ALWAYS);
 
         logBox.setStyle("""
-    -fx-background-color: linear-gradient(to bottom, #f9f0d2, #e2c18f);
-    -fx-border-color: #a86c1f;
-    -fx-border-width: 2;
-
-""");
-
+            -fx-background-color: linear-gradient(to bottom, #f9f0d2, #e2c18f);
+            -fx-border-color: #a86c1f;
+            -fx-border-width: 2;
+        """);
 
         return logBox;
     }
 
+    // Creates a horizontal toolbar containing key game interaction buttons
     private HBox createTopButtonBar() {
         Button centerButton = new Button("Center");
         Button zoomInButton = new Button("+");
@@ -244,9 +228,10 @@ public class CatanBoardGameView {
             boolean enabled = toggleConfirmBtn.isSelected();
             toggleConfirmBtn.setText(enabled ? "Confirm: ON" : "Confirm: OFF");
             gameController.getBuildController().toggleConfirmBeforeBuild();
-            toggleConfirmBtn.getScene().getRoot().requestFocus(); // clear focus
+            toggleConfirmBtn.getScene().getRoot().requestFocus();
         });
 
+        // Dice rolling button action
         rollDiceButton.setOnAction(e -> {
             if (gameplay.isActionBlockedByDevelopmentCard()){
                 drawOrDisplay.showFinishDevelopmentCardActionPopup();
@@ -255,73 +240,71 @@ public class CatanBoardGameView {
             gameplay.rollDice();
         });
 
+        // Development card purchase
         developmentCardButton.setOnAction(e -> {
             if (gameplay.getDevelopmentCard().isPlayingCard()) {
                 drawOrDisplay.showFinishDevelopmentCardActionPopup();
                 return;
             }
-            //something devcard active then can not be puched !!!! find me
+            // Prevent buying a new development card while another one is being played
             if (gameplay.isBlockedByAITurn()) return;
             if (!gameplay.hasRolledDice()) {
                 drawOrDisplay.rollDiceBeforeActionPopup("You must roll the dice before buying Development Cards!");
                 return;
             }
             gameplay.buyDevelopmentCard();
-            developmentCardButton.getScene().getRoot().requestFocus(); // clear focus
+            developmentCardButton.getScene().getRoot().requestFocus();
         });
 
+        // End turn
         nextTurnButton.setOnAction(e -> {
             turnController.handleNextTurnButtonPressed(e);
-            nextTurnButton.getScene().getRoot().requestFocus(); // clear focus
+            nextTurnButton.getScene().getRoot().requestFocus();
         });
 
+        // Center the game board view
         centerButton.setOnAction(e -> {
             // Optional UI adjustments
             if (splitPane != null) splitPane.setDividerPositions(0.85);
             centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
-            centerButton.getScene().getRoot().requestFocus(); // clear focus
+            centerButton.getScene().getRoot().requestFocus();
         });
 
+        // Zoom in/out actions
         zoomInButton.setOnAction(e -> {
             zoom(boardGroup, 1.1);
-            zoomInButton.getScene().getRoot().requestFocus(); // clear focus
+            zoomInButton.getScene().getRoot().requestFocus();
         });
 
         zoomOutButton.setOnAction(e -> {
             zoom(boardGroup, 0.9);
-            zoomOutButton.getScene().getRoot().requestFocus(); // clear focus
+            zoomOutButton.getScene().getRoot().requestFocus();
         });
 
         tradeController.setupTradeButton(tradeButton);
 
+        // Show resource cost popup
         showCostsButton.setOnAction(e -> {
             drawOrDisplay.showBuildingCostsPopup();
-            showCostsButton.getScene().getRoot().requestFocus(); // clear focus
+            showCostsButton.getScene().getRoot().requestFocus();
         });
 
+        // Handle exit confirmation and return to main menu
         exitButton.setOnAction(e -> {
             gameplay.pauseGame();
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
             DialogPane pane = alert.getDialogPane();
-            pane.setStyle("""
-                -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
-                -fx-border-color: #8c5b1a;
-                -fx-border-width: 2;
-                -fx-border-radius: 10;
-                -fx-background-radius: 10;
-                -fx-font-family: 'Georgia';
-                -fx-font-size: 14px;
-                -fx-text-fill: #3e2b1f;
-            """);
+            pane.setStyle(BUTTON_STYLE);
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.YES) {
                 gameController.returnToMenu(gameplay.getMenuView());
             } else {
                 gameController.resumeGame();
             }
-            exitButton.getScene().getRoot().requestFocus(); // clear focus
+            exitButton.getScene().getRoot().requestFocus();
         });
 
+        // Group all buttons, unified styling
         List<ButtonBase> allButtons = List.of(
                 rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton,
                 tradeButton, developmentCardButton, showCostsButton, toggleConfirmBtn, exitButton
@@ -330,7 +313,6 @@ public class CatanBoardGameView {
         String baseStyle = """
         -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
         -fx-text-fill: #2b1d0e;
-    
         -fx-background-radius: 12;
         -fx-border-radius: 12;
         -fx-border-color: #a86c1f;
@@ -348,21 +330,22 @@ public class CatanBoardGameView {
             btn.setOnMouseExited(e -> btn.setStyle(baseStyle));
         });
 
+        // Hide buttons initially
         hideTurnButton();
         hideDiceButton();
 
+        // Assemble all buttons into the button bar
         HBox buttonBox = new HBox(12);
         buttonBox.getChildren().addAll(allButtons);
         buttonBox.setPadding(new Insets(10));
         buttonBox.setAlignment(Pos.CENTER_LEFT);
 
         buttonBox.setStyle("""
-        -fx-background-color: linear-gradient(to bottom, #f3e2c7, #d2a86e);
-        -fx-border-color: #a86c1f;
-        -fx-border-width: 0 0 3 0;
-    """);
+            -fx-background-color: linear-gradient(to bottom, #f3e2c7, #d2a86e);
+            -fx-border-color: #a86c1f;
+            -fx-border-width: 0 0 3 0;
+        """);
 
-        /*buttonBox.setStyle("-fx-background-color: linear-gradient(to bottom, #ececec, #d4d4d4); -fx-border-color: #aaa; -fx-border-width: 0 0 1 0;");*/
         return buttonBox;
     }
 
@@ -371,10 +354,11 @@ public class CatanBoardGameView {
         playerBox.setPadding(new Insets(8));
         playerBox.setSpacing(4);
 
+        // Base and conditional styling for player panels
         String baseStyle = """
-        -fx-background-radius: 10;
-        -fx-border-radius: 10;
-    """;
+            -fx-background-radius: 10;
+            -fx-border-radius: 10;
+        """;
 
         String playerStyle;
         String displayName = (player instanceof AIOpponent ai)
@@ -387,6 +371,7 @@ public class CatanBoardGameView {
 
 
         if (player == gameplay.getCurrentPlayer()) {
+            // Expandable: Resources
             playerStyle = """
             -fx-background-color: linear-gradient(to bottom, #fff6cc, #eedc9a);
             -fx-border-color: #d4a627, #000000;
@@ -407,7 +392,7 @@ public class CatanBoardGameView {
         playerBox.getChildren().add(playerName);
 
         if (player == gameplay.getCurrentPlayer()) {
-            // Expandable resource section
+            // Expandable: Development Cards
             int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
             Button resourceButton = new Button("Resources: " + totalResources);
             resourceButton.setFont(Font.font("Georgia", infoFontSize));
@@ -441,7 +426,7 @@ public class CatanBoardGameView {
             devCardButton.setFont(Font.font("Georgia", infoFontSize));
             devCardButton.setStyle("""
                                     -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
-                                    -fx-text-fill: #2b1d0e; """
+                                    -fx-text-fill: #2b1d0e;"""
                                     );
 
 
@@ -452,28 +437,7 @@ public class CatanBoardGameView {
 
             for (Map.Entry<DevelopmentCardType, Integer> entry : player.getDevelopmentCards().entrySet()) {
                 if (entry.getValue() > 0) {
-                    DevelopmentCardType type = entry.getKey(); // capture outside lambda
-
-                    Button cardButton = new Button(type.getDisplayName() + " (" + entry.getValue() + ")");
-                    cardButton.setStyle("""
-                        -fx-font-family: 'Georgia';
-                        -fx-background-color: #d8b173;
-                        -fx-background-radius: 6;
-                        -fx-border-radius: 6; 
-                        -fx-border-color: #8c5b1a; 
-                        -fx-border-width: 1;
-                        -fx-padding: 4 10 4 10;
-                        -fx-cursor: hand;
-                    """);
-
-
-                    cardButton.setOnAction(e -> {
-                        try {
-                            gameplay.playDevelopmentCard(player, type);
-                        } catch (IllegalArgumentException ex) {
-                            logToGameLog("Invalid card: " + type);
-                        }
-                    });
+                    Button cardButton = styleButton(player, entry);
                     devCardDetailsBox.getChildren().add(cardButton);
                 }
             }
@@ -485,6 +449,7 @@ public class CatanBoardGameView {
 
             playerBox.getChildren().addAll(devCardButton, devCardDetailsBox);
         } else {
+            // Compact view for other players
             int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
             Text resourceTotal = new Text("Resources: " + totalResources);
             resourceTotal.setFont(Font.font("Georgia", infoFontSize));
@@ -495,27 +460,27 @@ public class CatanBoardGameView {
             devCardTotal.setFont(Font.font("Georgia", infoFontSize));
             playerBox.getChildren().add(devCardTotal);
         }
+
+        // Longest road indicator
         Text roadText = new Text("Longest road: " + player.getLongestRoad());
         roadText.setFont(Font.font("Georgia", infoFontSize));
-
         if (player == gameplay.getLongestRoadManager().getCurrentHolder()) {
             roadText.setText("🏅 LONGEST ROAD: " + player.getLongestRoad());
             roadText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
         }
-
         playerBox.getChildren().add(roadText);
 
+        // Largest army indicator
         Text armyText = new Text("Knights Played: " + player.getPlayedKnights());
         armyText.setFont(Font.font("Georgia", infoFontSize));
-
         BiggestArmyManager biggestArmy = gameplay.getBiggestArmy();
         if (player == biggestArmy.getCurrentHolder()) {
             armyText.setText("🏅 BIGGEST ARMY: " + player.getPlayedKnights());
             armyText.setFont(Font.font("Georgia", FontWeight.BOLD, infoFontSize));
         }
-
         playerBox.getChildren().add(armyText);
 
+        // Victory points
         Text pointsText = new Text("Victory points: " + player.getPlayerScore());
         pointsText.setFont(Font.font("Georgia", infoFontSize));
         playerBox.getChildren().add(pointsText);
@@ -546,59 +511,72 @@ public class CatanBoardGameView {
         }
 
         if (!hasBeenInitialized) {
-            ScrollPane scrollPane = new ScrollPane(playerListVBox);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setPrefHeight(500);
-            scrollPane.setStyle("""
-            -fx-background: transparent;
-            -fx-background-color: transparent;
-            -fx-border-color: #a86c1f;
-            -fx-border-radius: 10;
-        """);
-
-            VBox container = new VBox(scrollPane);
-            container.setPadding(new Insets(8));
-            container.setStyle("""
-            -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
-            -fx-border-color: #8c5b1a;
-            -fx-border-width: 2;
-            -fx-border-radius: 0;
-            -fx-background-radius: 0;
-            -fx-min-width: 220;
-        """);
-
-            return container;
+            return scrollVBox();
         }
 
         return null;
     }
 
-    public void styleDialog(Dialog<?> dialog) {
-        DialogPane pane = dialog.getDialogPane();
-        pane.setStyle("""
+    private VBox scrollVBox() {
+        ScrollPane scrollPane = new ScrollPane(playerListVBox);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefHeight(500);
+        scrollPane.setStyle("""
+        -fx-background: transparent;
+        -fx-background-color: transparent;
+        -fx-border-color: #a86c1f;
+        -fx-border-radius: 10;
+    """);
+
+        VBox container = new VBox(scrollPane);
+        container.setPadding(new Insets(8));
+        container.setStyle("""
         -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
         -fx-border-color: #8c5b1a;
         -fx-border-width: 2;
-        -fx-border-radius: 10;
-        -fx-background-radius: 10;
-        -fx-font-family: 'Georgia';
-        -fx-font-size: 13px;
-        -fx-text-fill: #3e2b1f;
+        -fx-border-radius: 0;
+        -fx-background-radius: 0;
+        -fx-min-width: 220;
     """);
+        return container;
+    }
+
+    private static final String BUTTON_STYLE = """
+        -fx-font-family: 'Georgia';
+        -fx-background-color: #d8b173;
+        -fx-background-radius: 6;
+        -fx-border-radius: 6;
+        -fx-border-color: #8c5b1a;
+        -fx-border-width: 2;
+        -fx-cursor: hand;
+    """;
+
+    private Button styleButton(Player player, Map.Entry<DevelopmentCardType, Integer> entry) {
+        DevelopmentCardType type = entry.getKey();
+
+        Button cardButton = new Button(type.getDisplayName() + " (" + entry.getValue() + ")");
+        cardButton.setStyle(BUTTON_STYLE);
+
+
+        cardButton.setOnAction(e -> {
+            try {
+                gameplay.playDevelopmentCard(player, type);
+            } catch (IllegalArgumentException ex) {
+                logToGameLog("Invalid card: " + type);
+            }
+        });
+        return cardButton;
+    }
+
+    public void styleDialog(Dialog<?> dialog) {
+        DialogPane pane = dialog.getDialogPane();
+        pane.setStyle(BUTTON_STYLE);
 
         Platform.runLater(() -> {
             for (ButtonType bt : pane.getButtonTypes()) {
                 Button btn = (Button) pane.lookupButton(bt);
                 if (btn != null) {
-                    btn.setStyle("""
-                    -fx-background-color: #6e2c00;
-                    -fx-text-fill: #fceabb;
-                    -fx-font-family: 'Georgia';
-                    -fx-font-weight: bold;
-                    -fx-background-radius: 10;
-                    -fx-border-color: #f7c75d;
-                    -fx-border-width: 2;
-                """);
+                    btn.setStyle(BUTTON_STYLE);
                 }
             }
         });
@@ -607,6 +585,7 @@ public class CatanBoardGameView {
 
     //__________________________INPUT HANDLING_____________________________//
 
+    //boardWrapper The pane that wraps the board and listens for input events
     private void setupInputHandlers(Pane boardWrapper) {
         scene.setOnKeyPressed(event -> {
             double step = 30;
@@ -619,19 +598,24 @@ public class CatanBoardGameView {
                     if (splitPane != null) splitPane.setDividerPositions(0.85); // snap gameLog back in place
                     centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
                 }
+                // Pause the game
                 case SPACE -> {
                     gameplay.pauseGame();
                     Alert pauseAlert = new Alert(Alert.AlertType.INFORMATION, "Game is paused. Press OK to resume.", ButtonType.OK);
                     pauseAlert.setTitle("Game Paused");
                     pauseAlert.setHeaderText(null);
-                    pauseAlert.showAndWait(); // wait for input
-                    gameController.resumeGame(); // only resume after dialog is confirmed
+                    // wait for input
+                    pauseAlert.showAndWait();
+                    // only resume after dialog is confirmed
+                    gameController.resumeGame();
 
                     // Reset focus to scene root
                     if (scene.getRoot() != null) {
                         scene.getRoot().requestFocus();
                     }
                 }
+
+                // Ask to confirm exit
                 case ESCAPE -> {
                     gameplay.pauseGame();
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Exit to main menu?", ButtonType.YES, ButtonType.NO);
@@ -639,7 +623,8 @@ public class CatanBoardGameView {
                     if (result.isPresent() && result.get() == ButtonType.YES) {
                         gameController.returnToMenu(gameplay.getMenuView());
                     } else {
-                        gameController.resumeGame(); // resume only if they cancel the exit
+                        // resume only if they cancel the exit
+                        gameController.resumeGame();
 
                         // Reset focus to scene root
                         if (scene.getRoot() != null) {
@@ -650,17 +635,20 @@ public class CatanBoardGameView {
             }
         });
 
+        // Mouse scroll to zoom in/out
         boardWrapper.setOnScroll(event -> {
             double zoomFactor = (event.getDeltaY() > 0) ? 1.05 : 0.95;
             zoom(boardGroup, zoomFactor);
             event.consume();
         });
 
+        // Variables to store initial mouse press and translation state
         final double[] dragAnchorX = new double[1];
         final double[] dragAnchorY = new double[1];
         final double[] initialTranslateX = new double[1];
         final double[] initialTranslateY = new double[1];
 
+        // Mouse press: record starting point for drag
         boardWrapper.setOnMousePressed(event -> {
             dragAnchorX[0] = event.getSceneX();
             dragAnchorY[0] = event.getSceneY();
@@ -668,6 +656,7 @@ public class CatanBoardGameView {
             initialTranslateY[0] = boardGroup.getTranslateY();
         });
 
+        // Mouse drag: calculate delta and move board accordingly
         boardWrapper.setOnMouseDragged(event -> {
             double deltaX = event.getSceneX() - dragAnchorX[0];
             double deltaY = event.getSceneY() - dragAnchorY[0];
@@ -676,12 +665,16 @@ public class CatanBoardGameView {
         });
     }
 
+    // Create the wrapper Pane and set its preferred size based on the game dimensions
     private Pane createBoardWrapperWithBackground(Group boardGroup) {
         Pane boardWrapper = new Pane(boardGroup);
-        boardWrapper.setPrefSize(gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
+        boardWrapper.setPrefSize(
+                gameController.getMenuView().getGAME_WIDTH(),
+                gameController.getMenuView().getGAME_HEIGHT()
+        );
 
         Image backgroundImage = new Image(
-                getClass().getResource("/backgrounds/boardBackground.png").toExternalForm()
+                Objects.requireNonNull(getClass().getResource("/backgrounds/boardBackground.png")).toExternalForm()
         );
 
         BackgroundSize backgroundSize = new BackgroundSize(
@@ -704,8 +697,11 @@ public class CatanBoardGameView {
     //__________________________UTILITY METHODS_____________________________//
 
     private void zoom(Group group, double factor) {
+        // Calculate the new scale, then clamp it to stay between 0.5 and 3.0
         double newScale = group.getScaleX() * factor;
         newScale = Math.max(0.5, Math.min(newScale, 3.0));
+
+        // Apply scale uniformly on both axes
         group.setScaleX(newScale);
         group.setScaleY(newScale);
     }
@@ -748,9 +744,11 @@ public class CatanBoardGameView {
     }
 
     //__________________________VIEW UPDATES_____________________________//
+
     public void updateDiceImages(int die1, int die2) {
         diceImage1.setImage(drawOrDisplay.loadDiceImage(die1));
         diceImage2.setImage(drawOrDisplay.loadDiceImage(die2));
+        // Ensure consistent display size
         diceImage1.setFitWidth(40);
         diceImage1.setFitHeight(40);
         diceImage2.setFitWidth(40);
@@ -764,15 +762,16 @@ public class CatanBoardGameView {
         hideDiceButton();
     }
 
+    // Refreshes the left sidebar UI that displays player information.
     public void refreshSidebar() {
         if (playerListVBox != null) {
-            createLeftMenu(true); // this clears and rebuilds the VBox contents
-            playerListVBox.requestLayout(); // ensure JavaFX re-renders it
+            createLeftMenu(true);
+            playerListVBox.requestLayout();
         }
     }
 
+    // Logs a message to the console and game log area, ensuring it runs on the FX thread.
     public void logToGameLog(String message) {
-        System.out.println(message);
         if (Platform.isFxApplicationThread()) {
             appendToGameLog(message);
         } else {
@@ -780,9 +779,11 @@ public class CatanBoardGameView {
         }
     }
 
+    // Appends a message to the game log text area and scrolls to bottom
     private void appendToGameLog(String message) {
         gameLogArea.appendText(message + "\n");
 
+        // Delay to ensure scroll happens after rendering
         javafx.animation.Timeline scrollTimeline = new javafx.animation.Timeline(
                 new javafx.animation.KeyFrame(
                         javafx.util.Duration.millis(50),
@@ -795,7 +796,7 @@ public class CatanBoardGameView {
         scrollTimeline.play();
     }
 
-
+    // Displays a visual overlay and message while an AI opponent is taking its turn.
     public void showAITurnOverlay(Player aiPlayer) {
         Platform.runLater(() -> {
             if (aiPlayer instanceof AIOpponent ai) {
@@ -809,6 +810,7 @@ public class CatanBoardGameView {
         });
     }
 
+    // Hides the AI turn overlay and stops any active animation.
     public void hideAITurnOverlay() {
         Platform.runLater(() -> {
             drawOrDisplay.getOverlayPane().setVisible(false);
@@ -817,6 +819,7 @@ public class CatanBoardGameView {
         });
     }
 
+    // Runs a given task on the JavaFX Application Thread.
     public void runOnFX(Runnable action) {
         if (Platform.isFxApplicationThread()) {
             action.run();
@@ -827,19 +830,27 @@ public class CatanBoardGameView {
 
     //________________________SHOW/HIDE BUTTONS____________________________________//
 
+    // Enables the roll dice button.
     public void showDiceButton() {
     rollDiceButton.setDisable(false);}
+
+    // Disables the roll dice button.
     public void hideDiceButton() {
         rollDiceButton.setDisable(true);
     }
+
+    // Enables the next turn button.
     public void showTurnButton() {
         nextTurnButton.setDisable(false);
     }
+
+    // Disables the next turn button.
     public void hideTurnButton() {
         nextTurnButton.setDisable(true);
     }
 
     //__________________________GETTERS_____________________________//
+
     public Scene getScene() {
         return scene;
     }
