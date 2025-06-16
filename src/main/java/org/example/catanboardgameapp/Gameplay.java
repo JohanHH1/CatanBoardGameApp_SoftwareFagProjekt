@@ -687,7 +687,6 @@ public class Gameplay {
                     winner,
                     playerList,
                     turnCounter,
-                    tradeCounter,
                     menuView.getGAME_WIDTH(),
                     menuView.getGAME_HEIGHT(),
                     menuView::showMainMenu);
@@ -717,7 +716,6 @@ public class Gameplay {
     }
     public void resetCounters() {
         turnCounter=0;
-        tradeCounter=0;
     }
 
     //__________________________GETTERS________________________//
@@ -823,9 +821,5 @@ public class Gameplay {
     // Some of the visuals depend on whether there are human players in the game, so this checks it.
     public boolean hasHumanPlayers() {
         return playerList.stream().anyMatch(p -> !(p instanceof AIOpponent));
-    }
-
-    public void increaseTradeCounter() {
-        tradeCounter++;
     }
 }

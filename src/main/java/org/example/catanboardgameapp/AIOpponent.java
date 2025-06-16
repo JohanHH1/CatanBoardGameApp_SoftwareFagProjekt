@@ -677,7 +677,6 @@ public class AIOpponent extends Player {
                 " traded " + ratio + " " + give +
                 " for 1 " + receive + " (Strategy: " + strategy + ")";
         gameplay.getCatanBoardGameView().runOnFX(() -> {
-            gameplay.increaseTradeCounter();
             gameplay.getCatanBoardGameView().logToGameLog(msg);
         });
         return true;
@@ -1119,7 +1118,6 @@ public class AIOpponent extends Player {
                 .limit(2)
                 .map(Map.Entry::getKey)
                 .toList();
-
         Map<String, Integer> result = new HashMap<>();
         for (String res : topTwo) {
             result.put(res, result.getOrDefault(res, 0) + 1);

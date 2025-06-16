@@ -285,119 +285,114 @@ public class DrawOrDisplay {
             Player winner,
             List<Player> playerList,
             int turnCounter,
-            int tradeCounter,
             double gameWidth,
             double gameHeight,
             Runnable onClose
     ) {
-        Platform.runLater(() -> {
-            System.out.println("FINAL TRADES WITH BANK IN THIS GAME: " + tradeCounter);
+        Stage popup = new Stage();
+        popup.initModality(Modality.APPLICATION_MODAL);
+        popup.initStyle(StageStyle.UNDECORATED);
+        popup.setTitle("Game Over");
 
-            Stage popup = new Stage();
-            popup.initModality(Modality.APPLICATION_MODAL);
-            popup.initStyle(StageStyle.UNDECORATED);
-            popup.setTitle("Game Over");
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(15));
+        content.setAlignment(Pos.TOP_CENTER);
+        content.setStyle("""
+        -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+        -fx-border-color: #8c5b1a;
+        -fx-border-width: 2;
+        -fx-border-radius: 10;
+        -fx-background-radius: 10;
+    """);
 
-            VBox content = new VBox(15);
-            content.setPadding(new Insets(15));
-            content.setAlignment(Pos.TOP_CENTER);
-            content.setStyle("""
-            -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
-            -fx-border-color: #8c5b1a;
-            -fx-border-width: 2;
-            -fx-border-radius: 10;
-            -fx-background-radius: 10;
-        """);
+        Label header = new Label("Player " + winner.getPlayerId() + " has won the game! (It took them " + turnCounter + " turns)");
+        header.setFont(Font.font("Georgia", FontWeight.BOLD, 18));
+        header.setTextFill(Color.DARKGREEN);
 
-            Label header = new Label("Player " + winner.getPlayerId() + " has won the game! (It took them " + turnCounter + " turns)");
-            header.setFont(Font.font("Georgia", FontWeight.BOLD, 18));
-            header.setTextFill(Color.DARKGREEN);
+        VBox playerStats = new VBox(12);
+        playerStats.setPadding(new Insets(10));
 
-            VBox playerStats = new VBox(12);
-            playerStats.setPadding(new Insets(10));
+        // Sort by score, descending
+        List<Player> sortedPlayers = playerList.stream()
+                .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
+                .toList();
 
-            // Sort by score, descending
-            List<Player> sortedPlayers = playerList.stream()
-                    .sorted((a, b) -> Integer.compare(b.getPlayerScore(), a.getPlayerScore()))
-                    .toList();
-
-            for (Player player : sortedPlayers) {
-                VBox box = new VBox(6);
-                box.setPadding(new Insets(10));
-                box.setStyle("""
-                -fx-background-color: linear-gradient(to bottom, #f3e2c7, #e0b97d);
-                -fx-border-color: #a86c1f;
-                -fx-border-width: 1.5;
-                -fx-background-radius: 8;
-                -fx-border-radius: 8;
-            """);
-
-                String displayName = (player instanceof AIOpponent ai)
-                        ? "AI Player " + ai.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
-                        : "Player " + player.getPlayerId();
-
-                Text name = new Text(displayName + " : " + player.getPlayerScore() + " points");
-                name.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
-                name.setFill(player.getColor());
-                box.getChildren().add(name);
-
-                //Base stats
-                int resources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
-                int devCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
-
-                Text resText = new Text("Current Resources: " + resources);
-                Text devText = new Text("Current Development Cards: " + devCards);
-                Text lroadText = new Text("Longest Road: " + player.getLongestRoad());
-                Text knightText = new Text("Biggest Army: " + player.getPlayedKnights());
-                Text cityText = new Text("Cities: " + player.getCities().size());
-                Text settlementText = new Text("Settlements: " + player.getSettlements().size());
-                Text roadText = new Text("Roads: " + player.getRoads().size());
-
-                List<Text> baseStats = List.of(
-                        resText, devText, lroadText, knightText,
-                        cityText, settlementText, roadText
-                );
-                baseStats.forEach(stat -> stat.setFont(Font.font("Georgia", 12)));
-                box.getChildren().addAll(baseStats);
-
-                if (player instanceof AIOpponent ai) {
-                    VBox strategyBox = new VBox(4);
-                    for (Map.Entry<AIOpponent.Strategy, Integer> entry : ai.getStrategyUsageMap().entrySet()) {
-                        Text stat = new Text("* " + entry.getKey().name() + ": " + entry.getValue() + " times");
-                        stat.setFont(Font.font("Georgia", 12));
-                        strategyBox.getChildren().add(stat);
-                    }
-
-                    TitledPane togglePane = new TitledPane("Strategy Usage", strategyBox);
-                    togglePane.setExpanded(false);
-                    togglePane.setFont(Font.font("Georgia", FontWeight.NORMAL, 12));
-                    box.getChildren().add(togglePane);
-                }
-                playerStats.getChildren().add(box);
-            }
-            ScrollPane scrollPane = new ScrollPane(playerStats);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setPrefViewportHeight(500);
-            scrollPane.setStyle("""
-            -fx-background: transparent;
+        for (Player player : sortedPlayers) {
+            VBox box = new VBox(6);
+            box.setPadding(new Insets(10));
+            box.setStyle("""
+            -fx-background-color: linear-gradient(to bottom, #f3e2c7, #e0b97d);
             -fx-border-color: #a86c1f;
+            -fx-border-width: 1.5;
+            -fx-background-radius: 8;
             -fx-border-radius: 8;
         """);
-            Button closeBtn = new Button("Back to Main Menu");
-            closeBtn.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
-            closeBtn.setStyle("""
-            -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
-            -fx-text-fill: black;
-        """);
-            closeBtn.setOnAction(e -> {
-                popup.close();
-                onClose.run();
-            });
-            content.getChildren().addAll(header, scrollPane, closeBtn);
-            Scene scene = new Scene(content, gameWidth, gameHeight);
-            popup.setScene(scene);
-            popup.show();
+
+            String displayName = (player instanceof AIOpponent ai)
+                    ? "AI Player " + ai.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
+                    : "Player " + player.getPlayerId();
+
+            Text name = new Text(displayName + " : " + player.getPlayerScore() + " points");
+            name.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
+            name.setFill(player.getColor());
+            box.getChildren().add(name);
+
+            //Base stats
+            int resources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
+            int devCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
+
+            Text resText = new Text("Current Resources: " + resources);
+            Text devText = new Text("Current Development Cards: " + devCards);
+            Text lroadText = new Text("Longest Road: " + player.getLongestRoad());
+            Text knightText = new Text("Biggest Army: " + player.getPlayedKnights());
+            Text cityText = new Text("Cities: " + player.getCities().size());
+            Text settlementText = new Text("Settlements: " + player.getSettlements().size());
+            Text roadText = new Text("Roads: " + player.getRoads().size());
+
+            List<Text> baseStats = List.of(
+                    resText, devText, lroadText, knightText,
+                    cityText, settlementText, roadText
+            );
+            baseStats.forEach(stat -> stat.setFont(Font.font("Georgia", 12)));
+            box.getChildren().addAll(baseStats);
+
+            if (player instanceof AIOpponent ai) {
+                VBox strategyBox = new VBox(4);
+                for (Map.Entry<AIOpponent.Strategy, Integer> entry : ai.getStrategyUsageMap().entrySet()) {
+                    Text stat = new Text("* " + entry.getKey().name() + ": " + entry.getValue() + " times");
+                    stat.setFont(Font.font("Georgia", 12));
+                    strategyBox.getChildren().add(stat);
+                }
+
+                TitledPane togglePane = new TitledPane("Strategy Usage", strategyBox);
+                togglePane.setExpanded(false);
+                togglePane.setFont(Font.font("Georgia", FontWeight.NORMAL, 12));
+                box.getChildren().add(togglePane);
+            }
+            playerStats.getChildren().add(box);
+        }
+        ScrollPane scrollPane = new ScrollPane(playerStats);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefViewportHeight(500);
+        scrollPane.setStyle("""
+        -fx-background: transparent;
+        -fx-border-color: #a86c1f;
+        -fx-border-radius: 8;
+    """);
+        Button closeBtn = new Button("Back to Main Menu");
+        closeBtn.setFont(Font.font("Georgia", FontWeight.BOLD, 14));
+        closeBtn.setStyle("""
+        -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
+        -fx-text-fill: black;
+    """);
+        closeBtn.setOnAction(e -> {
+            popup.close();
+            onClose.run();
         });
+        content.getChildren().addAll(header, scrollPane, closeBtn);
+        Scene scene = new Scene(content, gameWidth, gameHeight);
+        popup.setScene(scene);
+        popup.show();
     }
 
     public void showBuildingCostsPopup() {
