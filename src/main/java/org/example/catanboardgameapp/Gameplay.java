@@ -29,6 +29,7 @@ public class Gameplay {
     private DrawOrDisplay drawOrDisplay;
     private CatanBoardGameView catanBoardGameView;
     private MenuView menuView;
+    private Robber robber;
 
     //__________________________PLAYER STATE_____________________________//
     private final List<Player> playerList = new ArrayList<>();
@@ -806,7 +807,6 @@ public class Gameplay {
         return playerList.stream().anyMatch(p -> p.getPlayerScore() >= menuView.getMaxVictoryPoints());
     }
 
-
     // UI Guard -> Checks if it is AI's turn and then blocks actions until AI is done.
     public boolean isBlockedByAITurn() {
         if (gameController.getGameplay().getCurrentPlayer() instanceof AIOpponent) {
@@ -821,11 +821,7 @@ public class Gameplay {
         return playerList.stream().anyMatch(p -> !(p instanceof AIOpponent));
     }
 
-
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! skal fjernes???
     public void increaseTradeCounter() {
         tradeCounter++;
     }
-
 }

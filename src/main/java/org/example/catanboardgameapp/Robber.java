@@ -1,22 +1,11 @@
 package org.example.catanboardgameapp;
 
 import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceDialog;
-import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import org.example.catanboardgameviews.CatanBoardGameView;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -109,7 +98,7 @@ public class Robber {
     }
 
     //______________________________AI HELPERS__________________________________//
-    private void placeRobberAutomatically(AIOpponent ai, Group boardGroup) {
+    public void placeRobberAutomatically(AIOpponent ai, Group boardGroup) {
         AIOpponent.StrategyLevel level = ai.getStrategyLevel();
         Tile chosenTile;
 
@@ -177,13 +166,12 @@ public class Robber {
             Player target;
 
             if (level == AIOpponent.StrategyLevel.HARD) {
-                target = ai.chooseBestRobberyTargetForHardAI(ai, victims);
+                target = ai.chooseBestRobberTargetForHardAI(ai, victims);
             } else {
                 target = victims.stream()
                         .max(Comparator.comparingInt(Player::getTotalResourceCount))
                         .orElse(victims.get(0));
             }
-
             if (target != null) {
                 stealResourceFrom(target);
             }

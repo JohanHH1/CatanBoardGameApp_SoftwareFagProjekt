@@ -6,13 +6,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Edge {
+
+    // Vertices and adjacent Tiles
     private final Vertex vertex1;
     private final Vertex vertex2;
     private final List<Tile> adjacentTiles = new ArrayList<>();
+
     private Harbor harbor;
 
-
-    //___________________CONSTRUCTOR______________________//
+    //________________________CONSTRUCTOR____________________________//
     public Edge(Vertex vertex1, Vertex vertex2) {
         this.vertex1 = vertex1;
         this.vertex2 = vertex2;
@@ -21,19 +23,13 @@ public class Edge {
         vertex2.addNeighbor(vertex1);
     }
 
-    //___________________FUNCTIONS_________________________
+    //_________________________FUNCTIONS____________________________//
 
     // Add a tile that this edge borders
     public void addAdjacentTile(Tile tile) {
         if (!adjacentTiles.contains(tile)) {
             adjacentTiles.add(tile);
         }
-    }
-
-    // Check if two edges share any common vertex
-    public boolean sharesVertexWith(Edge other) {
-        return vertex1.equals(other.vertex1) || vertex1.equals(other.vertex2) ||
-                vertex2.equals(other.vertex1) || vertex2.equals(other.vertex2);
     }
 
     // Check if this edge is connected to a specific vertex
@@ -46,13 +42,17 @@ public class Edge {
         return adjacentTiles.stream().allMatch(Tile::isSea);
     }
 
-
-    //___________________GETTERS_________________________
-
+    //___________________GETTERS_________________________//
+    public Harbor getHarbor() {
+        return harbor;
+    }
     public Vertex getVertex1() { return vertex1; }
     public Vertex getVertex2() { return vertex2; }
-
     public List<Tile> getAdjacentTiles() { return adjacentTiles; }
+
+    public void setHarbor(Harbor harbor) {
+        this.harbor = harbor;
+    }
 
     //_______________________OVERRIDE____________________//
     @Override
@@ -68,21 +68,4 @@ public class Edge {
     public int hashCode() {
         return vertex1.hashCode() + vertex2.hashCode();
     }
-
-
-
-    public void setHarbor(Harbor harbor) {
-        this.harbor = harbor;
-    }
-
-    public Harbor getHarbor() {
-        return harbor;
-    }
-
-    public Point2D getMidPoint() {
-        double x = (vertex1.getX() + vertex2.getX()) / 2.0;
-        double y = (vertex1.getY() + vertex2.getY()) / 2.0;
-        return new Point2D(x, y);
-    }
-
 }

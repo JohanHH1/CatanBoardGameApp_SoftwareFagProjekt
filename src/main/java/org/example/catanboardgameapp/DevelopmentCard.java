@@ -1,5 +1,6 @@
 package org.example.catanboardgameapp;
 
+import javafx.scene.shape.Line;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.controller.TradeController;
 
@@ -130,24 +131,11 @@ public class DevelopmentCard {
         log("Player " + player.getPlayerId() + " played a knight development card");
     }
     private void playKnightCardAsAI(AIOpponent ai, Gameplay gameplay) {
-        ai.increasePlayedKnights();
-        gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(ai);
-        Player victim = ai.chooseBestRobberyTargetForHardAI(ai, gameplay.getPlayerList());
-        if (victim != null) {
-            List<String> pool = new ArrayList<>();
-            victim.getResources().forEach((res, count) -> {
-                for (int i = 0; i < count; i++) pool.add(res);
-            });
-            if (!pool.isEmpty()) {
-                Collections.shuffle(pool);
-                String stolen = pool.get(0);
-                victim.getResources().put(stolen, Math.max(0, victim.getResources().get(stolen) - 1));
-                ai.getResources().merge(stolen, 1, Integer::sum);
-                log("AI played Knight and stole 1 " + stolen + " from Player " + victim.getPlayerId());
-            } else {
-                log("AI played Knight but " + victim + " had no resources.");
-            }
-        }
+        view.runOnFX(() -> {
+            ai.increasePlayedKnights();
+            gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(ai);
+            view.getRobber().placeRobberAutomatically(ai, view.getBoardGroup());
+        });
     }
 
     // ______________ROADBUILDING______________//
