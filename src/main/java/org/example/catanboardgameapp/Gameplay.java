@@ -173,7 +173,12 @@ public class Gameplay {
             // If forward loop finished, switch to backward loop
             if (forwardOrder && currentPlayerIndex >= playerList.size()) {
                 currentPlayerIndex = playerList.size() - 1;
-                forwardOrder = false;
+                forwardOrder = false;catanBoardGameView.logToGameLog("All initial placements complete. Starting first turn...");
+                if (currentPlayer instanceof AIOpponent ai) {
+                    startAIThread(ai); // Safe AI startup
+                } else {
+                    catanBoardGameView.showDiceButton();
+                }
             // If backward loop finished, start main phase
             } else if (!forwardOrder && currentPlayerIndex < 0) {
                 // Transition from initial to main phase
@@ -184,7 +189,7 @@ public class Gameplay {
                 lastInitialSettlement = null;
 
                 // Log and prepare first player’s turn
-                Platform.runLater(() -> {
+                catanBoardGameView.runOnFX(() -> {
                     catanBoardGameView.logToGameLog("All initial placements complete. Starting first turn...");
                     if (currentPlayer instanceof AIOpponent ai) {
                         startAIThread(ai); // Safe AI startup
@@ -253,7 +258,7 @@ public class Gameplay {
             stopAllAIThreads();
 
             // Alert player before exiting
-            Platform.runLater(() -> {
+            catanBoardGameView.runOnFX(() -> {
                 Alert alert = new Alert(Alert.AlertType.ERROR, error, ButtonType.OK);
                 alert.setTitle("Game Crash");
                 alert.setHeaderText("Too many turns! Game is terminating.");
@@ -678,16 +683,16 @@ public class Gameplay {
         //Makes sure the popup doesn't open twice.
         if (gameOver) return;
         gameOver = true;
-
-        Platform.runLater(() -> drawOrDisplay.showEndGamePopup(
-                winner,
-                playerList,
-                turnCounter,
-                tradeCounter,
-                menuView.getGAME_WIDTH(),
-                menuView.getGAME_HEIGHT(),
-                menuView::showMainMenu
-        ));
+        catanBoardGameView.runOnFX(() -> {
+            drawOrDisplay.showEndGamePopup(
+                    winner,
+                    playerList,
+                    turnCounter,
+                    tradeCounter,
+                    menuView.getGAME_WIDTH(),
+                    menuView.getGAME_HEIGHT(),
+                    menuView::showMainMenu);
+        });
     }
 
     public boolean isActionBlockedByDevelopmentCard() {

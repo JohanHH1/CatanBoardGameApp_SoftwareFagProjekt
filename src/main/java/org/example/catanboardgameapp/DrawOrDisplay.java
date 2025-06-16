@@ -34,8 +34,6 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class DrawOrDisplay {
-    // BRUGER VI DENNE?
-    private static final boolean SHOW_SETTLEMENT_ORDER = true;
 
     // UI components
     private StackPane aiOverlayPane;

@@ -43,7 +43,7 @@ public class GameController {
         this.setTradeController(tradeController);
 
         // Create view after controllers
-        gameView = new CatanBoardGameView(primaryStage, gameplay, this, boardSize - 1);
+        gameView = new CatanBoardGameView(gameplay, this, boardSize - 1);
         gameplay.setCatanBoardGameView(gameView);
 
         // Build UI
