@@ -69,7 +69,6 @@ public class Gameplay {
 
     private int lastRolledDie1;
     private int lastRolledDie2;
-    private int tradeCounter;       // Used for analytics/debug/logging !!!!!!!!!!!!!!! skal fjernes???
     private int turnCounter = 0;    // Used for crash protection & stats
 
     //__________________________CONSTRUCTOR_____________________________//

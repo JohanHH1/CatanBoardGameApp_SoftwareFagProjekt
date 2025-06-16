@@ -40,6 +40,7 @@ public class Board {
             new ArrayList<>(List.of(3, 6, 4, 5, 10, 9, 11, 6, 2, 12, 8, 10, 5, 11, 3, 9, 4, 8)),
             new ArrayList<>(List.of(3, 6, 10, 5, 4, 9, 11, 8, 12, 2, 8, 4, 5, 11, 3, 9, 10, 6))
     );
+
     // Board size parameters
     private final int radius;      // e.g., 2 for standard 19-hex
     private final double hexSize;  // distance from hex center to a corner

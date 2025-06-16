@@ -24,7 +24,7 @@ public class AIOpponent extends Player {
 
     // AI decision types
     public enum Strategy {
-        ROADBUILDER, CITYUPGRADER, SETTLEMENTPLACER, LONGESTROAD, BIGGESTARMY, DEVELOPMENTCARDBYER, USERESOURCES, NONE
+        ROADBUILDER, CITYUPGRADER, SETTLEMENTPLACER, LONGESTROAD, BIGGESTARMY, DEVELOPMENTCARDBUYER, USERESOURCES, NONE
     }
 
     // Controls AI delay for realism
@@ -317,7 +317,7 @@ public class AIOpponent extends Player {
         } else if (hasLessThanMaxAllowedSettlements() && !getValidSettlementSpots(gameplay).isEmpty()) {
             selected = Strategy.SETTLEMENTPLACER;
         } else if (canAffordDevCard() && !gameplay.getShuffledDevelopmentCards().isEmpty()) {
-            selected = Strategy.DEVELOPMENTCARDBYER;
+            selected = Strategy.DEVELOPMENTCARDBUYER;
         } else if (shouldUseResources(10)) {
             selected = Strategy.USERESOURCES;
         } else if (hasLessThanMaxAllowedRoads() && gameplay.getBoard().getEdges().stream().anyMatch(gameplay::isValidRoadPlacement)) {
@@ -390,7 +390,7 @@ public class AIOpponent extends Player {
             switch (strategy) {
                 case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup, strategy);
                 case SETTLEMENTPLACER -> moveMade = tryBuildSettlement(gameplay, boardGroup, strategy);
-                case DEVELOPMENTCARDBYER, BIGGESTARMY -> moveMade = tryBuyDevCard(gameplay);
+                case DEVELOPMENTCARDBUYER, BIGGESTARMY -> moveMade = tryBuyDevCard(gameplay);
                 case USERESOURCES -> {
                     moveMade = tryBankTrade(gameplay, strategy);
                     if (!moveMade) {
@@ -613,7 +613,7 @@ public class AIOpponent extends Player {
                 targetCost.put("Brick", 1);
                 targetCost.put("Wood", 1);
             }
-            case DEVELOPMENTCARDBYER -> {
+            case DEVELOPMENTCARDBUYER -> {
                 targetCost.put("Wool", 1);
                 targetCost.put("Grain", 1);
                 targetCost.put("Ore", 1);
@@ -1333,7 +1333,7 @@ public class AIOpponent extends Player {
                 if (getResources().getOrDefault("Wool", 0) < 1) needed.add("Wool");
                 if (getResources().getOrDefault("Grain", 0) < 1) needed.add("Grain");
             }
-            case DEVELOPMENTCARDBYER -> {
+            case DEVELOPMENTCARDBUYER -> {
                 if (getResources().getOrDefault("Ore", 0) < 1) needed.add("Ore");
                 if (getResources().getOrDefault("Wool", 0) < 1) needed.add("Wool");
                 if (getResources().getOrDefault("Grain", 0) < 1) needed.add("Grain");

@@ -18,9 +18,6 @@ public class CatanBoardGameApp extends Application {
         MenuView menuView = new MenuView(primaryStage, gameController);
         gameController.setMenuView(menuView);
 
-        // Optionally preload gameplay view (disabled for now)
-        // gameController.getGameplay();
-
         // Display the main menu to the user
         menuView.showMainMenu();
     }
