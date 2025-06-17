@@ -19,7 +19,7 @@ public class TurnController {
     //___________________________FUNCTIONS__________________________________//
 
     // Handle "Next Turn" button press
-    public void handleNextTurnButtonPressed(ActionEvent event) {
+    public void handleNextTurnButtonPressed() {
         // Prevent turn change if a development card action is still pending
         if (gameController.getGameplay().isActionBlockedByDevelopmentCard()) {
             drawOrDisplay.showFinishDevelopmentCardActionPopup();

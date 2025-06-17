@@ -367,7 +367,7 @@ public class Gameplay {
             currentPlayer.getDevelopmentCards().merge(cardType, 1, Integer::sum);
 
             // Log the purchase to the game log
-            String log = currentPlayer + " bought a development card: " + cardType.getDisplayName(); // removed before hand in
+            String log = currentPlayer + " bought a development card ";
             catanBoardGameView.runOnFX(() -> {
                 catanBoardGameView.logToGameLog(log);
                 catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
