@@ -178,6 +178,7 @@ public class DevelopmentCard {
         }
         log("Player " + player.getPlayerId() + " played a year of plenty development card");
     }
+
     private void playYearOfPlentyCardAsAI(AIOpponent ai, Gameplay gameplay) {
         Map<String, Integer> selected = ai.chooseResourcesForYearOfPlenty();
         selected.forEach((res, amt) -> ai.getResources().merge(res, amt, Integer::sum));

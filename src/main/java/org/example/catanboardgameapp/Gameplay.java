@@ -1,24 +1,11 @@
 package org.example.catanboardgameapp;
-
-import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import java.util.*;
-
 import org.example.catanboardgameviews.MenuView;
 import org.example.controller.GameController;
-
 import static org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType.*;
 
 public class Gameplay {
@@ -29,7 +16,6 @@ public class Gameplay {
     private DrawOrDisplay drawOrDisplay;
     private CatanBoardGameView catanBoardGameView;
     private MenuView menuView;
-    private Robber robber;
 
     //__________________________PLAYER STATE_____________________________//
     private final List<Player> playerList = new ArrayList<>();
@@ -158,17 +144,14 @@ public class Gameplay {
         stopAllAIThreads(); // Stop any in-progress AI thread before advancing
         crashGameIfMaxTurnsExceeded(500, turnCounter); // Safety check against infinite loops
         startOfTurnEffects(); // Rotate player and refresh sidebar
-
-        // ------------------- INITIAL PLACEMENT PHASE -------------------
+        // Initial Phase
         if (initialPhase) {
             if (waitingForInitialRoad) {
                 catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " must place a road.");
                 return;
             }
-
             // Move to next player (or reverse direction after first loop)
             currentPlayerIndex = forwardOrder ? currentPlayerIndex + 1 : currentPlayerIndex - 1;
-
             // If forward loop finished, switch to backward loop
             if (forwardOrder && currentPlayerIndex >= playerList.size()) {
                 currentPlayerIndex = playerList.size() - 1;
@@ -198,7 +181,6 @@ public class Gameplay {
                 });
                 return;
             }
-
             // Prepare next player for settlement + road placement
             currentPlayer = playerList.get(currentPlayerIndex);
             lastInitialSettlement = null;
@@ -210,11 +192,9 @@ public class Gameplay {
             }
             return;
         }
-
-        // ------------------- MAIN GAME PHASE -------------------
+        // Main Game Phase
         waitingForInitialRoad = false;
         lastInitialSettlement = null;
-
         if (currentPlayer instanceof AIOpponent ai) {
             startAIThread(ai);
         } else {
@@ -583,7 +563,6 @@ public class Gameplay {
     }
 
     //______________________VALID BUILD CHECKS___________________________//
-
     // Check if the settlement placement follows all game rules
     public boolean isValidSettlementPlacement(Vertex vertex) {
         if (vertex.hasSettlement()) return false;
@@ -675,8 +654,6 @@ public class Gameplay {
         }
     }
 
-    //___________________________HELPER FUNCTIONS_____________________________//
-
     // Displays end of game winner popup (visuals in class "DrawOrDisplay")
     private void endOfGameWinnerPopup(Player winner) {
         //Makes sure the popup doesn't open twice.
@@ -693,12 +670,57 @@ public class Gameplay {
         });
     }
 
+    //_______________________________PAUSE FUNCTIONS_________________________________//
+    public void pauseGame() {
+        if (!gamePaused) {
+            this.drawOrDisplay.pauseThinkingAnimation(this.drawOrDisplay); // Stop animation
+            catanBoardGameView.logToGameLog("Game paused.");
+            gamePaused = true;
+            stopAllAIThreads();  // interrupt AI thread cleanly
+        }
+    }
+
+    // Resumes game from paused state
+    public void resumeGame() {
+        if (!gamePaused) return; // prevent spamming or double-starting
+        this.drawOrDisplay.resumeThinkingAnimation(this.drawOrDisplay); // resumes paused animations
+        catanBoardGameView.logToGameLog("Game resumed.");
+        gamePaused = false;
+        // Resumes AI if current player is AI
+        if (currentPlayer instanceof AIOpponent ai) {
+            startAIThread(ai);
+        }
+    }
+
+    public boolean isGamePaused() {
+        return gamePaused;
+    }
+
+    //_______________________________BOOLEAN VALIDITY CHECKS_________________________________//
+    // Checks if someone has won the game.
+    public boolean isGameOver() {
+        return playerList.stream().anyMatch(p -> p.getPlayerScore() >= menuView.getMaxVictoryPoints());
+    }
+
     public boolean isActionBlockedByDevelopmentCard() {
         return developmentCard.isPlayingCard();
     }
 
-    //__________________________SETTERS________________________//
+    // UI Guard -> Checks if it is AI's turn and then blocks actions until AI is done.
+    public boolean isBlockedByAITurn() {
+        if (gameController.getGameplay().getCurrentPlayer() instanceof AIOpponent) {
+            drawOrDisplay.showAITurnPopup();
+            return true;
+        }
+        return false;
+    }
 
+    // Some of the visuals depend on whether there are human players in the game, so this checks it.
+    public boolean hasHumanPlayers() {
+        return playerList.stream().anyMatch(p -> !(p instanceof AIOpponent));
+    }
+
+    //__________________________SETTERS________________________//
     public void setBoard(Board board) {
         this.board = board;
     }
@@ -718,7 +740,7 @@ public class Gameplay {
         turnCounter=0;
     }
 
-    //__________________________GETTERS________________________//
+    //_____________________________GETTERS______________________________//
     public GameController getGameController() {
         return gameController;
     }
@@ -776,50 +798,5 @@ public class Gameplay {
 
     public LongestRoadManager getLongestRoadManager() {
         return longestRoadManager;
-    }
-
-
-    public boolean isGamePaused() {
-        return gamePaused;
-    }
-
-    public void pauseGame() {
-        if (!gamePaused) {
-            this.drawOrDisplay.pauseThinkingAnimation(this.drawOrDisplay); // Stop animation
-            catanBoardGameView.logToGameLog("Game paused.");
-            gamePaused = true;
-            stopAllAIThreads();  // interrupt AI thread cleanly
-        }
-    }
-
-    // Resumes game from paused state
-    public void resumeGame() {
-        if (!gamePaused) return; // prevent spamming or double-starting
-        this.drawOrDisplay.resumeThinkingAnimation(this.drawOrDisplay); // resumes paused animations
-        catanBoardGameView.logToGameLog("Game resumed.");
-        gamePaused = false;
-        // Resumes AI if current player is AI
-        if (currentPlayer instanceof AIOpponent ai) {
-            startAIThread(ai);
-        }
-    }
-
-    // Checks if someone has won the game.
-    public boolean isGameOver() {
-        return playerList.stream().anyMatch(p -> p.getPlayerScore() >= menuView.getMaxVictoryPoints());
-    }
-
-    // UI Guard -> Checks if it is AI's turn and then blocks actions until AI is done.
-    public boolean isBlockedByAITurn() {
-        if (gameController.getGameplay().getCurrentPlayer() instanceof AIOpponent) {
-            drawOrDisplay.showAITurnPopup();
-            return true;
-        }
-        return false;
-    }
-
-    // Some of the visuals depend on whether there are human players in the game, so this checks it.
-    public boolean hasHumanPlayers() {
-        return playerList.stream().anyMatch(p -> !(p instanceof AIOpponent));
     }
 }

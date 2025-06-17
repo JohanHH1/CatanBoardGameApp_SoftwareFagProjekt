@@ -11,8 +11,7 @@ import java.util.List;
 
 public class Robber {
 
-    //____________________FIELDS__________________________
-
+    //____________________FIELDS__________________________//
     private final Gameplay gameplay;
     private Tile currentTile;
     private boolean robberNeedsToMove = false;
@@ -22,7 +21,7 @@ public class Robber {
     private Circle robberCircle;
     private final List<Circle> activeRobberHighlights = new ArrayList<>();
 
-    //____________________CONSTRUCTOR__________________________
+    //____________________CONSTRUCTOR__________________________//
     public Robber(Tile startingTile, Gameplay gameplay, CatanBoardGameView catanBoardGameView, Group boardGroup) {
         this.currentTile = startingTile;
         this.gameplay = gameplay;
@@ -33,8 +32,7 @@ public class Robber {
         this.robberCircle = drawOrDisplay.drawRobberCircle(center, boardGroup);
     }
 
-    //____________________ROBBER PLACEMENT LOGIC__________________________
-
+    //____________________ROBBER PLACEMENT LOGIC__________________________//
     public void showRobberTargets(Group boardGroup) {
         catanBoardGameView.runOnFX(() -> {
             catanBoardGameView.logToGameLog(gameplay.getCurrentPlayer() + ", place the Robber on a highlighted Tile");
@@ -43,7 +41,6 @@ public class Robber {
                 placeRobberAutomatically(ai, boardGroup);
                 return; // AI will handle everything automatically
             }
-
             // Human Player:
             boardGroup.getChildren().remove(this.robberCircle);
             catanBoardGameView.hideTurnButton();
@@ -52,7 +49,6 @@ public class Robber {
 
             for (Tile tile : board.getTiles()) {
                 if (tile == this.currentTile || tile.isSea()) continue;
-
                 Runnable onClick = () -> {
                     catanBoardGameView.runOnFX(() -> {
                         activeRobberHighlights.forEach(boardGroup.getChildren()::remove);
@@ -61,7 +57,6 @@ public class Robber {
                         if (gameplay.isActionBlockedByDevelopmentCard()) {
                             gameplay.getDevelopmentCard().finishPlayingCard();
                         }
-
                         gameplay.setRobberMoveRequired(false);
                         boardGroup.getChildren().remove(this.robberCircle);
                         this.robberCircle = drawOrDisplay.drawRobberCircle(tile.getCenter(), boardGroup);
@@ -101,8 +96,7 @@ public class Robber {
     public void placeRobberAutomatically(AIOpponent ai, Group boardGroup) {
         AIOpponent.StrategyLevel level = ai.getStrategyLevel();
         Tile chosenTile;
-
-        // ----------------- EASY: Random placement -----------------
+        // EASY AI: Random placement
         if (level == AIOpponent.StrategyLevel.EASY) {
             List<Tile> candidates = board.getTiles().stream()
                     .filter(t -> !t.isSea() && t != currentTile)
@@ -110,8 +104,7 @@ public class Robber {
             chosenTile = candidates.get(new Random().nextInt(candidates.size()));
             catanBoardGameView.logToGameLog(gameplay.getCurrentPlayer() + " (EASY) placed robber randomly.");
         }
-
-        // ----------------- MEDIUM / HARD: Smart scoring -----------------
+        // MEDIUM/HARD: Smart Placement System
         else {
             List<Tile> validTargets = board.getTiles().stream()
                     .filter(t -> !t.isSea() && t != currentTile)
@@ -128,7 +121,6 @@ public class Robber {
                 if (blocksSelf) {
                     continue; // MEDIUM/HARD: never block self
                 }
-
                 for (Vertex v : tile.getVertices()) {
                     Player owner = v.getOwner();
                     if (owner == null || owner == ai) continue;
@@ -140,31 +132,27 @@ public class Robber {
                         score += diceValue * weight * 2; // Threat multiplier
                     }
                 }
-
                 if (score > bestScore) {
                     bestScore = score;
                     bestTile = tile;
                 }
             }
-
             chosenTile = bestTile != null ? bestTile : validTargets.get(0);
             catanBoardGameView.logToGameLog(gameplay.getCurrentPlayer() + " (" + level + ") placed robber on best possible tile with score: " + bestScore);
         }
-
-        // ---------- Place Robber on Tile ----------
+        // Place Robber on Tile
         boardGroup.getChildren().remove(this.robberCircle); //  Remove old circle before drawing new one
         moveTo(chosenTile);
         this.robberCircle = drawOrDisplay.drawRobberCircle(chosenTile.getCenter(), boardGroup);
         robberHasMoved();
 
-        // ---------- Determine valid victims ----------
+        // Determine valid victims
         List<Player> victims = showPotentialVictims(chosenTile, ai).stream()
                 .filter(p -> p.getTotalResourceCount() > 0)
                 .toList();
 
         if (!victims.isEmpty()) {
             Player target;
-
             if (level == AIOpponent.StrategyLevel.HARD) {
                 target = ai.chooseBestRobberTargetForHardAI(ai, victims);
             } else {
@@ -189,8 +177,7 @@ public class Robber {
         return new ArrayList<>(victims);
     }
 
-    //____________________CARD DISCARD HANDLER__________________________
-
+    //____________________CARD DISCARD HANDLER__________________________//
     public void requireRobberMove() {
         robberNeedsToMove = true;
         for (Player p : gameplay.getPlayerList()) {
