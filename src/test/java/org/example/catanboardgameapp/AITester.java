@@ -14,6 +14,7 @@ import org.mockito.*;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import static org.mockito.Mockito.lenient;
 
@@ -21,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
-class AIOpponentTest {
+class AITester {
 
     @Mock private Gameplay mockGameplay;
     @Mock private DrawOrDisplay mockDrawOrDisplay;
@@ -132,5 +133,45 @@ class AIOpponentTest {
         Player chosen = ai.chooseBestRobberTargetForHardAI(ai, victims);
         // victim1 has 3 resoucres and victim2 on 2, so victim1 should be chosen
         assertEquals(victim1, chosen);
+    }
+
+    @Test
+    void whenEasyAndCanUpgradeCity_determineStrategyReturnsCityUpgrader() {
+        when(mockMenuView.getMaxCities()).thenReturn(4);
+        // one settlement to upgrade
+        ai.getSettlements().add(new Vertex(0,0));
+        // Give resources so canAffordCity == true
+        ai.getResources().put("Ore", 3);
+        ai.getResources().put("Grain", 2);
+        AIOpponent.Strategy strat = ai.determineStrategy();
+        assertEquals(AIOpponent.Strategy.CITYUPGRADER, strat);
+    }
+
+//----------------------------HARD AI------------------------------//
+
+    @Test
+    void hardAI_ShouldChooseLongestRoad_whenEligible() throws IllegalAccessException, NoSuchFieldException {
+        AIOpponent hardAI = new AIOpponent(2, Color.BLUE, AIOpponent.StrategyLevel.HARD, mockGameplay);
+        // get out of early game
+        setField(hardAI, "gameplay", mockGameplay);
+        when(mockGameplay.getCurrentPlayer()).thenReturn(hardAI);
+        AIOpponent other = new AIOpponent(3, Color.GREEN, AIOpponent.StrategyLevel.HARD, mockGameplay);
+        // force score to >4 so earlygame == false
+        Field scoreField = Player.class.getDeclaredField("playerScore");
+        scoreField.setAccessible(true);
+        scoreField.setInt(other, 6);
+        when(mockGameplay.getPlayerList()).thenReturn(List.of(hardAI, other));
+        // bump score above 4
+        scoreField.setInt(hardAI, 5);
+        // create situation where no current longestroadmanager, and AI has 4 roads
+        LongestRoadManager mgr = mock(LongestRoadManager.class);
+        when(mockGameplay.getLongestRoadManager()).thenReturn(mgr);
+        when(mgr.getCurrentHolder()).thenReturn(null);
+        when(mgr.calculateLongestRoad(hardAI, List.of(hardAI, other))).thenReturn(4);
+        // give road resources
+        hardAI.getResources().put("Brick", 1);
+        hardAI.getResources().put("Wood", 1);
+        // strategy should now be longest road
+        assertEquals(AIOpponent.Strategy.LONGESTROAD, hardAI.determineStrategy());
     }
 }
