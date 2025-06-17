@@ -258,7 +258,7 @@ public class CatanBoardGameView {
 
         // End turn
         nextTurnButton.setOnAction(e -> {
-            turnController.handleNextTurnButtonPressed(e);
+            turnController.handleNextTurnButtonPressed();
             nextTurnButton.getScene().getRoot().requestFocus();
         });
 
