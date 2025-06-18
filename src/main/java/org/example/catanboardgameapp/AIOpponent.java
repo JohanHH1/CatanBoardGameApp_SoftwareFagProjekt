@@ -1403,7 +1403,8 @@ public class AIOpponent extends Player {
         int roadScore = 0;
 
         // 1. Top priority! can build settlement at target
-        if (gameplay.isValidSettlementPlacement(target) || gameplay.isValidSettlementPlacement(source)) {
+        if (gameplay.isValidSettlementPlacement(target, true) ||
+                gameplay.isValidSettlementPlacement(source, true)) {
             roadScore += 2000;
         }
         // 2. Smart scoring for actually good settlement locations

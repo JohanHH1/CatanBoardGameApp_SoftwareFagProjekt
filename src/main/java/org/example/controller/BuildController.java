@@ -156,7 +156,7 @@ public class BuildController {
                     vertex.setOwner(currentPlayer);
                     drawOrDisplay.drawSettlement(circle, vertex, boardGroup);
                     circle.setOnMouseClicked(createSettlementClickHandler(circle, vertex, root));
-                    gameController.getGameView().logToGameLog(currentPlayer.getPlayerId() + "  build a SETTLEMENT");
+                    gameController.getGameView().logToGameLog(currentPlayer + "  built a SETTLEMENT");
                     gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
                 }
                 case INSUFFICIENT_RESOURCES, INVALID_VERTEX -> {
@@ -171,7 +171,7 @@ public class BuildController {
                         gameController.getGameView().getSettlementLayer().getChildren().remove(circle);
                         drawOrDisplay.drawCity(vertex, gameController.getGameplay().getCatanBoardGameView().getBoardGroup());
                         gameController.getGameplay().getCatanBoardGameView().refreshSidebar();
-                        gameController.getGameView().logToGameLog(currentPlayer.getPlayerId() + " build a CITY");
+                        gameController.getGameView().logToGameLog(currentPlayer + " built a CITY");
 
                     } else {
                         // Neither worked

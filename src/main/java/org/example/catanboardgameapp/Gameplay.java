@@ -562,28 +562,39 @@ public class Gameplay {
     }
 
     //______________________VALID BUILD CHECKS___________________________//
-    // Check if the settlement placement follows all game rules
+    // Checks if a Settlement placement is Valid!
     public boolean isValidSettlementPlacement(Vertex vertex) {
+        return isValidSettlementPlacement(vertex, /* ignoreRoadConnection = */ false);
+    }
+    public boolean isValidSettlementPlacement(Vertex vertex,
+                                              boolean ignoreRoadConnection) {
+        // 1. Vertex must be empty
         if (vertex.hasSettlement()) return false;
 
-        // Must be adjacent to at least one land tile (not surrounded by sea)
-        boolean hasLand = vertex.getAdjacentTiles().stream()
+        // 2. Must touch at least one land tile (not sea/harbour only)
+        boolean hasLand = vertex.getAdjacentTiles()
+                .stream()
                 .anyMatch(tile -> !tile.isSea());
         if (!hasLand) return false;
 
-        // Distance rule: no adjacent settlements allowed
-        for (Vertex neighbor : vertex.getNeighbors()) {
-            if (neighbor.hasSettlement()) return false;
+        // 3. Distance-2 rule: no neighbouring settlements
+        for (Vertex neighbour : vertex.getNeighbors()) {
+            if (neighbour.hasSettlement()) return false;
         }
 
-        // In main phase: must connect to one of the player's roads
-        if (!isInInitialPhase()) {
-            boolean hasOwnAdjacentRoad = getCurrentPlayer().getRoads().stream()
+        // 4. During the main phase, settlement must connect to one of the
+        //    current player’s roads – unless the caller asked us to ignore
+        //    that rule (e.g. for hypothetical scoring)
+        if (!ignoreRoadConnection && !isInInitialPhase()) {
+            boolean hasOwnAdjacentRoad = getCurrentPlayer().getRoads()
+                    .stream()
                     .anyMatch(edge -> edge.isConnectedTo(vertex));
             if (!hasOwnAdjacentRoad) return false;
         }
-        return true;
+
+        return true;  // All checks passed
     }
+
 
     // Check if the road placement follows all rules
     public boolean isValidRoadPlacement(Edge edge) {
