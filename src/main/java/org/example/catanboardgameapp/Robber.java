@@ -117,7 +117,6 @@ public class Robber {
                 int score = 0;
                 boolean blocksSelf = tile.getVertices().stream()
                         .anyMatch(v -> v.getOwner() == ai);
-
                 if (blocksSelf) {
                     continue; // MEDIUM/HARD: never block self
                 }
@@ -127,7 +126,6 @@ public class Robber {
                     int weight = v.isCity() ? 2 : 1;
                     int diceValue = ai.getSettlementDiceValue(v, gameplay);
                     score += diceValue * weight;
-
                     if (level == AIOpponent.StrategyLevel.HARD && ai.lateGame() && owner.getPlayerScore() >= 7) {
                         score += diceValue * weight * 2; // Threat multiplier
                     }
@@ -150,7 +148,6 @@ public class Robber {
         List<Player> victims = showPotentialVictims(chosenTile, ai).stream()
                 .filter(p -> p.getTotalResourceCount() > 0)
                 .toList();
-
         if (!victims.isEmpty()) {
             Player target;
             if (level == AIOpponent.StrategyLevel.HARD) {

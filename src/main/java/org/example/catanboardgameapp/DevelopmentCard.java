@@ -134,7 +134,7 @@ public class DevelopmentCard {
         view.runOnFX(() -> {
             ai.increasePlayedKnights();
             gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(ai);
-            view.getRobber().placeRobberAutomatically(ai, view.getBoardGroup());
+            view.getRobber().showRobberTargets(view.getBoardGroup());
         });
     }
 

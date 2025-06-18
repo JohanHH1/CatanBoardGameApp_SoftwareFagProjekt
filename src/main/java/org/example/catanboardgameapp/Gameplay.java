@@ -32,7 +32,6 @@ public class Gameplay {
     private boolean isRobberMoveRequired = false;      // Set to true after rolling a 7
     private boolean gameOver = false;                  // Set true when someone reaches victory
 
-
     //__________________________BOARD & GAME DATA_____________________________//
     private Board board;
     private Vertex lastInitialSettlement = null;       // Used for checking where to place road
@@ -463,7 +462,7 @@ public class Gameplay {
             lastInitialSettlement = null;
 
             // Update longest road tracking
-            longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer, playerList);
+            longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer);
             catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
             return BuildResult.SUCCESS;
         }
@@ -483,7 +482,7 @@ public class Gameplay {
             removeResource("Wood", 1);
             currentPlayer.getRoads().add(edge);
 
-            longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer, playerList);
+            longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer);
             catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
             return BuildResult.SUCCESS;
         }
@@ -557,7 +556,7 @@ public class Gameplay {
         });
         player.getRoads().add(edge);
         // Recalculate longest road for consistency
-        longestRoadManager.calculateAndUpdateLongestRoad(player, playerList);
+        longestRoadManager.calculateAndUpdateLongestRoad(player);
         catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
         return BuildResult.SUCCESS;
     }
@@ -583,7 +582,6 @@ public class Gameplay {
                     .anyMatch(edge -> edge.isConnectedTo(vertex));
             if (!hasOwnAdjacentRoad) return false;
         }
-
         return true;
     }
 
@@ -656,6 +654,7 @@ public class Gameplay {
 
     // Displays end of game winner popup (visuals in class "DrawOrDisplay")
     private void endOfGameWinnerPopup(Player winner) {
+        stopAllAIThreads();
         //Makes sure the popup doesn't open twice.
         if (gameOver) return;
         gameOver = true;

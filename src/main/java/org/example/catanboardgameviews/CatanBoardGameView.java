@@ -772,10 +772,17 @@ public class CatanBoardGameView {
 
     // Logs a message to the console and game log area, ensuring it runs on the FX thread.
     public void logToGameLog(String message) {
+        if (!gameplay.isGameOver()) {
+            System.out.println(message);
+        }
         if (Platform.isFxApplicationThread()) {
-            appendToGameLog(message);
+            if (!gameplay.isGameOver()) {
+                appendToGameLog(message);
+            }
         } else {
-            Platform.runLater(() -> appendToGameLog(message));
+            if (!gameplay.isGameOver()) {
+                Platform.runLater(() -> appendToGameLog(message));
+            }
         }
     }
 

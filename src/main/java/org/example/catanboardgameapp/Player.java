@@ -2,6 +2,9 @@ package org.example.catanboardgameapp;
 
 import javafx.scene.paint.Color;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType;
 
 public class Player {
@@ -68,6 +71,15 @@ public class Player {
             }
         }
         return false;
+    }
+
+    // Checks if an edge is connected to the players roads/settlements/cities
+    public boolean connectsToMyNetwork(Edge edge) {
+        Set<Vertex> ownedEndpoints = getRoads().stream()
+                .flatMap(e -> Stream.of(e.getVertex1(), e.getVertex2()))
+                .collect(Collectors.toSet());
+        ownedEndpoints.addAll(getSettlementsAndCities());
+        return ownedEndpoints.contains(edge.getVertex1()) || ownedEndpoints.contains(edge.getVertex2());
     }
 
     public void playerScorePlusOne() {
@@ -158,9 +170,13 @@ public class Player {
     public Color getColor() {
         return color;
     }
-
+    // Returns All resources a player has
     public HashMap<String, Integer> getResources() {
         return resources;
+    }
+    // How many of a specific resource
+    public int getResourceAmount(String resourceName) {
+        return resources.getOrDefault(resourceName, 0);
     }
 
     public Map<DevelopmentCardType, Integer> getDevelopmentCards() {

@@ -38,6 +38,13 @@ public class Edge {
         return vertex.equals(vertex1) || vertex.equals(vertex2);
     }
 
+    // Given one end of the edge, return the other
+    public Vertex getOppositeVertex(Vertex v) {
+        if (v.equals(vertex1)) return vertex2;
+        if (v.equals(vertex2)) return vertex1;
+        throw new IllegalArgumentException("Vertex is not part of this edge.");
+    }
+
     public boolean isSeaOnly() {
         return adjacentTiles.stream().allMatch(Tile::isSea);
     }
