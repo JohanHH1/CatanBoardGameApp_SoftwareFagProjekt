@@ -657,8 +657,9 @@ public class Gameplay {
         currentPlayer.playerScorePlusOne();
         currentPlayer.playerScorePlusOne();
         // Win check
-        if (currentPlayer.getPlayerScore() >= menuView.getMaxVictoryPoints()) {
+        if (isGameOver()) {
             if (isGamePaused()) return;
+            stopAllAIThreads();
             endOfGameWinnerPopup(currentPlayer);
         }
     }
