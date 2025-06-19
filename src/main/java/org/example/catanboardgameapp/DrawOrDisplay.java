@@ -28,11 +28,12 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.controller.BuildController;
-
 import java.io.InputStream;
 import java.util.*;
 import java.util.function.Supplier;
 
+// Handles everything related to drawing on the board, settlements and cities, etc with updates
+// and all displays and UI features seen in the game, popups, warnings etc.
 public class DrawOrDisplay {
 
     // UI components
@@ -51,8 +52,8 @@ public class DrawOrDisplay {
         this.boardRadius = boardRadius;
     }
 
-    //___________________________CLICK INITIALIZATION_____________________________//
-    public void initEdgesClickHandlers(Board board, Group boardGroup, BuildController controller, int radius) {
+    //___________________________CLICK INITIALIZATION___________________________//
+    public void initEdgesClickHandlers(Board board, BuildController controller) {
         Group edgeBaseLayer = controller.getGameController().getGameView().getEdgeBaseLayer();
         Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
 
@@ -75,7 +76,7 @@ public class DrawOrDisplay {
         }
     }
 
-    public void initVerticeClickHandlers(Board board, Group boardGroup, BuildController controller, int radius, BorderPane root) {
+    public void initVerticeClickHandlers(Board board, BuildController controller, BorderPane root) {
         Group settlementLayer = controller.getGameController().getGameView().getSettlementLayer();
         Group edgeClickLayer = controller.getGameController().getGameView().getEdgeClickLayer();
 
@@ -105,7 +106,6 @@ public class DrawOrDisplay {
                 clickable.setFill(Color.TRANSPARENT);
                 clickable.setStroke(Color.TRANSPARENT);
             }
-
             edgeClickLayer.getChildren().add(clickable);
         }
     }

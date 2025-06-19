@@ -9,7 +9,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import org.example.catanboardgameapp.*;
-
 import java.util.Optional;
 
 public class BuildController {
@@ -17,8 +16,7 @@ public class BuildController {
     private final Group boardGroup;
     private final DrawOrDisplay drawOrDisplay;
     private final GameController gameController;
-    // start with confirmation OFF
-    private boolean confirmBeforeBuild = false;
+    private boolean confirmBeforeBuild = false; // Start with Build confirmation OFF
 
     //___________________________CONTROLLER__________________________________//
     // Initialize with references to game controller and display
@@ -29,12 +27,15 @@ public class BuildController {
     }
 
     //___________________________ ROAD PLACEMENT HANDLER ___________________________
-
     // Handles mouse clicks for placing roads
     public EventHandler<MouseEvent> createRoadClickHandler(Edge edge) {
         return event -> {
             // Handle free roads from Road Building card
             if (gameController.getGameplay().getDevelopmentCard().isPlacingFreeRoads()) {
+                if (gameController.getGameplay().getCurrentPlayer().getRoads().size() >= 15) {
+                    gameController.getGameplay().getDevelopmentCard().finishPlayingCard();
+                    drawOrDisplay.showMaxRoadsReachedPopup();
+                }
                 if (gameController.getGameplay().isValidRoadPlacement(edge)) {
                     gameController.getGameView().logToGameLog("Place your free roads now");
                     Player player = gameController.getGameplay().getCurrentPlayer();
@@ -112,7 +113,6 @@ public class BuildController {
     }
 
     //___________________________ SETTLEMENT / CITY PLACEMENT HANDLER ___________________________
-
     // Handles mouse click on a vertex (for building settlement or upgrading to city)
     public EventHandler<MouseEvent> createSettlementClickHandler(Circle circle, Vertex vertex, BorderPane root) {
         return event -> {

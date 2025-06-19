@@ -1,16 +1,10 @@
 package org.example.catanboardgameapp;
-
-import javafx.scene.shape.Line;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.controller.TradeController;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
-//__________________________________________________________
-// DEVELOPMENT CARD ENGINE - Handles usage logic for all
-// types of development cards in Catan, including player/AI logic.
-//__________________________________________________________
+// Handles usage logic for all types of development cards in Catan, including player/AI logic.
 public class DevelopmentCard {
 
     // Dependencies
@@ -115,7 +109,7 @@ public class DevelopmentCard {
         log("Player " + player.getPlayerId() + " played a monopoly development card");
     }
     private void playMonopolyCardAsAI(AIOpponent ai) {
-        String resource = ai.chooseSmartResourceToMonopoly(gameplay);
+        String resource = chooseSmartResourceToMonopoly(gameplay, ai);
         int total = monopolizeResource(resource, ai);
         log("AI played Monopoly and took " + total + " " + resource);
     }
@@ -166,7 +160,6 @@ public class DevelopmentCard {
         Map<String, Integer> selected = (currentPlayer instanceof AIOpponent ai && ai.getStrategyLevel() == AIOpponent.StrategyLevel.HARD)
                 ? ai.chooseResourcesForYearOfPlenty()
                 : drawOrDisplay.showYearOfPlentyDialog(currentPlayer.getResources());
-
         if (selected != null) {
             addResourcesToPlayer(currentPlayer, selected);
             String gained = selected.entrySet().stream()
@@ -249,5 +242,101 @@ public class DevelopmentCard {
         }
         player.getResources().merge(resource, totalTaken, Integer::sum);
         return totalTaken;
+    }
+
+    // Second Monopoly helper function
+    public String chooseSmartResourceToMonopoly(Gameplay gameplay, AIOpponent ai){
+        //getting all opponents
+        List<Player> opponents = gameplay.getPlayerList().stream()
+                .filter(p -> p != ai)
+                .toList();
+        // finding there resources
+        Map<String, Integer> totalOpponentResources = new HashMap<>();
+
+        for (Player p : opponents) {
+            for (Map.Entry<String, Integer> entry : p.getResources().entrySet()) {
+                totalOpponentResources.merge(entry.getKey(), entry.getValue(), Integer::sum);
+            }
+        }
+        // Calculate how much the player has of each resource
+        int oreHave = ai.getResources().getOrDefault("Ore", 0);
+        int grainHave = ai.getResources().getOrDefault("Grain", 0);
+        int woolHave = ai.getResources().getOrDefault("Wool", 0);
+        int woodHave = ai.getResources().getOrDefault("Wood", 0);
+        int brickHave = ai.getResources().getOrDefault("Brick", 0);
+
+        // Calculate how much you can steal in total of each resource
+        int oreFromOpponents = totalOpponentResources.getOrDefault("Ore", 0);
+        int grainFromOpponents = totalOpponentResources.getOrDefault("Grain", 0);
+        int woolFromOpponents = totalOpponentResources.getOrDefault("Wool", 0);
+        int woodFromOpponents = totalOpponentResources.getOrDefault("Wood", 0);
+        int brickFromOpponents = totalOpponentResources.getOrDefault("Brick", 0);
+
+        // Check if we can steal enough to build a full city
+        int oreNeed = Math.max(0, 3 - oreHave);
+        int grainNeed = Math.max(0, 2 - grainHave);
+        if ((oreFromOpponents >= oreNeed) && grainNeed==0 ){
+            return "Ore";
+        } else if (grainFromOpponents >= grainNeed && oreNeed==0) {
+            return"Grain";
+        }
+        // Check if we can steal enough to build a settlement
+        grainNeed = Math.max(0, 1 - grainHave);
+        int woodNeed = Math.max(0, 1 - woodHave);
+        int woolNeed = Math.max(0, 1 - woolHave);
+        int brickNeed = Math.max(0, 1 - brickHave);
+        if (grainNeed > 0 && grainNeed <= grainFromOpponents
+                && woodNeed == 0 && woolNeed == 0 && brickNeed == 0) {
+            return "Grain";
+        } else if (woodNeed > 0 && woodNeed <= woodFromOpponents
+                && grainNeed == 0 && woolNeed == 0 && brickNeed == 0) {
+            return "Wood";
+        } else if (woolNeed > 0 && woolNeed <= woolFromOpponents
+                && grainNeed == 0 && woodNeed == 0 && brickNeed == 0) {
+            return "Wool";
+        } else if (brickNeed > 0 && brickNeed <= brickFromOpponents
+                && grainNeed == 0 && woolNeed == 0 && woodNeed == 0) {
+            return "Brick";
+        }
+        // If not, pick the one with the largest trading potential
+        List<Harbor.HarborType> harborTypes = new ArrayList<>();
+        for (Harbor harbor : gameplay.getBoard().getHarbors()) {
+            if (harbor.usableBy(ai)) {
+                harborTypes.add(harbor.getType());
+            }
+        }
+        String bestTradeResource = null;
+        int bestTradeValue = 0;
+
+        for (String resource : List.of("Ore", "Grain", "Wool", "Wood", "Brick")) {
+            int available = totalOpponentResources.getOrDefault(resource, 0);
+            int tradeRatio = 4; // default (not tradable)
+
+            // Check for specific 2:1 harbor
+            for (Harbor.HarborType type : harborTypes) {
+                if (type.specific != null && type.specific.name().equalsIgnoreCase(resource)) {
+                    tradeRatio = 2;
+                    break;
+                }
+            }
+            // If no 2:1 harbor, check for generic 3:1
+            if (tradeRatio == 4) {
+                for (Harbor.HarborType type : harborTypes) {
+                    if (type == Harbor.HarborType.GENERIC) {
+                        tradeRatio = 3;
+                        break;
+                    }
+                }
+            }
+            // If we have a usable harbor (2:1 or 3:1), compute trades
+            if (tradeRatio < 4) {
+                int tradeCount = available / tradeRatio;
+                if (tradeCount > bestTradeValue) {
+                    bestTradeValue = tradeCount;
+                    bestTradeResource = resource;
+                }
+            }
+        }
+        return bestTradeResource;
     }
 }

@@ -1,7 +1,5 @@
 package org.example.catanboardgameapp;
 
-import javafx.geometry.Point2D;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +22,6 @@ public class Edge {
     }
 
     //_________________________FUNCTIONS____________________________//
-
     // Add a tile that this edge borders
     public void addAdjacentTile(Tile tile) {
         if (!adjacentTiles.contains(tile)) {
@@ -70,7 +67,6 @@ public class Edge {
         return (vertex1.equals(other.vertex1) && vertex2.equals(other.vertex2)) ||
                 (vertex1.equals(other.vertex2) && vertex2.equals(other.vertex1));
     }
-
     @Override
     public int hashCode() {
         return vertex1.hashCode() + vertex2.hashCode();

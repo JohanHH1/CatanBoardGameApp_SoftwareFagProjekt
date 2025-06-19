@@ -28,7 +28,7 @@ public class GameController {
     //___________________________FUNCTIONS__________________________________//
     // Starts a new game with specified settings
     public void startGame(int playerCount, int boardSize, int easyAI, int medAI, int hardAI) {
-        gameplay = new Gameplay(primaryStage, boardSize - 1, this);
+        gameplay = new Gameplay(boardSize - 1, this);
         gameplay.setMenuView(this.menuView);
 
         // Add players
@@ -70,11 +70,9 @@ public class GameController {
             gameplay.resetCounters();
             gameplay = null;
         }
-
         if (gameView != null) {
             gameView = null;
         }
-
     }
     // Returns to the main menu
     public void returnToMenu(MenuView menuView) {
@@ -92,7 +90,6 @@ public class GameController {
         gameplay.setCatanBoardGameView(gameView); // restore view reference
         primaryStage.setScene(gameView.getScene()); // bring game view back
     }
-
 
     //___________________________SETTERS__________________________________//
     public void setMenuView(MenuView menuView) {
@@ -126,11 +123,9 @@ public class GameController {
     public CatanBoardGameView getGameView() {
         return gameView;
     }
-
     public MenuView getMenuView() {
         return menuView;
     }
-
 
     //___________________________BOOLEAN__________________________________//
     // Returns true if a game session is currently active

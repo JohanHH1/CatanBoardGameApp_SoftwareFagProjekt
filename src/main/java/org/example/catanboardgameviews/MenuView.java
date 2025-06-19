@@ -58,13 +58,10 @@ public class MenuView {
         VBox menuLayout = new VBox(25);
         menuLayout.setAlignment(Pos.CENTER);
         menuLayout.setPadding(new Insets(40));
-
         String filename = "/backgrounds/menuViewBackG.png";
         InputStream stream = getClass().getResourceAsStream(filename);
-
         assert stream != null;
         Image backgroundImage = new Image(stream);
-
         BackgroundImage bgImage = new BackgroundImage(
                 backgroundImage,
                 BackgroundRepeat.NO_REPEAT,
@@ -76,7 +73,6 @@ public class MenuView {
         );
 
         menuLayout.setBackground(new Background(bgImage));
-
         Label titleLabel = new Label("CATAN BOARD GAME");
         titleLabel.setFont(Font.font("Georgia", FontWeight.BOLD, 52));
         titleLabel.setTextFill(Color.web("#F9D849"));
@@ -122,7 +118,6 @@ public class MenuView {
 
         // Ensure any running threads and state are cleared
         gameController.resetGame();
-
         gameController.startGame(
                 playerCount,
                 boardSize,
@@ -178,7 +173,6 @@ public class MenuView {
                 new Label(String.valueOf(maxCitiesVal[0])),
                 new Label(String.valueOf(maxVictoryPointsVal[0])),
         };
-
         for (int i = 0; i < labels.length; i++) {
             labels[i].setFont(labelFont);
             labels[i].setTextFill(fontColor);
@@ -189,7 +183,6 @@ public class MenuView {
         shufflePlayersCheckbox.setFont(labelFont);
         shufflePlayersCheckbox.setTextFill(fontColor);
         shufflePlayersCheckbox.setSelected(true); // default ON
-
         ComboBox<AIOpponent.ThinkingSpeed> aiSpeedDropdown = new ComboBox<>();
         aiSpeedDropdown.getItems().addAll(AIOpponent.ThinkingSpeed.values());
         aiSpeedDropdown.setValue(aiSpeed);
@@ -238,7 +231,7 @@ public class MenuView {
         controls[6][0].setOnAction(e -> { if (maxSettlementsVal[0] > 1) maxSettlementsVal[0]--; updateCounts.run(); });
         controls[7][1].setOnAction(e -> { if (maxCitiesVal[0] < 6) maxCitiesVal[0]++; updateCounts.run(); });
         controls[7][0].setOnAction(e -> { if (maxCitiesVal[0] > 1) maxCitiesVal[0]--; updateCounts.run(); });
-        controls[8][1].setOnAction(e -> { if (maxVictoryPointsVal[0] < 10) maxVictoryPointsVal[0]++; updateCounts.run(); });
+        controls[8][1].setOnAction(e -> { if (maxVictoryPointsVal[0] < 16) maxVictoryPointsVal[0]++; updateCounts.run(); });
         controls[8][0].setOnAction(e -> { if (maxVictoryPointsVal[0] > 1) maxVictoryPointsVal[0]--; updateCounts.run(); });
 
         GridPane grid = new GridPane();

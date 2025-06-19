@@ -1,7 +1,6 @@
 package org.example.catanboardgameapp;
 
 public class BiggestArmyManager {
-
     private Player biggestArmy;
     private final Gameplay gameplay;
 

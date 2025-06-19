@@ -12,8 +12,8 @@ public class Player {
     private static final boolean DEBUG_MODE = false; // Set to false for normal game SKAL FJERNES??
 
     private final Gameplay gameplay;
-    private int playerId;
     private final Color color;
+    private int playerId;
 
     // The resources a player has
     private final HashMap<String, Integer> resources;
@@ -29,7 +29,7 @@ public class Player {
     private int playedKnights;
     private int longestRoad;
 
-    //_____________________________Constructor_____________________________//
+    //_____________________________CONSTRUCTOR_____________________________//
     public Player(int playerId, Color color, Gameplay gameplay) {
         this.playerId = playerId;
         this.color = color;
@@ -46,7 +46,7 @@ public class Player {
         initializeDevelopmentCards();
     }
 
-    //_____________________________Functions_____________________________//
+    //_____________________________FUNCTIONS_____________________________//
     // Initialize resources to 0 of every resource (10 if DEBUG_MODE)
     private void initializeResources() {
         List<String> resourceTypes = Arrays.asList("Brick", "Wood", "Ore", "Grain", "Wool");
@@ -106,8 +106,7 @@ public class Player {
         return developmentCards.values().stream().allMatch(count -> count == 0);
     }
 
-    //______________________________Robber Logic____________________________//
-    // for AI use and for auto-discard for human players
+    // Robber Logic: For AI use and for auto-discard for human players
     public Map<String, Integer> chooseDiscardCards() {
         Map<String, Integer> resourcesCopy = new HashMap<>(getResources());
         int total = resourcesCopy.values().stream().mapToInt(Integer::intValue).sum();
@@ -129,20 +128,17 @@ public class Player {
                 toDiscard -= discard;
             }
         }
-
         // Log discards
-        if (gameplay != null && gameplay.getCatanBoardGameView() != null) {
-            StringBuilder log = new StringBuilder("AI Player " + getPlayerId() + " discarded: ");
-            discardMap.forEach((res, amt) -> log.append(amt).append(" ").append(res).append(", "));
-            if (!discardMap.isEmpty()) {
-                log.setLength(log.length() - 2); // remove trailing comma
-                gameplay.getCatanBoardGameView().logToGameLog(log.toString());
-            }
+        StringBuilder log = new StringBuilder("Player " + getPlayerId() + " auto discarded: ");
+        discardMap.forEach((res, amt) -> log.append(amt).append(" ").append(res).append(", "));
+        if (!discardMap.isEmpty()) {
+            log.setLength(log.length() - 2); // remove trailing comma
+            gameplay.getCatanBoardGameView().logToGameLog(log.toString());
         }
         return discardMap;
     }
 
-    //_____________________________Getters_____________________________//
+    //_____________________________GETTERS_____________________________//
     public List<Vertex> getSettlementsAndCities() {
         List<Vertex> all = new ArrayList<>();
         all.addAll(settlements);
@@ -207,7 +203,6 @@ public class Player {
         return longestRoad;
     }
 
-    //_________________________toString method_________________________________//
     @Override
     public String toString() {
         return "Player " + playerId;

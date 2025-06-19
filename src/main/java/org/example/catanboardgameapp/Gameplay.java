@@ -1,13 +1,15 @@
 package org.example.catanboardgameapp;
+
 import javafx.scene.control.*;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
 import org.example.catanboardgameviews.CatanBoardGameView;
 import java.util.*;
 import org.example.catanboardgameviews.MenuView;
 import org.example.controller.GameController;
 import static org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType.*;
 
+// Handles all game play relevant logic, all rules being enforced, functions to run the game etc.
+// Also sets up and directs multiple other class
 public class Gameplay {
 
     //__________________________CONFIG & VIEWS_____________________________//
@@ -58,7 +60,7 @@ public class Gameplay {
 
     //__________________________CONSTRUCTOR_____________________________//
     // Create a new game session
-    public Gameplay(Stage primaryStage, int boardRadius, GameController gameController) {
+    public Gameplay(int boardRadius, GameController gameController) {
         this.drawOrDisplay = new DrawOrDisplay(boardRadius);
         this.boardRadius = boardRadius;
         this.gameController = gameController;
@@ -100,7 +102,6 @@ public class Gameplay {
         for (int i = 0; i < humanCount && !colors.isEmpty(); i++) {
             playerList.add(new Player(idCounter++, colors.remove(0), this));
         }
-
         AIOpponent.ThinkingSpeed selectedSpeed = menuView.getSelectedAISpeed(); // <- retrieve selected speed
 
         // Add AI players by difficulty level
@@ -128,7 +129,6 @@ public class Gameplay {
         for (int i = 0; i < playerList.size(); i++) {
             playerList.get(i).setPlayerId(i + 1);
         } }
-
         // Set first player
         if (!playerList.isEmpty()) {
             currentPlayerIndex = 0;
@@ -137,7 +137,6 @@ public class Gameplay {
     }
 
     //____________________________TURN MANAGEMENT______________________________//
-
     // Advances the game to the next player's turn
     public void nextPlayerTurn() {
         stopAllAIThreads(); // Stop any in-progress AI thread before advancing
@@ -154,7 +153,7 @@ public class Gameplay {
             // If forward loop finished, switch to backward loop
             if (forwardOrder && currentPlayerIndex >= playerList.size()) {
                 currentPlayerIndex = playerList.size() - 1;
-                forwardOrder = false;catanBoardGameView.logToGameLog("All initial placements complete. Starting first turn...");
+                forwardOrder = false;
                 if (currentPlayer instanceof AIOpponent ai) {
                     startAIThread(ai); // Safe AI startup
                 } else {
@@ -172,6 +171,7 @@ public class Gameplay {
                 // Log and prepare first player’s turn
                 catanBoardGameView.runOnFX(() -> {
                     catanBoardGameView.logToGameLog("All initial placements complete. Starting first turn...");
+                    catanBoardGameView.logToGameLog("_____________________________________________________\n");
                     if (currentPlayer instanceof AIOpponent ai) {
                         startAIThread(ai); // Safe AI startup
                     } else {
@@ -205,6 +205,7 @@ public class Gameplay {
     private void startOfTurnEffects() {
         if (!initialPhase) {
             catanBoardGameView.logToGameLog(getCurrentPlayer() +  " has ended their turn.");
+            catanBoardGameView.logToGameLog("_____________________________________________________\n");
             // Rotate to next player
             currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
             currentPlayer = playerList.get(currentPlayerIndex);
@@ -225,7 +226,7 @@ public class Gameplay {
         }
     }
 
-    // Stops the game and exits if the turn limit is exceeded (e.g., infinite loop)
+    // Stops the game and exits if the turn limit is exceeded (Used to prevent infinite loops or AI bugs while testing)
     public void crashGameIfMaxTurnsExceeded(int MAX_TURNS, int turnCounter) {
         if (turnCounter > MAX_TURNS) {
             pauseGame();
@@ -262,7 +263,7 @@ public class Gameplay {
         catanBoardGameView.runOnFX(() -> {
             // Update dice visuals and logs
             catanBoardGameView.updateDiceImages(lastRolledDie1, lastRolledDie2);
-            catanBoardGameView.logToGameLog("\n" + currentPlayer + " ROLLED " + roll + "!");
+            catanBoardGameView.logToGameLog(currentPlayer + " ROLLED " + roll + "!");
             catanBoardGameView.hideDiceButton();
             catanBoardGameView.showTurnButton();
             catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
@@ -282,20 +283,20 @@ public class Gameplay {
 
     // Distribute resources to players based on the current dice roll
     public void distributeResources(int diceRoll) {
+        boolean resourcesDistributed = false;
         for (Tile tile : board.getTiles()) {
             if (tile.getTileDiceNumber() == diceRoll) {
                 Resource.ResourceType type = tile.getResourcetype();
 
                 // Skip sea and desert tiles
                 if (type == Resource.ResourceType.SEA || type == Resource.ResourceType.DESERT) continue;
-
                 for (Vertex vertex : tile.getVertices()) {
                     Player owner = vertex.getOwner();
                     if (owner != null) {
                         String res = type.getName();
                         int amount = vertex.isCity() ? 2 : 1;
                         owner.getResources().merge(res, amount, Integer::sum);
-
+                        resourcesDistributed = true;    // Flag for game log
                         // Log the resource gain
                         String logMsg = "Player " + owner.getPlayerId() + " gets " + res;
                         catanBoardGameView.runOnFX(() -> catanBoardGameView.logToGameLog(logMsg));
@@ -303,8 +304,9 @@ public class Gameplay {
                 }
             }
         }
-        // Separate log entry for clarity
-        catanBoardGameView.runOnFX(() -> catanBoardGameView.logToGameLog("\n"));
+        if (!resourcesDistributed) {
+            catanBoardGameView.runOnFX(() -> catanBoardGameView.logToGameLog("No Player received anything this turn"));
+        }
     }
 
     //_________________________________________ AI THREAD _____________________________________________//
@@ -325,7 +327,6 @@ public class Gameplay {
                     return;
                 }
             }
-
             // Call AI actions depending on the phase
             if (initialPhase) {
                 ai.placeInitialSettlementAndRoad(this, catanBoardGameView.getBoardGroup());
@@ -481,7 +482,6 @@ public class Gameplay {
             removeResource("Brick", 1);
             removeResource("Wood", 1);
             currentPlayer.getRoads().add(edge);
-
             longestRoadManager.calculateAndUpdateLongestRoad(currentPlayer);
             catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
             return BuildResult.SUCCESS;
@@ -519,7 +519,7 @@ public class Gameplay {
         return BuildResult.INSUFFICIENT_RESOURCES;
     }
 
-    // Upgrade an existing settlement to a city'
+    // Upgrade an existing settlement to a city
     public BuildResult buildCity(Vertex vertex) {
         if (isNotValidCityPlacement(vertex)) return BuildResult.INVALID_VERTEX;
 
@@ -595,7 +595,6 @@ public class Gameplay {
         return true;  // All checks passed
     }
 
-
     // Check if the road placement follows all rules
     public boolean isValidRoadPlacement(Edge edge) {
         // Must connect two vertices with at least one land tile each
@@ -623,10 +622,8 @@ public class Gameplay {
         // Must connect to current player's road or settlement
         boolean connectsToSettlementOrCity = currentPlayer.getSettlementsAndCities().contains(edge.getVertex1()) ||
                 currentPlayer.getSettlementsAndCities().contains(edge.getVertex2());
-
         boolean connectsToRoad = currentPlayer.getRoads().stream().anyMatch(r ->
                 r.isConnectedTo(edge.getVertex1()) || r.isConnectedTo(edge.getVertex2()));
-
         return connectsToSettlementOrCity || connectsToRoad;
     }
 

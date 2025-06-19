@@ -132,8 +132,8 @@ public class CatanBoardGameView {
 
         BuildController buildController = new BuildController(gameController);
         gameController.setBuildController(buildController);
-        drawOrDisplay.initEdgesClickHandlers(board, boardGroup, buildController, boardRadius);
-        drawOrDisplay.initVerticeClickHandlers(board, boardGroup, buildController, boardRadius, root);
+        drawOrDisplay.initEdgesClickHandlers(board, buildController);
+        drawOrDisplay.initVerticeClickHandlers(board, buildController, root);
 
         VBox gameLogPanel = createGameLogPanel();
 
@@ -223,14 +223,12 @@ public class CatanBoardGameView {
         Button exitButton = new Button("Exit");
         ToggleButton toggleConfirmBtn = new ToggleButton("Confirm: OFF");
         toggleConfirmBtn.setSelected(false);
-
         toggleConfirmBtn.setOnAction(e -> {
             boolean enabled = toggleConfirmBtn.isSelected();
             toggleConfirmBtn.setText(enabled ? "Confirm: ON" : "Confirm: OFF");
             gameController.getBuildController().toggleConfirmBeforeBuild();
             toggleConfirmBtn.getScene().getRoot().requestFocus();
         });
-
         // Dice rolling button action
         rollDiceButton.setOnAction(e -> {
             if (gameplay.isActionBlockedByDevelopmentCard()){
@@ -239,7 +237,6 @@ public class CatanBoardGameView {
             }
             gameplay.rollDice();
         });
-
         // Development card purchase
         developmentCardButton.setOnAction(e -> {
             if (gameplay.getDevelopmentCard().isPlayingCard()) {
@@ -255,13 +252,11 @@ public class CatanBoardGameView {
             gameplay.buyDevelopmentCard();
             developmentCardButton.getScene().getRoot().requestFocus();
         });
-
         // End turn
         nextTurnButton.setOnAction(e -> {
             turnController.handleNextTurnButtonPressed();
             nextTurnButton.getScene().getRoot().requestFocus();
         });
-
         // Center the game board view
         centerButton.setOnAction(e -> {
             // Optional UI adjustments
@@ -269,7 +264,6 @@ public class CatanBoardGameView {
             centerBoard(boardGroup, gameController.getMenuView().getGAME_WIDTH(), gameController.getMenuView().getGAME_HEIGHT());
             centerButton.getScene().getRoot().requestFocus();
         });
-
         // Zoom in/out actions
         zoomInButton.setOnAction(e -> {
             zoom(boardGroup, 1.1);
@@ -280,7 +274,6 @@ public class CatanBoardGameView {
             zoom(boardGroup, 0.9);
             zoomOutButton.getScene().getRoot().requestFocus();
         });
-
         tradeController.setupTradeButton(tradeButton);
 
         // Show resource cost popup
@@ -303,13 +296,11 @@ public class CatanBoardGameView {
             }
             exitButton.getScene().getRoot().requestFocus();
         });
-
         // Group all buttons, unified styling
         List<ButtonBase> allButtons = List.of(
                 rollDiceButton, nextTurnButton, centerButton, zoomInButton, zoomOutButton,
                 tradeButton, developmentCardButton, showCostsButton, toggleConfirmBtn, exitButton
         );
-
         String baseStyle = """
         -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
         -fx-text-fill: #2b1d0e;
@@ -321,7 +312,6 @@ public class CatanBoardGameView {
         -fx-font-family: 'Georgia', 'Serif';
         -fx-cursor: hand;
     """;
-
         String hoverStyle = "-fx-background-color: linear-gradient(to bottom, #f0c785, #c5852f);";
 
         allButtons.forEach(btn -> {
@@ -329,17 +319,14 @@ public class CatanBoardGameView {
             btn.setOnMouseEntered(e -> btn.setStyle(baseStyle + hoverStyle));
             btn.setOnMouseExited(e -> btn.setStyle(baseStyle));
         });
-
         // Hide buttons initially
         hideTurnButton();
         hideDiceButton();
-
         // Assemble all buttons into the button bar
         HBox buttonBox = new HBox(12);
         buttonBox.getChildren().addAll(allButtons);
         buttonBox.setPadding(new Insets(10));
         buttonBox.setAlignment(Pos.CENTER_LEFT);
-
         buttonBox.setStyle("""
             -fx-background-color: linear-gradient(to bottom, #f3e2c7, #d2a86e);
             -fx-border-color: #a86c1f;
@@ -359,7 +346,6 @@ public class CatanBoardGameView {
             -fx-background-radius: 10;
             -fx-border-radius: 10;
         """;
-
         String playerStyle;
         String displayName = (player instanceof AIOpponent ai)
                 ? "AIPlayer " + player.getPlayerId() + " (" + ai.getStrategyLevel().name() + ")"
@@ -368,8 +354,6 @@ public class CatanBoardGameView {
         Text playerName = new Text(displayName);
         playerName.setFont(Font.font("Georgia", FontWeight.BOLD, nameFontSize));
         playerName.setFill(player.getColor());
-
-
         if (player == gameplay.getCurrentPlayer()) {
             // Expandable: Resources
             playerStyle = """
@@ -387,10 +371,8 @@ public class CatanBoardGameView {
             -fx-border-width: 1.5;
         """;
         }
-
         playerBox.setStyle(baseStyle + playerStyle);
         playerBox.getChildren().add(playerName);
-
         if (player == gameplay.getCurrentPlayer()) {
             // Expandable: Development Cards
             int totalResources = player.getResources().values().stream().mapToInt(Integer::intValue).sum();
@@ -400,7 +382,6 @@ public class CatanBoardGameView {
                                     -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
                                     -fx-text-fill: #2b1d0e; """
             );
-
             VBox resourceDetailsBox = new VBox(3);
             resourceDetailsBox.setPadding(new Insets(5, 0, 0, 10));
             resourceDetailsBox.setVisible(false);
@@ -411,15 +392,12 @@ public class CatanBoardGameView {
                 resourceText.setFont(Font.font("Georgia", infoFontSize));
                 resourceDetailsBox.getChildren().add(resourceText);
             }
-
             resourceButton.setOnAction(e -> {
                 boolean showing = resourceDetailsBox.isVisible();
                 resourceDetailsBox.setVisible(!showing);
                 resourceDetailsBox.setManaged(!showing);
             });
-
             playerBox.getChildren().addAll(resourceButton, resourceDetailsBox);
-
             // Expandable dev cards
             int totalDevCards = player.getDevelopmentCards().values().stream().mapToInt(Integer::intValue).sum();
             Button devCardButton = new Button("Development Cards: " + totalDevCards);
@@ -428,8 +406,6 @@ public class CatanBoardGameView {
                                     -fx-background-color: linear-gradient(to bottom, #d8b173, #a86c1f);
                                     -fx-text-fill: #2b1d0e;"""
                                     );
-
-
             VBox devCardDetailsBox = new VBox(3);
             devCardDetailsBox.setPadding(new Insets(5, 0, 0, 10));
             devCardDetailsBox.setVisible(false);
@@ -513,7 +489,6 @@ public class CatanBoardGameView {
         if (!hasBeenInitialized) {
             return scrollVBox();
         }
-
         return null;
     }
 
@@ -529,6 +504,7 @@ public class CatanBoardGameView {
     """);
 
         VBox container = new VBox(scrollPane);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS); // Make the scrollPane fill vertical space
         container.setPadding(new Insets(8));
         container.setStyle("""
         -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);

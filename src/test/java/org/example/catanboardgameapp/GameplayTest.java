@@ -38,7 +38,7 @@ class GameplayTest {
 
     @BeforeEach
     void setUp() {
-        gameplay = new Gameplay(mockStage, /*boardRadius=*/2, mockGameController);
+        gameplay = new Gameplay(/*boardRadius=*/2, mockGameController);
         gameplay.setMenuView(mockMenuView);
         gameplay.setCatanBoardGameView(mockBoardView);
         // Two human players, no AI, no shuffle
