@@ -47,9 +47,11 @@ public class DrawOrDisplay {
     private final List<Circle> vertexClickHighlights = new ArrayList<>();
 
     private final int boardRadius;
+    private final Gameplay gameplay;
 
     //______________________________CONSTRUCTOR________________________________//
-    public DrawOrDisplay(int boardRadius) {
+    public DrawOrDisplay(int boardRadius, Gameplay gameplay) {
+        this.gameplay = gameplay;
         this.boardRadius = boardRadius;
     }
 
@@ -552,7 +554,7 @@ public class DrawOrDisplay {
                 2,
                 false,
                 null,
-                playerResources
+                null           // unlimited – you can pick any resource
         );
     }
 
@@ -634,17 +636,18 @@ public class DrawOrDisplay {
         grid.setVgap(10);
         grid.setPadding(new Insets(10));
         grid.getColumnConstraints().addAll(
-                new ColumnConstraints(100), // Resource label
-                new ColumnConstraints(),    // Minus
-                new ColumnConstraints(),    // Counter
-                new ColumnConstraints(),    // Plus
-                new ColumnConstraints(50)   // Owned count
+                new ColumnConstraints(100),
+                new ColumnConstraints(),
+                new ColumnConstraints(),
+                new ColumnConstraints(),
+                new ColumnConstraints(50)
         );
 
         Map<String, Integer> selection = new HashMap<>();
         Map<String, Text> counterTexts = new HashMap<>();
         Button confirmButton = new Button("Confirm");
         confirmButton.setDisable(true);
+
         int row = 0;
         for (String resource : resources) {
             selection.put(resource, 0);
@@ -663,37 +666,54 @@ public class DrawOrDisplay {
             ownedLabel.setWrappingWidth(30);
             ownedLabel.setTextAlignment(TextAlignment.CENTER);
 
+            minus.setDisable(true);
+            plus.setDisable(owned == 0 && owned >= 0);
+
             plus.setOnAction(e -> {
-                if (selection.get(resource) < maxSelection && getTotalSelected(selection) < maxSelection) {
-                    selection.put(resource, selection.get(resource) + 1);
-                    counter.setText(String.valueOf(selection.get(resource)));
+                int current = selection.get(resource);
+                if ((owned < 0 || current < owned) && getTotalSelected(selection) < maxSelection) {
+                    current++;
+                    selection.put(resource, current);
+                    counter.setText(String.valueOf(current));
+                    minus.setDisable(false);
+                    if (owned >= 0 && current == owned) plus.setDisable(true);
                     confirmButton.setDisable(getTotalSelected(selection) != maxSelection);
                 }
             });
+
             minus.setOnAction(e -> {
-                if (selection.get(resource) > 0) {
-                    selection.put(resource, selection.get(resource) - 1);
-                    counter.setText(String.valueOf(selection.get(resource)));
+                int current = selection.get(resource);
+                if (current > 0) {
+                    current--;
+                    selection.put(resource, current);
+                    counter.setText(String.valueOf(current));
+                    plus.setDisable(owned >= 0 && current == owned);
+                    minus.setDisable(current == 0);
                     confirmButton.setDisable(getTotalSelected(selection) != maxSelection);
                 }
             });
+
             grid.addRow(row++, label, minus, counter, plus, ownedLabel);
         }
+
         final Map<String, Integer>[] result = new Map[]{null};
         confirmButton.setOnAction(e -> {
             result[0] = new HashMap<>(selection);
+            gameplay.resumeGame(true);
             dialogStage.close();
         });
 
         VBox container = new VBox(15, new Text(message), grid);
         HBox buttons = new HBox(10, confirmButton);
+
         container.setStyle("""
-            -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
-            -fx-border-color: #8c5b1a;
-            -fx-border-width: 2;
-            -fx-border-radius: 10;
-            -fx-background-radius: 10;
-        """);
+        -fx-background-color: linear-gradient(to bottom, #f9ecd1, #d2a86e);
+        -fx-border-color: #8c5b1a;
+        -fx-border-width: 2;
+        -fx-border-radius: 10;
+        -fx-background-radius: 10;
+    """);
+
         if (allowAutoSelection && autoSelectionSupplier != null) {
             Button autoButton = new Button("Auto-Discard");
             autoButton.setOnAction(e -> {
@@ -705,12 +725,14 @@ public class DrawOrDisplay {
             });
             buttons.getChildren().add(autoButton);
         }
+
         container.getChildren().add(buttons);
         container.setPadding(new Insets(15));
         dialogStage.setScene(new Scene(container));
         dialogStage.showAndWait();
         return result[0];
     }
+
 
     //__________________________AI OVERLAY FUNCTIONS______________________________//
     public void setThinkingMessage(String text) {

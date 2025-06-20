@@ -103,42 +103,41 @@ public class DevelopmentCard {
         String chosenResource = drawOrDisplay.showMonopolyDialog();
         if (chosenResource == null) return;
         int taken = monopolizeResource(chosenResource, currentPlayer);
-        catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " played a Monopoly card and took " + taken + " " + chosenResource + " from other players.");
-        catanBoardGameView.refreshSidebar();
+        view.logToGameLog(player + " played a Monopoly Development Card and took " + taken + " " + chosenResource + " from other players!");
+        view.refreshSidebar();
         finishPlayingCard();
-        log("Player " + player.getPlayerId() + " played a monopoly development card");
     }
     private void playMonopolyCardAsAI(AIOpponent ai) {
-        String resource = chooseSmartResourceToMonopoly(gameplay, ai);
-        int total = monopolizeResource(resource, ai);
-        log("AI played Monopoly and took " + total + " " + resource);
+        String chosenResource = chooseSmartResourceToMonopoly(gameplay, ai);
+        int taken = monopolizeResource(chosenResource, ai);
+        view.logToGameLog("AI " + ai + " played a Monopoly Development Card and took " + taken + " " + chosenResource + " from other players!");
     }
     // ______________KNIGHT______________//
     private void playKnightCardAsPlayer(Player player) {
-        log(gameplay.getCurrentPlayer() + " played a Knight development card!");
+        view.logToGameLog(player + " played a Knight development card!");
         view.getRobber().activateRobber(false, player);
     }
     private void playKnightCardAsAI(AIOpponent ai, Gameplay gameplay) {
-        log(gameplay.getCurrentPlayer() + " played a Knight development card!");
+        view.logToGameLog("AI " + ai + " played a Knight development card!");
         view.getRobber().activateRobber(false, ai);
     }
 
     // ______________ROADBUILDING______________//
     private void playRoadBuildingCardAsPlayer(Player player) {
+        view.logToGameLog(player + " played a Road Builder Development Card!");
         startPlayingCard();
         this.placingFreeRoads = true;
         this.freeRoadsLeft = 2;
-        log("Player " + player.getPlayerId() + " played a road building development card");
     }
 
     private void playRoadBuildingCardAsAI(AIOpponent ai, Gameplay gameplay) {
+        view.logToGameLog("AI " + ai + " played a Road Builder Development Card!");
         int placed = 0;
         for (Edge edge : gameplay.getBoard().getEdges()) {
             if (placed == 2) break;
             if (gameplay.isValidRoadPlacement(edge)) {
                 if (gameplay.placeFreeRoad(ai, edge) == BuildResult.SUCCESS) {
                     placed++;
-                    log("AI " + gameplay.getCurrentPlayer() + " placed a free road.");
                 }
             }
         }
@@ -156,11 +155,10 @@ public class DevelopmentCard {
             String gained = selected.entrySet().stream()
                     .map(entry -> entry.getValue() + " " + entry.getKey())
                     .collect(Collectors.joining(", "));
-            catanBoardGameView.logToGameLog("Player " + currentPlayer.getPlayerId() + " used Year of Plenty and received " + gained + ".");
+            catanBoardGameView.logToGameLog(player + " used Year of Plenty Development Card and received " + gained + ".");
             catanBoardGameView.refreshSidebar();
             finishPlayingCard();
         }
-        log("Player " + player.getPlayerId() + " played a year of plenty development card");
     }
 
     private void playYearOfPlentyCardAsAI(AIOpponent ai, Gameplay gameplay) {
@@ -169,29 +167,23 @@ public class DevelopmentCard {
         String gained = selected.entrySet().stream()
                 .map(e -> "+ " + e.getValue() + " " + e.getKey())
                 .collect(Collectors.joining(", "));
-        log("AI played Year of Plenty: " + gained);
+        view.logToGameLog("AI " + ai + " used Year of Plenty Development Card and received " + gained + ".");
     }
 
     // ______________VICTORY POINT______________//
     private void playVictoryPointCardAsPlayer(Player player) {
         gameplay.increasePlayerScore(player);
-        log("Player " + player.getPlayerId() + " played a victory point development card");
+        view.logToGameLog(player + " played a Victory Point Development Card and gained 1 point!");
     }
 
     private void playVictoryPointCardAsAI(AIOpponent ai, Gameplay gameplay) {
         gameplay.increasePlayerScore(ai);
         gameplay.getCatanBoardGameView().runOnFX(() ->
-                gameplay.getCatanBoardGameView().logToGameLog("AI played Victory Point and gained 1 point.")
+                gameplay.getCatanBoardGameView().logToGameLog("AI " + ai + " played a Victory Point Development Card and gained 1 point!")
         );
     }
 
     //__________________________STATE + LOGIC UTILITIES__________________________//
-
-    public void log(String message) {
-        if (view != null) view.logToGameLog(message);
-        else System.err.println("LOG FAIL (view=null): " + message);
-    }
-
     public void startPlayingCard() {
         this.playingCard = true;
     }

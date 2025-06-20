@@ -77,7 +77,7 @@ public class GameController {
     // Returns to the main menu
     public void returnToMenu(MenuView menuView) {
         if (gameplay != null) {
-            gameplay.pauseGame(); // ensures all threads and state are halted
+            gameplay.pauseGame(false); // ensures all threads and state are halted
         }
         if (menuView != null) {
             menuView.showMainMenu();
@@ -86,7 +86,7 @@ public class GameController {
     // Resumes an existing game session
     public void resumeGame() {
         if (gameplay == null || gameView == null) return;
-        gameplay.resumeGame(); // handles AI restart / treads
+        gameplay.resumeGame(false); // handles AI restart / treads
         gameplay.setCatanBoardGameView(gameView); // restore view reference
         primaryStage.setScene(gameView.getScene()); // bring game view back
     }

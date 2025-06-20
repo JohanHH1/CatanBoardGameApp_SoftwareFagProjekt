@@ -72,7 +72,7 @@ public class Robber {
                                 catanBoardGameView.logToGameLog(player + " Placed the robber on a new Tile!");
                                 drawOrDisplay.showRobberVictimDialog(victims)
                                         .ifPresent(victim -> {
-                                            boolean success = stealResourceFrom(victim);
+                                            boolean success = stealResourceFrom(victim, player);
                                             if (!success) {
                                                 catanBoardGameView.logToGameLog(
                                                         "Failed to steal a resource from " + victim);
@@ -91,7 +91,7 @@ public class Robber {
         Tile chosenTile = AIChooseBestRobberTile(ai);
         Player victim = AIChooseVictimToStealFrom(chosenTile, ai, ai.getStrategyLevel());
         if (victim != null) {
-            stealResourceFrom(victim);
+            stealResourceFrom(victim, ai);
         }
         moveTo(chosenTile); // Move robber to new Tile
         // Draw the new robber circle
@@ -185,14 +185,17 @@ public class Robber {
                 catanBoardGameView.runOnFX(catanBoardGameView::refreshSidebar);
             }
             else {
-                // Human player: run the whole interaction on the FX thread
-                catanBoardGameView.runOnFX(() -> {
-                    Map<String, Integer> discarded = chooseCardsToDiscard(player, gameplay);
-                    if (discarded != null) {
-                        discardResources(player, discarded);
-                    }
-                    catanBoardGameView.refreshSidebar();   // still on FX thread
-                });
+                gameplay.pauseGame(true);
+                Map<String, Integer> discarded = chooseCardsToDiscard(player, gameplay);
+                if (discarded != null) {
+                    // Optional log
+                    StringBuilder discardText = new StringBuilder(player + " auto-discarded: ");
+                    discarded.forEach((res, amt) -> discardText.append(amt).append(" ").append(res).append(", "));
+                    discardText.setLength(discardText.length() - 2); // remove trailing comma
+                    gameplay.getCatanBoardGameView().logToGameLog(discardText.toString());
+                    discardResources(player, discarded);
+                }
+                catanBoardGameView.refreshSidebar();
             }
         }
     }
@@ -214,7 +217,7 @@ public class Robber {
         return new ArrayList<>(victims);
     }
 
-    public boolean stealResourceFrom(Player victim) {
+    public boolean stealResourceFrom(Player victim, Player thief) {
         List<String> pool = new ArrayList<>();
         victim.getResources().forEach((res, count) -> {
             for (int i = 0; i < count; i++) pool.add(res);
@@ -227,9 +230,13 @@ public class Robber {
         Collections.shuffle(pool);
         String stolen = pool.get(0);
         victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
-        Player thief = this.gameplay.getCurrentPlayer();
         thief.getResources().put(stolen, thief.getResources().getOrDefault(stolen, 0) + 1);
-        catanBoardGameView.logToGameLog("Player " + thief.getPlayerId() + " stole 1 " + stolen + " from Player " + victim.getPlayerId());
+        catanBoardGameView.logToGameLog(thief + " stole 1 " + stolen + " from Player " + victim);
+//        if (gameplay.isGamePaused()) {
+//
+//        }
+//        catanBoardGameView.logToGameLog("AI " + thief + " has ended their turn.");
+//        catanBoardGameView.logToGameLog("_____________________________________________________\n");
         return true;
     }
 
@@ -248,6 +255,7 @@ public class Robber {
         int totalCards = playerResources.values().stream().mapToInt(Integer::intValue).sum();
         int toDiscard = totalCards / 2;
         if (toDiscard == 0) return null;
+
         return drawOrDisplay.showDiscardDialog(player, toDiscard, playerResources, gameplay);
     }
 

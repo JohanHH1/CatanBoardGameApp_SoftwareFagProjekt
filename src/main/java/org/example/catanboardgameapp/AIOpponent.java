@@ -362,10 +362,7 @@ public class AIOpponent extends Player {
                 case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
             }
         } while (moveMade && --attempts > 0);
-        view.runOnFX(() -> {
-            view.logToGameLog(gameplay.getCurrentPlayer() + " (" + strategyLevel.name() + ") has ended their turn.");
-            gameplay.nextPlayerTurn();
-        });
+        view.runOnFX(gameplay::nextPlayerTurn);
     }
     // Medium AI tries to make a move based on chosen Strategy
     private void makeMediumLevelMove(Gameplay gameplay, Group boardGroup) {
@@ -390,10 +387,7 @@ public class AIOpponent extends Player {
                 case ROADBUILDER -> moveMade = tryBuildRoad(gameplay, boardGroup);
             }
         } while (moveMade && --attempts > 0);
-        view.runOnFX(() -> {
-            view.logToGameLog(gameplay.getCurrentPlayer() + " (" + strategyLevel.name() + ") has ended their turn.");
-            gameplay.nextPlayerTurn();
-        });
+        view.runOnFX(gameplay::nextPlayerTurn);
     }
     // Hard AI tries to make a move based on chosen Strategy
     private void makeHardLevelMove(Gameplay gameplay, Group boardGroup) {
@@ -424,10 +418,7 @@ public class AIOpponent extends Player {
 
         // before finishing their turn, always try to play development card if they have any
         tryPlayDevCard(gameplay, boardGroup);
-        view.runOnFX(() -> {
-            view.logToGameLog(gameplay.getCurrentPlayer() + " (" + strategyLevel.name() + ") has ended their turn.");
-            gameplay.nextPlayerTurn();
-        });
+        view.runOnFX(gameplay::nextPlayerTurn);
     }
 
     //_______________________________ BUILDS AND TRADES ______________________________//
@@ -770,9 +761,6 @@ public class AIOpponent extends Player {
         else {
             DevelopmentCard.DevelopmentCardType devCardType = getFirstDevelopmentCard();
             if (devCardType != null) {
-                gameplay.getCatanBoardGameView().runOnFX(() ->
-                        gameplay.getCatanBoardGameView().logToGameLog(gameplay.getCurrentPlayer() +" just played development card of type: " + devCardType)
-                );
                 // Call the enum-based AI method
                 devCardType.playAsAI(this, gameplay.getDevelopmentCard(), gameplay);
 
@@ -896,9 +884,9 @@ public class AIOpponent extends Player {
         int delayMillis;
         switch (thinkingSpeed) {
             case SLOW -> delayMillis = ThreadLocalRandom.current().nextInt(3000, 7000);
-            case FAST -> delayMillis = 200;
+            case FAST -> delayMillis = 700;
             case EXTREME -> delayMillis = 20;
-            default -> delayMillis = 1000;
+            default -> delayMillis = 1500;
         }
         try {
             int step = 10;

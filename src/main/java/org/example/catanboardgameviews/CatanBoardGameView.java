@@ -284,7 +284,7 @@ public class CatanBoardGameView {
 
         // Handle exit confirmation and return to main menu
         exitButton.setOnAction(e -> {
-            gameplay.pauseGame();
+            gameplay.pauseGame(false);
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to exit to the main menu?", ButtonType.YES, ButtonType.NO);
             DialogPane pane = alert.getDialogPane();
             pane.setStyle(BUTTON_STYLE);
@@ -576,7 +576,7 @@ public class CatanBoardGameView {
                 }
                 // Pause the game
                 case SPACE -> {
-                    gameplay.pauseGame();
+                    gameplay.pauseGame(false);
                     Alert pauseAlert = new Alert(Alert.AlertType.INFORMATION, "Game is paused. Press OK to resume.", ButtonType.OK);
                     pauseAlert.setTitle("Game Paused");
                     pauseAlert.setHeaderText(null);
@@ -593,7 +593,7 @@ public class CatanBoardGameView {
 
                 // Ask to confirm exit
                 case ESCAPE -> {
-                    gameplay.pauseGame();
+                    gameplay.pauseGame(false);
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Exit to main menu?", ButtonType.YES, ButtonType.NO);
                     Optional<ButtonType> result = alert.showAndWait();
                     if (result.isPresent() && result.get() == ButtonType.YES) {

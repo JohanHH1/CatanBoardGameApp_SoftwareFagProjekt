@@ -60,7 +60,7 @@ public class Gameplay {
     //__________________________CONSTRUCTOR_____________________________//
     // Create a new game session
     public Gameplay(int boardRadius, GameController gameController) {
-        this.drawOrDisplay = new DrawOrDisplay(boardRadius);
+        this.drawOrDisplay = new DrawOrDisplay(boardRadius, this);
         this.boardRadius = boardRadius;
         this.gameController = gameController;
         this.longestRoadManager = new LongestRoadManager(this);
@@ -203,8 +203,13 @@ public class Gameplay {
     // Helper logic called at the start of every turn
     private void startOfTurnEffects() {
         if (!initialPhase) {
-            catanBoardGameView.logToGameLog(getCurrentPlayer() +  " has ended their turn.");
-            catanBoardGameView.logToGameLog("_____________________________________________________\n");
+            if (getCurrentPlayer() instanceof AIOpponent && !isGamePaused()) {
+                catanBoardGameView.logToGameLog("AI " + getCurrentPlayer() +  " has ended their turn.");
+            }
+            else {
+                if (!isGamePaused()) catanBoardGameView.logToGameLog(getCurrentPlayer() +  " has ended their turn.");
+            }
+            if (!isGamePaused())catanBoardGameView.logToGameLog("_____________________________________________________\n");
             // Rotate to next player
             currentPlayerIndex = (currentPlayerIndex + 1) % playerList.size();
             currentPlayer = playerList.get(currentPlayerIndex);
@@ -228,7 +233,7 @@ public class Gameplay {
     // Stops the game and exits if the turn limit is exceeded (Used to prevent infinite loops or AI bugs while testing)
     public void crashGameIfMaxTurnsExceeded(int MAX_TURNS, int turnCounter) {
         if (turnCounter > MAX_TURNS) {
-            pauseGame();
+            pauseGame(false);
             String error = "Fatal error: MAX_TURNS (" + MAX_TURNS + ") exceeded. Possible infinite loop or thread leak.";
             System.err.println(error);
 
@@ -673,24 +678,39 @@ public class Gameplay {
     }
 
     //_______________________________PAUSE FUNCTIONS_________________________________//
-    public void pauseGame() {
-        if (!gamePaused) {
-            this.drawOrDisplay.pauseThinkingAnimation(this.drawOrDisplay); // Stop animation
-            catanBoardGameView.logToGameLog("Game paused.");
+    public void pauseGame(boolean robberAction) {
+        if (robberAction) {
             gamePaused = true;
             stopAllAIThreads();  // interrupt AI thread cleanly
+        }
+        else {
+            if (!gamePaused) {
+                this.drawOrDisplay.pauseThinkingAnimation(this.drawOrDisplay); // Stop animation
+                catanBoardGameView.logToGameLog("Game paused.");
+                gamePaused = true;
+                stopAllAIThreads();  // interrupt AI thread cleanly
+            }
         }
     }
 
     // Resumes game from paused state
-    public void resumeGame() {
-        if (!gamePaused) return; // prevent spamming or double-starting
-        this.drawOrDisplay.resumeThinkingAnimation(this.drawOrDisplay); // resumes paused animations
-        catanBoardGameView.logToGameLog("Game resumed.");
-        gamePaused = false;
-        // Resumes AI if current player is AI
-        if (currentPlayer instanceof AIOpponent ai) {
-            startAIThread(ai);
+    public void resumeGame(boolean robberAction) {
+        if (robberAction) {
+            gamePaused = false;
+            // Resumes AI if current player is AI
+            if (currentPlayer instanceof AIOpponent ai) {
+                startAIThread(ai);
+            }
+        }
+        else {
+            if (!gamePaused) return; // prevent spamming or double-starting
+            this.drawOrDisplay.resumeThinkingAnimation(this.drawOrDisplay); // resumes paused animations
+            catanBoardGameView.logToGameLog("Game resumed.");
+            gamePaused = false;
+            // Resumes AI if current player is AI
+            if (currentPlayer instanceof AIOpponent ai) {
+                startAIThread(ai);
+            }
         }
     }
 
