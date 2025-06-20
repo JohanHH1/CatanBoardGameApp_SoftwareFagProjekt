@@ -39,13 +39,16 @@ public class Gameplay {
     private DevelopmentCard developmentCard;
 
     // All available development cards in the deck
-    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
+    /*private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
             MONOPOLY, MONOPOLY,
             YEAROFPLENTY, YEAROFPLENTY,
             ROADBUILDING, ROADBUILDING,
             VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT, VICTORYPOINT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT,
             KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT, KNIGHT
+    };*/
+    private final DevelopmentCard.DevelopmentCardType[] developmentCardTypes = {
+            MONOPOLY, MONOPOLY,
     };
 
     private List<DevelopmentCard.DevelopmentCardType> shuffledDevelopmentCards;

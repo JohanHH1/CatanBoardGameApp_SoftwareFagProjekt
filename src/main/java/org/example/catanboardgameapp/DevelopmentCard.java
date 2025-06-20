@@ -228,7 +228,7 @@ public class DevelopmentCard {
     }
 
     // Second Monopoly helper function
-    public String chooseSmartResourceToMonopoly(Gameplay gameplay, AIOpponent ai){
+    public String chooseSmartResourceToMonopoly(Gameplay gameplay, AIOpponent ai) {
         //getting all opponents
         List<Player> opponents = gameplay.getPlayerList().stream()
                 .filter(p -> p != ai)
@@ -258,10 +258,10 @@ public class DevelopmentCard {
         // Check if we can steal enough to build a full city
         int oreNeed = Math.max(0, 3 - oreHave);
         int grainNeed = Math.max(0, 2 - grainHave);
-        if ((oreFromOpponents >= oreNeed) && grainNeed==0 ){
+        if ((oreFromOpponents >= oreNeed) && grainNeed == 0) {
             return "Ore";
-        } else if (grainFromOpponents >= grainNeed && oreNeed==0) {
-            return"Grain";
+        } else if (grainFromOpponents >= grainNeed && oreNeed == 0) {
+            return "Grain";
         }
         // Check if we can steal enough to build a settlement
         grainNeed = Math.max(0, 1 - grainHave);
@@ -320,6 +320,10 @@ public class DevelopmentCard {
                 }
             }
         }
-        return bestTradeResource;
+        // fallback only if literally no one has any resources
+        return Objects.requireNonNullElseGet(bestTradeResource, () -> totalOpponentResources.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("Ore"));
     }
 }
