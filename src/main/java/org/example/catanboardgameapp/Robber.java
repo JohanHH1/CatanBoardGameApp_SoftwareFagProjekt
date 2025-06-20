@@ -1,7 +1,5 @@
 package org.example.catanboardgameapp;
 
-import javafx.application.Platform;
-import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.shape.Circle;
 import org.example.catanboardgameviews.CatanBoardGameView;
@@ -19,8 +17,7 @@ public class Robber {
     private Tile currentTile;
     private final Board board;
     private Circle robberCircle;
-    private boolean robberNeedsToMove = false;
-    private final List<Circle> activeRobberHighlights = new ArrayList<>();
+    private List<Circle> activeRobberHighlights = new ArrayList<>();
 
     //______________________________CONSTRUCTOR_____________________________//
     public Robber(Tile startingTile, Gameplay gameplay, CatanBoardGameView catanBoardGameView, Group boardGroup) {
@@ -29,68 +26,79 @@ public class Robber {
         this.drawOrDisplay = gameplay.getDrawOrDisplay();
         this.catanBoardGameView = catanBoardGameView;
         this.board = gameplay.getBoard();
-        Point2D center = startingTile.getCenter();
-        this.robberCircle = drawOrDisplay.drawRobberCircle(center, boardGroup);
+        this.robberCircle = drawOrDisplay.createRobberCircle();
+        drawOrDisplay.drawNewRobberCircle(startingTile, boardGroup, robberCircle, false);
     }
 
     //________________________ROBBER PLACEMENT LOGIC________________________//
-    public void showRobberTargets(Group boardGroup) {
-        catanBoardGameView.runOnFX(() -> {
-            catanBoardGameView.logToGameLog(gameplay.getCurrentPlayer() + ", place the Robber on a highlighted Tile");
+    // Main Robber function, ONLY function being called from outside this class
+    public void activateRobber(boolean sevenRolled, Player player) {
+        hideButtons();
+        if (sevenRolled) {
+            whoShouldDiscardCards();            // 7 was rolled
+        } else {                                // Knight Development Card
+            player.increasePlayedKnights();
+            gameplay.getBiggestArmy()
+                    .calculateAndUpdateBiggestArmy(player);
+        }
+        // AI Player Logic
+        if (player instanceof AIOpponent ai) {
+            AIHandleRobberMechanics(ai);
+            showButtons();
+            catanBoardGameView.runOnFX(catanBoardGameView::refreshSidebar);
+        }
+        else {
+            // Human Player Logic
+            catanBoardGameView.runOnFX(() -> {
+                catanBoardGameView.logToGameLog(
+                        player + " please place the Robber on a highlighted tile");
 
-            if (gameplay.getCurrentPlayer() instanceof AIOpponent ai) {
-                placeRobberAutomatically(ai, boardGroup);
-                return; // AI will handle everything automatically
-            }
-            // Human Player:
-            boardGroup.getChildren().remove(this.robberCircle);
-            catanBoardGameView.hideTurnButton();
-            catanBoardGameView.hideDiceButton();
-            activeRobberHighlights.clear();
-            for (Tile tile : board.getTiles()) {
-                if (tile == this.currentTile || tile.isSea()) continue;
-                Runnable onClick = () -> {
-                    catanBoardGameView.runOnFX(() -> {
-                        activeRobberHighlights.forEach(boardGroup.getChildren()::remove);
-                        activeRobberHighlights.clear();
+                // draw highlights; when the user clicks, *this* lambda runs
+                activeRobberHighlights = drawOrDisplay.createAndDrawRobberHighlights(
+                        catanBoardGameView.getBoardGroup(),
+                        activeRobberHighlights,
+                        board,
+                        chosenTile -> {
+                            // Robber actually moves
+                            moveTo(chosenTile);
+                            drawOrDisplay.drawNewRobberCircle(chosenTile, catanBoardGameView.getBoardGroup(), robberCircle, false);
 
-                        if (gameplay.isActionBlockedByDevelopmentCard()) {
-                            gameplay.getDevelopmentCard().finishPlayingCard();
-                        }
-                        gameplay.setRobberMoveRequired(false);
-                        boardGroup.getChildren().remove(this.robberCircle);
-                        this.robberCircle = drawOrDisplay.drawRobberCircle(tile.getCenter(), boardGroup);
-                        this.moveTo(tile);
-
-                        if (gameplay.hasRolledDice()) {
-                            catanBoardGameView.showTurnButton();
-                        } else {
-                            catanBoardGameView.showDiceButton();
-                        }
-
-                        List<Player> victims = showPotentialVictims(tile, gameplay.getCurrentPlayer());
-                        if (victims.isEmpty()) {
-                            catanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from.");
-                            return;
-                        }
-                        drawOrDisplay.showRobberVictimDialog(victims).ifPresent(victim -> {
-                            boolean success = stealResourceFrom(victim);
-                            if (!success) {
-                                catanBoardGameView.logToGameLog("Failed to steal a resource from " + victim);
+                            // Steal phase
+                            List<Player> victims = getPotentialVictims(
+                                    chosenTile, gameplay.getCurrentPlayer());
+                            if (victims.isEmpty()) {
+                                catanBoardGameView.logToGameLog("Bad Robber placement! No players to steal from.");
+                            } else {
+                                catanBoardGameView.logToGameLog(player + " Placed the robber on a new Tile!");
+                                drawOrDisplay.showRobberVictimDialog(victims)
+                                        .ifPresent(victim -> {
+                                            boolean success = stealResourceFrom(victim);
+                                            if (!success) {
+                                                catanBoardGameView.logToGameLog(
+                                                        "Failed to steal a resource from " + victim);
+                                            }
+                                        });
                             }
+                            showButtons();
                             catanBoardGameView.refreshSidebar();
                         });
-                        activeRobberHighlights.clear();
-                    });
-                };
-                Circle highlight = drawOrDisplay.createRobberHighlight(tile, boardGroup, onClick);
-                activeRobberHighlights.add(highlight);
-            }
-        });
+            });
+        }
     }
 
-    //______________________________AI HELPERS__________________________________//
-    public void placeRobberAutomatically(AIOpponent ai, Group boardGroup) {
+    // Handles all logic for AI Robber usage
+    private void AIHandleRobberMechanics(AIOpponent ai) {
+        Tile chosenTile = AIChooseBestRobberTile(ai);
+        Player victim = AIChooseVictimToStealFrom(chosenTile, ai, ai.getStrategyLevel());
+        if (victim != null) {
+            stealResourceFrom(victim);
+        }
+        moveTo(chosenTile); // Move robber to new Tile
+        // Draw the new robber circle
+        drawOrDisplay.drawNewRobberCircle(chosenTile, catanBoardGameView.getBoardGroup(), robberCircle, false);
+    }
+
+    private Tile AIChooseBestRobberTile(AIOpponent ai) {
         AIOpponent.StrategyLevel level = ai.getStrategyLevel();
         Tile chosenTile;
         // EASY AI: Random placement
@@ -98,8 +106,8 @@ public class Robber {
             List<Tile> candidates = board.getTiles().stream()
                     .filter(t -> !t.isSea() && t != currentTile)
                     .toList();
+            catanBoardGameView.logToGameLog(ai + " (" + level + ") placed the robber randomly!");
             chosenTile = candidates.get(new Random().nextInt(candidates.size()));
-            catanBoardGameView.logToGameLog(gameplay.getCurrentPlayer() + " (EASY) placed robber randomly.");
         }
         // MEDIUM/HARD: Smart Placement System
         else {
@@ -132,50 +140,35 @@ public class Robber {
                     bestTile = tile;
                 }
             }
+            catanBoardGameView.logToGameLog(ai + " (" + level + ") placed robber on best possible tile!");
             chosenTile = bestTile != null ? bestTile : validTargets.get(0);
-            catanBoardGameView.logToGameLog(gameplay.getCurrentPlayer() + " (" + level + ") placed robber on best possible tile");
         }
-        // Place Robber on Tile
-        boardGroup.getChildren().remove(this.robberCircle); //  Remove old circle before drawing new one
-        moveTo(chosenTile);
-        this.robberCircle = drawOrDisplay.drawRobberCircle(chosenTile.getCenter(), boardGroup);
-        robberHasMoved();
+        return chosenTile;
+    }
 
+    private Player AIChooseVictimToStealFrom(Tile chosenTile, AIOpponent ai, AIOpponent.StrategyLevel level) {
         // Determine valid victims
-        List<Player> victims = showPotentialVictims(chosenTile, ai).stream()
+        List<Player> victims = getPotentialVictims(chosenTile, ai).stream()
                 .filter(p -> p.getTotalResourceCount() > 0)
                 .toList();
         if (!victims.isEmpty()) {
-            Player target;
+            Player victim;
             if (level == AIOpponent.StrategyLevel.HARD) {
-                target = ai.chooseBestRobberTargetForHardAI(ai, victims);
+                victim = AIHardChooseBestRobberVictim(ai, victims);
             } else {
-                target = victims.stream()
+                victim = victims.stream()
                         .max(Comparator.comparingInt(Player::getTotalResourceCount))
                         .orElse(victims.get(0));
             }
-            if (target != null) {
-                stealResourceFrom(target);
-            }
+            return victim;
         }
-        catanBoardGameView.refreshSidebar();
-        catanBoardGameView.showTurnButton();
+        catanBoardGameView.logToGameLog("AI did not find a victim to steal from");
+        return null;
     }
 
-    private List<Player> showPotentialVictims(Tile tile, Player currentPlayer) {
-        Set<Player> victims = new HashSet<>();
-        for (Vertex v : tile.getVertices()) {
-            Player owner = v.getOwner();
-            if (owner != null && owner != currentPlayer) victims.add(owner);
-        }
-        return new ArrayList<>(victims);
-    }
-
-    //____________________CARD DISCARD HANDLER__________________________//
-    public void requireRobberMove() {
-        robberNeedsToMove = true;
-        for (Player p : gameplay.getPlayerList()) {
-            int totalCards = p.getResources()
+    private void whoShouldDiscardCards() {
+        for (Player player : gameplay.getPlayerList()) {
+            int totalCards = player.getResources()
                     .values()
                     .stream()
                     .mapToInt(Integer::intValue)
@@ -184,47 +177,41 @@ public class Robber {
                 continue;   // no discard needed
             }
             // AI player, away from FX thread
-            if (p instanceof AIOpponent ai) {
-                Map<String, Integer> discarded = ai.chooseDiscardCardsAI();
+            if (player instanceof AIOpponent ai) {
+                Map<String, Integer> discarded = AIChooseCardsToDiscard(ai);
                 if (discarded != null) {
-                    discardResourcesForPlayer(p, discarded);
+                    discardResources(player, discarded);
                 }
                 catanBoardGameView.runOnFX(catanBoardGameView::refreshSidebar);
-                continue;
             }
-            // Human player: run the whole interaction on the FX thread
-            catanBoardGameView.runOnFX(() -> {
-                Map<String, Integer> discarded = discardCards(p, gameplay);
-                if (discarded != null) {
-                    discardResourcesForPlayer(p, discarded);
-                }
-                catanBoardGameView.refreshSidebar();   // still on FX thread
-            });
+            else {
+                // Human player: run the whole interaction on the FX thread
+                catanBoardGameView.runOnFX(() -> {
+                    Map<String, Integer> discarded = chooseCardsToDiscard(player, gameplay);
+                    if (discarded != null) {
+                        discardResources(player, discarded);
+                    }
+                    catanBoardGameView.refreshSidebar();   // still on FX thread
+                });
+            }
         }
     }
 
-    private Map<String, Integer> discardCards(Player player, Gameplay gameplay) {
-        Map<String, Integer> playerResources = new HashMap<>(player.getResources());
-        int totalCards = playerResources.values().stream().mapToInt(Integer::intValue).sum();
-        int toDiscard = totalCards / 2;
-        if (toDiscard == 0) return null;
-        return drawOrDisplay.showDiscardDialog(player, toDiscard, playerResources, gameplay);
+    public Player AIHardChooseBestRobberVictim(AIOpponent ai, List<Player> victims) {
+        AIOpponent.Strategy strategy = ai.determineStrategy(false);
+        Set<String> neededResources = ai.getNeededResourcesForStrategy(strategy);
+        return victims.stream()
+                .max(Comparator.comparingInt(v -> ai.countHelpfulCards(v, neededResources)))
+                .orElse(null);
     }
 
-    //____________________HELPERS__________________________//
-    public void robberHasMoved() {
-        robberNeedsToMove = false;
-    }
-
-    public void moveTo(Tile newTile) {
-        this.currentTile = newTile;
-    }
-
-    public void discardResourcesForPlayer(Player player, Map<String, Integer> discarded) {
-        discarded.forEach((res, amt) -> {
-            int current = player.getResources().getOrDefault(res, 0);
-            player.getResources().put(res, Math.max(0, current - amt));
-        });
+    private List<Player> getPotentialVictims(Tile tile, Player currentPlayer) {
+        Set<Player> victims = new HashSet<>();
+        for (Vertex v : tile.getVertices()) {
+            Player owner = v.getOwner();
+            if (owner != null && owner != currentPlayer) victims.add(owner);
+        }
+        return new ArrayList<>(victims);
     }
 
     public boolean stealResourceFrom(Player victim) {
@@ -232,16 +219,146 @@ public class Robber {
         victim.getResources().forEach((res, count) -> {
             for (int i = 0; i < count; i++) pool.add(res);
         });
-        if (pool.isEmpty()) return false;
-
+        if (pool.isEmpty()) {
+            catanBoardGameView.logToGameLog(victim + " had no Resources to steal");
+            return false;
+        }
+        // Shuffle resources and steal random one
         Collections.shuffle(pool);
         String stolen = pool.get(0);
         victim.getResources().put(stolen, victim.getResources().get(stolen) - 1);
-
         Player thief = this.gameplay.getCurrentPlayer();
         thief.getResources().put(stolen, thief.getResources().getOrDefault(stolen, 0) + 1);
-
         catanBoardGameView.logToGameLog("Player " + thief.getPlayerId() + " stole 1 " + stolen + " from Player " + victim.getPlayerId());
         return true;
+    }
+
+    //_____________________________DISCARD LOGIC_____________________________________//
+    // Function that actually removes the resources from Players
+    public void discardResources(Player player, Map<String, Integer> discarded) {
+        discarded.forEach((res, amt) -> {
+            int current = player.getResources().getOrDefault(res, 0);
+            player.getResources().put(res, Math.max(0, current - amt));
+        });
+    }
+
+    // For Human Players - Choose which cards to Discard via Popup
+    private Map<String, Integer> chooseCardsToDiscard(Player player, Gameplay gameplay) {
+        Map<String, Integer> playerResources = new HashMap<>(player.getResources());
+        int totalCards = playerResources.values().stream().mapToInt(Integer::intValue).sum();
+        int toDiscard = totalCards / 2;
+        if (toDiscard == 0) return null;
+        return drawOrDisplay.showDiscardDialog(player, toDiscard, playerResources, gameplay);
+    }
+
+    // AI automatically discards cards
+    public Map<String, Integer> AIChooseCardsToDiscard(AIOpponent ai) {
+        Map<String, Integer> resources = new HashMap<>(ai.getResources());
+        int total = resources.values().stream().mapToInt(Integer::intValue).sum();
+        int toDiscard = total / 2;
+        if (toDiscard == 0) return null;
+
+        Map<String, Integer> discardMap = new HashMap<>();
+        Map<String, Integer> priorityScores = new HashMap<>();
+        // Resources AI needs for next strategy (e.g. city/settlement/dev card)
+        AIOpponent.Strategy strategy = ai.determineStrategy(false);
+        Set<String> neededResources = ai.getNeededResourcesForStrategy(strategy);
+
+        for (String res : resources.keySet()) {
+            int amountOwned = resources.getOrDefault(res, 0);
+            int productionScore = 0;
+
+            // Production score: total dice weight from settlements
+            productionScore = ai.getProductionScore(res);
+
+            // Base score: more owned = more discardable
+            int score = amountOwned * 3;
+
+            // Subtract based on production (more produced → less discardable)
+            score -= productionScore * 2;
+
+            // Penalize if resource is needed for strategy
+            if (neededResources.contains(res)) {
+                score -= 8;
+            }
+            // Penalize if resource is easy to trade (2:1 or 3:1 harbor = valuable)
+            int ratio = ai.getBestTradeRatio(res, ai);
+            if (ratio <= 2) score -= 6;
+            else if (ratio == 3) score -= 3;
+            priorityScores.put(res, score);
+        }
+        // Sort by lowest score (most discardable first)
+        List<String> discardOrder = priorityScores.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .toList();
+
+        for (String res : discardOrder) {
+            if (toDiscard == 0) break;
+            int available = resources.get(res);
+            int discard = Math.min(available, toDiscard);
+            if (discard > 0) {
+                discardMap.put(res, discard);
+                toDiscard -= discard;
+            }
+        }
+        // Optional log
+        StringBuilder discardText = new StringBuilder(ai + " auto-discarded: ");
+        discardMap.forEach((res, amt) -> discardText.append(amt).append(" ").append(res).append(", "));
+        if (!discardMap.isEmpty()) {
+            discardText.setLength(discardText.length() - 2); // remove trailing comma
+            gameplay.getCatanBoardGameView().logToGameLog(discardText.toString());
+        }
+        return discardMap;
+    }
+
+    // Robber Logic: auto-discard for human players
+    public Map<String, Integer> autoDiscardCardsHuman(Player player) {
+        Map<String, Integer> resourcesCopy = new HashMap<>(player.getResources());
+        int total = resourcesCopy.values().stream().mapToInt(Integer::intValue).sum();
+        int toDiscard = total / 2;
+        if (toDiscard == 0) return null;
+        Map<String, Integer> discardMap = new HashMap<>();
+
+        // Simple heuristic: discard from most abundant resource
+        List<Map.Entry<String, Integer>> sorted = new ArrayList<>(resourcesCopy.entrySet());
+        sorted.sort((a, b) -> Integer.compare(b.getValue(), a.getValue())); // highest first
+
+        for (Map.Entry<String, Integer> entry : sorted) {
+            if (toDiscard == 0) break;
+            String res = entry.getKey();
+            int available = entry.getValue();
+            int discard = Math.min(available, toDiscard);
+            if (discard > 0) {
+                discardMap.put(res, discard);
+                toDiscard -= discard;
+            }
+        }
+        // Log discards
+        StringBuilder log = new StringBuilder(player + " auto discarded: ");
+        discardMap.forEach((res, amt) -> log.append(amt).append(" ").append(res).append(", "));
+        if (!discardMap.isEmpty()) {
+            log.setLength(log.length() - 2); // remove trailing comma
+            gameplay.getCatanBoardGameView().logToGameLog(log.toString());
+        }
+        return discardMap;
+    }
+
+    //___________________________HELPER FUNCTIONS________________________________//
+    private void hideButtons() {
+        catanBoardGameView.hideDiceButton();
+        catanBoardGameView.hideTurnButton();
+    }
+    private void showButtons() {
+        if (gameplay.hasRolledDice()) {
+            catanBoardGameView.showTurnButton();
+        }
+        else {
+            catanBoardGameView.showDiceButton();
+        }
+    }
+
+    public void moveTo(Tile newTile) {
+        this.currentTile = newTile;
     }
 }

@@ -115,21 +115,12 @@ public class DevelopmentCard {
     }
     // ______________KNIGHT______________//
     private void playKnightCardAsPlayer(Player player) {
-        view.hideDiceButton();
-        view.hideTurnButton();
-        startPlayingCard();
-        view.getRobber().showRobberTargets(view.getBoardGroup());
-        gameplay.setRobberMoveRequired(true);
-        player.increasePlayedKnights();
-        gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(player);
-        log("Player " + player.getPlayerId() + " played a knight development card");
+        log(gameplay.getCurrentPlayer() + " played a Knight development card!");
+        view.getRobber().activateRobber(false, player);
     }
     private void playKnightCardAsAI(AIOpponent ai, Gameplay gameplay) {
-        view.runOnFX(() -> {
-            ai.increasePlayedKnights();
-            gameplay.getBiggestArmy().calculateAndUpdateBiggestArmy(ai);
-            view.getRobber().showRobberTargets(view.getBoardGroup());
-        });
+        log(gameplay.getCurrentPlayer() + " played a Knight development card!");
+        view.getRobber().activateRobber(false, ai);
     }
 
     // ______________ROADBUILDING______________//

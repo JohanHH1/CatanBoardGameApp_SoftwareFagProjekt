@@ -31,7 +31,6 @@ public class Gameplay {
     private boolean waitingForInitialRoad = false;     // Set to true after placing initial settlement
     private volatile boolean gamePaused = false;       // Used to pause/resume game (e.g., for menu)
     private Thread activeAIThread;
-    private boolean isRobberMoveRequired = false;      // Set to true after rolling a 7
     private boolean gameOver = false;                  // Set true when someone reaches victory
 
     //__________________________BOARD & GAME DATA_____________________________//
@@ -253,13 +252,11 @@ public class Gameplay {
     public void rollDice() {
         turnCounter++;
         setHasRolledThisTurn(true);
-
         // Logic part (no FX)
         Random rand = new Random();
         lastRolledDie1 = rand.nextInt(6) + 1;
         lastRolledDie2 = rand.nextInt(6) + 1;
         int roll = lastRolledDie1 + lastRolledDie2;
-
         catanBoardGameView.runOnFX(() -> {
             // Update dice visuals and logs
             catanBoardGameView.updateDiceImages(lastRolledDie1, lastRolledDie2);
@@ -267,12 +264,9 @@ public class Gameplay {
             catanBoardGameView.hideDiceButton();
             catanBoardGameView.showTurnButton();
             catanBoardGameView.runOnFX(() -> catanBoardGameView.refreshSidebar());
-
             // Handle robber or resource distribution
             if (roll == 7) {
-                catanBoardGameView.getRobber().requireRobberMove();
-                catanBoardGameView.getRobber().showRobberTargets(catanBoardGameView.getBoardGroup());
-                setRobberMoveRequired(true);
+                catanBoardGameView.getRobber().activateRobber(true, currentPlayer);
             } else {
                 catanBoardGameView.logToGameLog("Distributing resources:");
                 distributeResources(roll);
@@ -754,10 +748,6 @@ public class Gameplay {
     }
     public DrawOrDisplay getDrawOrDisplay() {
         return drawOrDisplay;
-    }
-
-    public void setRobberMoveRequired(boolean required) {
-        isRobberMoveRequired = required;
     }
 
     public Player getCurrentPlayer() {

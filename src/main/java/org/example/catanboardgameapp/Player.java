@@ -9,7 +9,7 @@ import org.example.catanboardgameapp.DevelopmentCard.DevelopmentCardType;
 
 public class Player {
 
-    private static final boolean DEBUG_MODE = false; // Set to false for normal game SKAL FJERNES??
+    private static final boolean DEBUG_MODE = true; // Set to false for normal game SKAL FJERNES??
 
     private final Gameplay gameplay;
     private final Color color;
@@ -51,7 +51,7 @@ public class Player {
     private void initializeResources() {
         List<String> resourceTypes = Arrays.asList("Brick", "Wood", "Ore", "Grain", "Wool");
         for (String resource : resourceTypes) {
-            resources.put(resource, DEBUG_MODE ? 10 : 0);
+            resources.put(resource, DEBUG_MODE ? 1 : 0);
         }
     }
 
@@ -59,7 +59,7 @@ public class Player {
     private void initializeDevelopmentCards() {
         developmentCards = new HashMap<>();
         for (DevelopmentCardType cardType : DevelopmentCardType.values()) {
-            developmentCards.put(cardType, DEBUG_MODE ? 2 : 0);
+            developmentCards.put(cardType, DEBUG_MODE ? 1 : 0);
         }
     }
 
@@ -104,38 +104,6 @@ public class Player {
 
     public boolean hasNoDevelopmentCards() {
         return developmentCards.values().stream().allMatch(count -> count == 0);
-    }
-
-    // Robber Logic: For AI use and for auto-discard for human players
-    public Map<String, Integer> chooseDiscardCards() {
-        Map<String, Integer> resourcesCopy = new HashMap<>(getResources());
-        int total = resourcesCopy.values().stream().mapToInt(Integer::intValue).sum();
-        int toDiscard = total / 2;
-        if (toDiscard == 0) return null;
-        Map<String, Integer> discardMap = new HashMap<>();
-
-        // Simple heuristic: discard from most abundant resource
-        List<Map.Entry<String, Integer>> sorted = new ArrayList<>(resourcesCopy.entrySet());
-        sorted.sort((a, b) -> Integer.compare(b.getValue(), a.getValue())); // highest first
-
-        for (Map.Entry<String, Integer> entry : sorted) {
-            if (toDiscard == 0) break;
-            String res = entry.getKey();
-            int available = entry.getValue();
-            int discard = Math.min(available, toDiscard);
-            if (discard > 0) {
-                discardMap.put(res, discard);
-                toDiscard -= discard;
-            }
-        }
-        // Log discards
-        StringBuilder log = new StringBuilder("Player " + getPlayerId() + " auto discarded: ");
-        discardMap.forEach((res, amt) -> log.append(amt).append(" ").append(res).append(", "));
-        if (!discardMap.isEmpty()) {
-            log.setLength(log.length() - 2); // remove trailing comma
-            gameplay.getCatanBoardGameView().logToGameLog(log.toString());
-        }
-        return discardMap;
     }
 
     //_____________________________GETTERS_____________________________//

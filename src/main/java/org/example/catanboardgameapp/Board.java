@@ -176,7 +176,7 @@ public class Board {
                 Harbor.HarborType.ORE,     Harbor.HarborType.GRAIN,
                 Harbor.HarborType.WOOD,
                 Harbor.HarborType.GENERIC, Harbor.HarborType.GENERIC,
-                Harbor.HarborType.GENERIC, Harbor.HarborType.GENERIC
+                Harbor.HarborType.GENERIC
         ));
         Collections.shuffle(harborTypes);              // randomise types
 

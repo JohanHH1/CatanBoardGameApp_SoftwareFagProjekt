@@ -355,7 +355,6 @@ public class AIOpponent extends Player {
         boolean moveMade;
         do {
             Strategy strategy = determineStrategy(true);
-            view.logToGameLog(gameplay.getCurrentPlayer() + " (EASY) is using strategy: " + strategy);
             moveMade = false;
             switch (strategy) {
                 case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
@@ -375,7 +374,6 @@ public class AIOpponent extends Player {
         boolean moveMade;
         do {
             Strategy strategy = determineStrategy(true);
-            view.logToGameLog(gameplay.getCurrentPlayer() + " (MEDIUM) is using strategy: " + strategy);
             moveMade = false;
             switch (strategy) {
                 case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
@@ -404,7 +402,6 @@ public class AIOpponent extends Player {
         boolean moveMade;
         do {
             Strategy strategy = determineStrategy(true);
-            view.logToGameLog(gameplay.getCurrentPlayer() + " (HARD) is using strategy: " + strategy);
             moveMade = false;
             switch (strategy) {
                 case CITYUPGRADER -> moveMade = tryBuildCity(gameplay, boardGroup);
@@ -857,69 +854,6 @@ public class AIOpponent extends Player {
         return canOvertake && canAffordDevCard();
     }
 
-    //_____________________________________ROBBER LOGIC_____________________________________//
-    // AI automatically discards cards when needed
-    public Map<String, Integer> chooseDiscardCardsAI() {
-        Map<String, Integer> resources = new HashMap<>(getResources());
-        int total = resources.values().stream().mapToInt(Integer::intValue).sum();
-        int toDiscard = total / 2;
-        if (toDiscard == 0) return null;
-
-        Map<String, Integer> discardMap = new HashMap<>();
-        Map<String, Integer> priorityScores = new HashMap<>();
-        // Resources AI needs for next strategy (e.g. city/settlement/dev card)
-        Strategy strategy = determineStrategy(false);
-        Set<String> neededResources = getNeededResourcesForStrategy(strategy);
-
-        for (String res : resources.keySet()) {
-            int amountOwned = resources.getOrDefault(res, 0);
-            int productionScore = 0;
-
-            // Production score: total dice weight from settlements
-            productionScore = getProductionScore(res);
-
-            // Base score: more owned = more discardable
-            int score = amountOwned * 3;
-
-            // Subtract based on production (more produced → less discardable)
-            score -= productionScore * 2;
-
-            // Penalize if resource is needed for strategy
-            if (neededResources.contains(res)) {
-                score -= 8;
-            }
-            // Penalize if resource is easy to trade (2:1 or 3:1 harbor = valuable)
-            int ratio = getBestTradeRatio(res, this);
-            if (ratio <= 2) score -= 6;
-            else if (ratio == 3) score -= 3;
-            priorityScores.put(res, score);
-        }
-        // Sort by lowest score (most discardable first)
-        List<String> discardOrder = priorityScores.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .toList();
-
-        for (String res : discardOrder) {
-            if (toDiscard == 0) break;
-
-            int available = resources.get(res);
-            int discard = Math.min(available, toDiscard);
-            if (discard > 0) {
-                discardMap.put(res, discard);
-                toDiscard -= discard;
-            }
-        }
-        // Optional log
-        StringBuilder discardText = new StringBuilder("AI Player " + getPlayerId() + " auto-discarded: ");
-        discardMap.forEach((res, amt) -> discardText.append(amt).append(" ").append(res).append(", "));
-        if (!discardMap.isEmpty()) {
-            discardText.setLength(discardText.length() - 2); // remove trailing comma
-            gameplay.getCatanBoardGameView().logToGameLog(discardText.toString());
-        }
-        return discardMap;
-    }
-
     //_____________________________________HELPER / CALCULATION FUNCTIONS_____________________________________//
     // How many new resources a certain Tile would give the player
     private int countMissingResourcesCovered(Vertex vertex, Gameplay gameplay) {
@@ -1045,15 +979,6 @@ public class AIOpponent extends Player {
         return tradable.get(0);
     }
 
-    public Player chooseBestRobberTargetForHardAI(AIOpponent ai, List<Player> victims) {
-        Strategy strategy = determineStrategy(false);
-        Set<String> neededResources = getNeededResourcesForStrategy(strategy);
-
-        return victims.stream()
-                .max(Comparator.comparingInt(v -> countHelpfulCards(v, neededResources)))
-                .orElse(null);
-    }
-
     // Year of plenty logic
     public Map<String, Integer> chooseResourcesForYearOfPlenty() {
         Strategy strategy = determineStrategy(false);
@@ -1172,7 +1097,7 @@ public class AIOpponent extends Player {
 
     //__________________________CALCULATION FUNCTIONS__________________________//
     // Helper to calculate how much of a resource a player gets
-    private int getProductionScore(String resourceType) {
+    public int getProductionScore(String resourceType) {
         int productionScore = 0;
         //Loop settlements
         for (Vertex v : getSettlements()) {

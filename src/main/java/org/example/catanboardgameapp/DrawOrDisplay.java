@@ -30,6 +30,7 @@ import org.example.catanboardgameviews.CatanBoardGameView;
 import org.example.controller.BuildController;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 // Handles everything related to drawing on the board, settlements and cities, etc with updates
@@ -121,12 +122,7 @@ public class DrawOrDisplay {
         rectangle.setArcHeight(5);
         return rectangle;
     }
-    public Circle createRobberHighlight(Tile tile, Group boardGroup, Runnable onClick) {
-        Point2D center = tile.getCenter();
-        Circle highlight = drawRobberCircle(center, boardGroup);
-        highlight.setOnMouseClicked(e -> onClick.run());
-        return highlight;
-    }
+
     public Polygon createTilePolygon(Tile tile) {
         Polygon polygon = new Polygon();
         for (Vertex v : tile.getVertices()) {
@@ -216,16 +212,8 @@ public class DrawOrDisplay {
         cityShape.setStrokeWidth(1.0);
         boardGroup.getChildren().add(cityShape);
     }
-    public Circle drawRobberCircle(Point2D center, Group boardGroup) {
-        double radius = 40.0 / boardRadius;
-        double strokeWidth = 12.0 / boardRadius;
-        Circle circle = new Circle(center.getX(), center.getY(), radius);
-        circle.setFill(Color.TRANSPARENT);
-        circle.setStroke(Color.BLACK);
-        circle.setStrokeWidth(strokeWidth);
-        boardGroup.getChildren().add(circle);
-        return circle;
-    }
+
+
     public void drawHarbors(List<Tile> tiles, Group boardGroup) {
         for (Tile tile : tiles) {
             Harbor harbor = tile.getHarbor();
@@ -501,8 +489,8 @@ public class DrawOrDisplay {
                 player + ", you must discard " + toDiscard + " resource cards.",
                 resources,
                 toDiscard,
-                true,       // allowAutoSelection
-                player::chooseDiscardCards, // auto-selection function
+                false,       // allowAutoSelection
+                null,                        // auto-selection function
                 playerResources
         );
     }
@@ -743,6 +731,68 @@ public class DrawOrDisplay {
         if (rotateAnimation != null) {
             draw.rotateAnimation.play();
         }
+    }
+
+    //________________________________ROBBER HELPERS_______________________________//
+    // Removing old robber and drawing the new one
+    public void drawNewRobberCircle(Tile newTile, Group boardGroup, Circle robberCircle, boolean isHighlighting) {
+        // 1) JavaFX thread
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> drawNewRobberCircle(newTile, boardGroup, robberCircle, false));
+            return;
+        }
+        // 2) Remove the circle if it’s already part of the board (unless highlighting all tiles)
+        if (!isHighlighting) {boardGroup.getChildren().remove(robberCircle);}
+
+        // 3) Move the circle to the centre of the destination tile
+        Point2D center = newTile.getCenter();
+        robberCircle.setCenterX(center.getX());
+        robberCircle.setCenterY(center.getY());
+
+        // 4) Add it back so it becomes visible at the new position
+        boardGroup.getChildren().add(robberCircle);
+    }
+
+    // Creates the Robber Circle object, does not draw anything
+    public Circle createRobberCircle() {
+        double radius      = 40.0 / boardRadius;   // scales with board size
+        double strokeWidth = 12.0 / boardRadius;
+        Circle robberCircle = new Circle(radius);// centre defaults to (0, 0)
+        robberCircle.setFill(Color.TRANSPARENT);
+        robberCircle.setStroke(Color.BLACK);
+        robberCircle.setStrokeWidth(strokeWidth);
+        return robberCircle;   // still not attached or positioned
+    }
+
+    public List<Circle> createAndDrawRobberHighlights(Group boardGroup,
+                                                      List<Circle> highlights,
+                                                      Board board,
+                                                      Consumer<Tile> onTileChosen) {
+        // FX thread
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(() ->
+                    createAndDrawRobberHighlights(boardGroup, highlights, board, onTileChosen));
+            return highlights;
+        }
+        // clear previous overlay
+        boardGroup.getChildren().removeAll(highlights);
+        highlights.clear();
+
+        // one highlight per land tile
+        for (Tile tile : board.getTiles()) {
+            if (tile.isSea()) continue;
+            Circle ring = createRobberCircle();
+            drawNewRobberCircle(tile, boardGroup, ring, true);
+            ring.setOnMouseClicked(e -> {
+                // (a) clean up overlay
+                boardGroup.getChildren().removeAll(highlights);
+                highlights.clear();
+                // (b) hand control back to game logic
+                onTileChosen.accept(tile);
+            });
+            highlights.add(ring);
+        }
+        return highlights;
     }
 
     //___________________________________GETTERS____________________________________//
